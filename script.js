@@ -15,19 +15,19 @@
 // limitations under the License.
 
 // True if the mouse is currently pressed down.
-var mouseDown = false;
+let mouseDown = false;
 // Last position of the mouse when it was pressed down.
-var lastMousePositionX = 0;
-var lastMousePositionY = 0;
+let lastMousePositionX = 0;
+let lastMousePositionY = 0;
 // Rotation of the model in degrees.
 // https://en.wikipedia.org/wiki/Yaw_%28rotation%29
-var yaw = 0;
-var pitch = 0;
+let yaw = 0;
+let pitch = 0;
 
 // Use this for displaying errors to the user. More details should be put into
 // `console.error` messages.
 function showErrorToUser(message) {
-    var div = document.getElementById("errormessages");
+    let div = document.getElementById("errormessages");
     div.innerHTML += message + "</br>";
 }
 
@@ -63,143 +63,33 @@ function handleMouseMove(event) {
     lastMousePositionY = event.clientY;
 }
 
-function getMvpMatrix(width, height) {
-    var model = new mat4.create();
-    mat4.translate(model, model, vec3.fromValues(0, 0, 0.5));
-    mat4.rotateX(model, model, glMatrix.toRadian(pitch));
-    mat4.rotateY(model, model, glMatrix.toRadian(yaw));
-    mat4.translate(model, model, vec3.fromValues(0, 0, -0.5));
-
-    var view = new mat4.create();
-    mat4.lookAt(view,
-        vec3.fromValues(0, 0, 0),   // eye
-        vec3.fromValues(0, 0, 1),   // target
-        vec3.fromValues(0, -1, 0));  // up
-
-    var aspect = width / height;
-    var projection = new mat4.create();
-    mat4.perspective(projection, glMatrix.toRadian(60.0), aspect, 0.1, 20.0);
-
-    var mv = mat4.create();
-    mat4.multiply(mv, view, model);
-
-    var mvp = mat4.create();
-    mat4.multiply(mvp, projection, mv);
-    return mvp;
+function getViewMatrix() {
+    let view = new mat4.create();
+    mat4.translate(view, view, vec3.fromValues(0, 0, 1.8));
+    mat4.rotateY(view, view, glMatrix.toRadian(yaw));
+    mat4.rotateX(view, view, glMatrix.toRadian(pitch));
+    mat4.translate(view, view, vec3.fromValues(0, 0, -1.8));
+    return view;
 }
 
-// Compile the shader from `source` and return a reference to it.
-function createShader(gl, type, source) {
-    var shader = gl.createShader(type);
-    gl.shaderSource(shader, source);
-    gl.compileShader(shader);
-    var success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
-    if (success) {
-        return shader;
-    }
-    var msg = gl.getShaderInfoLog(shader);
-    gl.deleteShader(shader);
-    throw {
-        name: "ShaderCompilationError",
-        message: msg,
-    };
-}
-
-// Compile shaders, activate the shader program and return a reference to it.
-// The shaders are defined in the html file.
-function setupProgram(gl) {
-    var source = document.getElementById("vertexshader").text;
-    var vertexShader = createShader(gl, gl.VERTEX_SHADER, source);
-    source = document.getElementById("fragmentshader").text;
-    var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, source);
-
-    var program = gl.createProgram();
-    gl.attachShader(program, vertexShader);
-    gl.attachShader(program, fragmentShader);
-    gl.linkProgram(program);
-    var success = gl.getProgramParameter(program, gl.LINK_STATUS);
-    if (success) {
-        console.log("GLSL program compiled.");
-        gl.useProgram(program);
-        return program;
-    }
-    var msg = gl.getProgramInfoLog(program);
-    gl.deleteProgram(program);
-    throw {
-        name: "ShaderLinkingError",
-        message: msg,
-    };
-}
-
-// Create textures into which the camera output will be stored.
-function setupTextures(gl, program) {
-    var shaderColorTexture = gl.getUniformLocation(program, "u_color_texture");
-    gl.uniform1i(shaderColorTexture, 0);
-
-    var colorStreamTexture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, colorStreamTexture);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-
-    var shaderDepthTexture = gl.getUniformLocation(program, "u_depth_texture");
-    gl.uniform1i(shaderDepthTexture, 1);
-    var depthStreamTexture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, depthStreamTexture);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    return {
-        colorStreamTexture: colorStreamTexture,
-        depthStreamTexture: depthStreamTexture,
-    };
-}
 
 // Returns the calibration data.
 async function setupCamera() {
-    var [depth_stream, color_stream] = await DepthCamera.getStreams();
-    var video = document.getElementById("colorStream");
-    video.srcObject = color_stream;
-    var depth_video = document.getElementById("depthStream");
-    depth_video.srcObject = depth_stream;
-    var parameters = DepthCamera.getCameraCalibration(depth_stream);
+    let [depthStream, colorStream] = await DepthCamera.getStreams();
+    let video = document.getElementById("colorStream");
+    video.srcObject = colorStream;
+    let depthVideo = document.getElementById("depthStream");
+    depthVideo.srcObject = depthStream;
+    let parameters = DepthCamera.getCameraCalibration(depthStream);
     return parameters;
-}
-
-// Take the parameters returned from `DepthCamera.getCameraCalibration` and
-// upload them as uniforms into the shaders.
-function uploadCameraParameters(gl, program, parameters, width, height) {
-    var shaderVar = gl.getUniformLocation(program, "u_depth_scale");
-    gl.uniform1f(shaderVar, parameters.depthScale);
-    var depthIntrinsics = parameters.getDepthIntrinsics(width, height);
-    shaderVar = gl.getUniformLocation(program, "u_depth_focal_length");
-    gl.uniform2fv(shaderVar, depthIntrinsics.focalLength);
-    shaderVar = gl.getUniformLocation(program, "u_depth_offset");
-    gl.uniform2fv(shaderVar, depthIntrinsics.offset);
-    shaderVar = gl.getUniformLocation(program, "u_depth_distortion_model");
-    gl.uniform1i(shaderVar, parameters.depthDistortionModel);
-    shaderVar = gl.getUniformLocation(program, "u_depth_distortion_coeffs");
-    gl.uniform1fv(shaderVar, parameters.depthDistortioncoeffs);
-    shaderVar = gl.getUniformLocation(program, "u_color_focal_length");
-    gl.uniform2fv(shaderVar, parameters.colorFocalLength);
-    shaderVar = gl.getUniformLocation(program, "u_color_offset");
-    gl.uniform2fv(shaderVar, parameters.colorOffset);
-    shaderVar = gl.getUniformLocation(program, "u_color_distortion_model");
-    gl.uniform1i(shaderVar, parameters.colorDistortionModel);
-    shaderVar = gl.getUniformLocation(program, "u_color_distortion_coeffs");
-    gl.uniform1fv(shaderVar, parameters.colorDistortioncoeffs);
-    shaderVar = gl.getUniformLocation(program, "u_depth_to_color");
-    gl.uniformMatrix4fv(shaderVar, false, parameters.depthToColor);
 }
 
 async function main() {
     "use strict";
 
-    var gl, program, textures;
+    let gl, programs, textures;
     try {
-        var canvasElement = document.getElementById("webglcanvas");
+        let canvasElement = document.getElementById("webglcanvas");
         canvasElement.onmousedown = handleMouseDown;
         document.onmouseup = handleMouseUp;
         document.onmousemove = handleMouseMove;
@@ -210,9 +100,11 @@ async function main() {
         return false;
     }
     try {
-        program = setupProgram(gl);
-        textures = setupTextures(gl, program);
+        programs = setupPrograms(gl);
+        initVertexBuffer(gl, programs);
+        textures = setupTextures(gl, programs);
         gl.getExtension("EXT_color_buffer_float");
+        gl.getExtension("OES_texture_float_linear");
 
     } catch (e) {
         console.error(e.name + ": " + e.message);
@@ -221,74 +113,32 @@ async function main() {
     }
 
 
-    var cameraParameters = await setupCamera().catch(handleError);
+    let cameraParams = await setupCamera().catch(handleError);
 
-    var colorStreamElement = document.getElementById("colorStream");
-    var depthStreamElement = document.getElementById("depthStream");
-    var colorStreamReady = false;
-    var depthStreamReady = false;
+    let colorStreamElement = document.getElementById("colorStream");
+    let depthStreamElement = document.getElementById("depthStream");
+    let colorStreamReady = false;
+    let depthStreamReady = false;
     colorStreamElement.oncanplay = function() { colorStreamReady = true; };
     depthStreamElement.oncanplay = function() { depthStreamReady = true; };
 
-    var ranOnce = false;
+    let ranOnce = false;
+    let frame = 0;
+    let framebuffer0 = gl.createFramebuffer();
+    let framebuffer1 = gl.createFramebuffer();
+    let timePrevious = new Date;
     // Run for each frame. Will do nothing if the camera is not ready yet.
-    var animate=function() {
-        gl.clear(gl.COLOR_BUFFER_BIT);
-        if (colorStreamReady && depthStreamReady) {
-            var width = depthStreamElement.videoWidth;
-            var height = depthStreamElement.videoHeight;
+    let animate=function() {
+        if (depthStreamReady && colorStreamReady) {
+            let width = depthStreamElement.videoWidth;
+            let height = depthStreamElement.videoHeight;
             if ( ! ranOnce ) {
-                uploadCameraParameters(gl, program, cameraParameters, width,
-                                       height);
-                var shaderDepthTextureSize =
-                    gl.getUniformLocation(program, "u_depth_texture_size");
-                gl.uniform2f(shaderDepthTextureSize, width, height);
-
-                var shaderColorTextureSize =
-                    gl.getUniformLocation(program, "u_color_texture_size");
-                gl.uniform2f(shaderColorTextureSize,
-                    colorStreamElement.videoWidth,
-                    colorStreamElement.videoHeight);
-
-                gl.canvas.width = width;
-                gl.canvas.height = height;
-                gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-
-                var indices = [];
-                for (var i = 0; i < width; i++) {
-                    for (var j = 0; j < height; j++) {
-                        indices.push(i);
-                        indices.push(j);
-                    }
-                }
-                var shaderDepthTextureIndex =
-                    gl.getAttribLocation(program, "a_depth_texture_index");
-                gl.enableVertexAttribArray(shaderDepthTextureIndex);
-                var buffer = gl.createBuffer();
-                gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-                gl.bufferData(gl.ARRAY_BUFFER,
-                    new Float32Array(indices),
-                    gl.STATIC_DRAW);
-                gl.vertexAttribPointer(shaderDepthTextureIndex,
-                    2, gl.FLOAT, false, 0, 0);
+                initUniforms(gl, programs, cameraParams, width, height);
                 ranOnce = true;
             }
-            var shaderMvp = gl.getUniformLocation(program, "u_mvp");
-            gl.uniformMatrix4fv(shaderMvp, false, getMvpMatrix(width, height));
-
             try {
-                // Upload the camera frame for both the RGB camera and depth.
-                gl.activeTexture(gl.TEXTURE0);
-                gl.bindTexture(gl.TEXTURE_2D, textures.colorStreamTexture);
-                gl.texImage2D(gl.TEXTURE_2D,
-                    0,
-                    gl.RGBA,
-                    gl.RGBA,
-                    gl.UNSIGNED_BYTE,
-                    colorStreamElement);
-
-                gl.activeTexture(gl.TEXTURE1);
-                gl.bindTexture(gl.TEXTURE_2D, textures.depthStreamTexture);
+                gl.activeTexture(gl.TEXTURE3);
+                gl.bindTexture(gl.TEXTURE_2D, textures.depth);
                 gl.texImage2D(gl.TEXTURE_2D,
                     0,
                     gl.R32F,
@@ -300,9 +150,55 @@ async function main() {
                 console.error("Error uploading video to WebGL: " +
                     e.name + ", " + e.message);
             }
-            // create a vertex for each pixel in the depth stream
-            gl.drawArrays(gl.POINTS, 0, width * height);
 
+            let l = 0;
+            let program = programs.model;
+            let framebuffer = framebuffer1;
+            console.time('model');
+            gl.useProgram(program)
+            l = gl.getUniformLocation(program, "cubeTexture");
+            let framebufferTexture;
+            if (frame % 2 == 0) {
+                gl.uniform1i(l, 0);
+                framebufferTexture = textures.cube1;
+                framebuffer = framebuffer1;
+            } else {
+                gl.uniform1i(l, 1);
+                framebufferTexture = textures.cube0;
+                framebuffer = framebuffer0;
+            }
+            gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+            l = gl.getUniformLocation(program, "zslice");
+            for (let zslice = 0; zslice < CUBE_SIZE; zslice++) {
+                gl.uniform1ui(l, zslice);
+                gl.framebufferTextureLayer(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0,
+                    framebufferTexture, 0, zslice);
+                gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+            }
+            //console.timeEnd('model');
+
+            console.time('render');
+            program = programs.render;
+            gl.useProgram(program)
+            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+            l = gl.getUniformLocation(program, "cubeTexture");
+            if (frame % 2 == 0) {
+                gl.uniform1i(l, 1);
+            } else {
+                gl.uniform1i(l, 0);
+            }
+            l = gl.getUniformLocation(program, "viewMatrix");
+            gl.uniformMatrix4fv(l, false, getViewMatrix());
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+            //console.timeEnd('render');
+
+            frame++;
+            let timeNew = new Date;
+            let fps = 1000/(timeNew - timePrevious);
+            timePrevious = timeNew;
+            console.log("fps: ", fps);
         }
         window.requestAnimationFrame(animate);
     };
