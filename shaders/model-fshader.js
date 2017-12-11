@@ -192,4 +192,4 @@ void main() {
     position = (movement * vec4(position, 1.0)).xyz;
     outTexel = calculateSdf(texel, position);
 }
-`
+`;

@@ -158,4 +158,4 @@ void main() {
     vec4 viewDirection = normalize(camera - position);
     outColor = raymarch(position.xyz, viewDirection.xyz);
 }
-`
+`;

@@ -1,5 +1,3 @@
-/*jshint esversion: 6 */
-
 // Copyright 2017 Intel Corporation.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,13 +25,13 @@ let pitch = 0;
 // Use this for displaying errors to the user. More details should be put into
 // `console.error` messages.
 function showErrorToUser(message) {
-    let div = document.getElementById("errormessages");
-    div.innerHTML += message + "</br>";
+    const div = document.getElementById('errormessages');
+    div.innerHTML += `${message} </br>`;
 }
 
 function handleError(error) {
     console.error(error);
-    showErrorToUser(error.name ? (error.name + ": " + error.message) : error);
+    showErrorToUser(error.name ? `${error.name}: ${error.message}` : error);
 }
 
 function handleMouseDown(event) {
@@ -64,7 +62,7 @@ function handleMouseMove(event) {
 }
 
 function getViewMatrix() {
-    let view = new mat4.create();
+    const view = mat4.create();
     mat4.translate(view, view, vec3.fromValues(0, 0, 1.8));
     mat4.rotateY(view, view, glMatrix.toRadian(yaw));
     mat4.rotateX(view, view, glMatrix.toRadian(pitch));
@@ -75,90 +73,78 @@ function getViewMatrix() {
 
 // Returns the calibration data.
 async function setupCamera() {
-    let [depthStream, colorStream] = await DepthCamera.getStreams();
-    let video = document.getElementById("colorStream");
+    const [depthStream, colorStream] = await DepthCamera.getStreams();
+    const video = document.getElementById('colorStream');
     video.srcObject = colorStream;
-    let depthVideo = document.getElementById("depthStream");
+    const depthVideo = document.getElementById('depthStream');
     depthVideo.srcObject = depthStream;
-    let parameters = DepthCamera.getCameraCalibration(depthStream);
-    return parameters;
+    return DepthCamera.getCameraCalibration(depthStream);
 }
 
-async function main() {
-    "use strict";
+async function doMain() {
+    const canvasElement = document.getElementById('webglcanvas');
+    canvasElement.onmousedown = handleMouseDown;
+    document.onmouseup = handleMouseUp;
+    document.onmousemove = handleMouseMove;
 
-    let gl, programs, textures;
+    let gl;
     try {
-        let canvasElement = document.getElementById("webglcanvas");
-        canvasElement.onmousedown = handleMouseDown;
-        document.onmouseup = handleMouseUp;
-        document.onmousemove = handleMouseMove;
-        gl = canvasElement.getContext("webgl2");
+        gl = canvasElement.getContext('webgl2');
     } catch (e) {
-        console.error("Could not create WebGL2 context: " + e);
-        showErrorToUser("Your browser doesn't support WebGL2.");
-        return false;
+        showErrorToUser('Your browser doesn\'t support WebGL2.');
+        throw new Error(`Could not create WebGL2 context: ${e}`);
     }
-    try {
-        programs = setupPrograms(gl);
-        initVertexBuffer(gl, programs);
-        textures = setupTextures(gl, programs);
-        gl.getExtension("EXT_color_buffer_float");
-        gl.getExtension("OES_texture_float_linear");
+    const programs = setupPrograms(gl);
+    initVertexBuffer(gl, programs);
+    const textures = setupTextures(gl, programs);
+    gl.getExtension('EXT_color_buffer_float');
+    gl.getExtension('OES_texture_float_linear');
 
-    } catch (e) {
-        console.error(e.name + ": " + e.message);
-        showErrorToUser("Errors while executing WebGL: " + e.name);
-        return false;
-    }
+    const cameraParams = await setupCamera();
 
-
-    let cameraParams = await setupCamera().catch(handleError);
-
-    let colorStreamElement = document.getElementById("colorStream");
-    let depthStreamElement = document.getElementById("depthStream");
+    const colorStreamElement = document.getElementById('colorStream');
+    const depthStreamElement = document.getElementById('depthStream');
     let colorStreamReady = false;
     let depthStreamReady = false;
-    colorStreamElement.oncanplay = function() { colorStreamReady = true; };
-    depthStreamElement.oncanplay = function() { depthStreamReady = true; };
+    colorStreamElement.oncanplay = function () { colorStreamReady = true; };
+    depthStreamElement.oncanplay = function () { depthStreamReady = true; };
 
-    let ranOnce = false;
     let frame = 0;
-    let framebuffer0 = gl.createFramebuffer();
-    let framebuffer1 = gl.createFramebuffer();
-    let timePrevious = new Date;
+    const framebuffer0 = gl.createFramebuffer();
+    const framebuffer1 = gl.createFramebuffer();
+    let timePrevious = new Date();
     // Run for each frame. Will do nothing if the camera is not ready yet.
-    let animate=function() {
+    const animate = function () {
         if (depthStreamReady && colorStreamReady) {
-            let width = depthStreamElement.videoWidth;
-            let height = depthStreamElement.videoHeight;
-            if ( ! ranOnce ) {
+            const width = depthStreamElement.videoWidth;
+            const height = depthStreamElement.videoHeight;
+            if (frame === 0) {
                 initUniforms(gl, programs, cameraParams, width, height);
-                ranOnce = true;
             }
             try {
                 gl.activeTexture(gl.TEXTURE3);
                 gl.bindTexture(gl.TEXTURE_2D, textures.depth);
-                gl.texImage2D(gl.TEXTURE_2D,
+                gl.texImage2D(
+                    gl.TEXTURE_2D,
                     0,
                     gl.R32F,
                     gl.RED,
                     gl.FLOAT,
-                    depthStreamElement);
-            }
-            catch(e) {
-                console.error("Error uploading video to WebGL: " +
-                    e.name + ", " + e.message);
+                    depthStreamElement,
+                );
+            } catch (e) {
+                console.error(`Error uploading video to WebGL:
+                    ${e.name}, ${e.message}`);
             }
 
             let l = 0;
             let program = programs.model;
             let framebuffer = framebuffer1;
             console.time('model');
-            gl.useProgram(program)
-            l = gl.getUniformLocation(program, "cubeTexture");
+            gl.useProgram(program);
+            l = gl.getUniformLocation(program, 'cubeTexture');
             let framebufferTexture;
-            if (frame % 2 == 0) {
+            if (frame % 2 === 0) {
                 gl.uniform1i(l, 0);
                 framebufferTexture = textures.cube1;
                 framebuffer = framebuffer1;
@@ -168,39 +154,46 @@ async function main() {
                 framebuffer = framebuffer0;
             }
             gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
-            l = gl.getUniformLocation(program, "zslice");
-            for (let zslice = 0; zslice < CUBE_SIZE; zslice++) {
+            l = gl.getUniformLocation(program, 'zslice');
+            for (let zslice = 0; zslice < CUBE_SIZE; zslice += 1) {
                 gl.uniform1ui(l, zslice);
-                gl.framebufferTextureLayer(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0,
-                    framebufferTexture, 0, zslice);
+                gl.framebufferTextureLayer(
+                    gl.FRAMEBUFFER,
+                    gl.COLOR_ATTACHMENT0,
+                    framebufferTexture,
+                    0,
+                    zslice,
+                );
                 gl.drawArrays(gl.TRIANGLES, 0, 6);
-
             }
-            //console.timeEnd('model');
-
+            // console.timeEnd('model');
             console.time('render');
             program = programs.render;
-            gl.useProgram(program)
+            gl.useProgram(program);
             gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-            l = gl.getUniformLocation(program, "cubeTexture");
-            if (frame % 2 == 0) {
+            l = gl.getUniformLocation(program, 'cubeTexture');
+            if (frame % 2 === 0) {
                 gl.uniform1i(l, 1);
             } else {
                 gl.uniform1i(l, 0);
             }
-            l = gl.getUniformLocation(program, "viewMatrix");
+            l = gl.getUniformLocation(program, 'viewMatrix');
             gl.uniformMatrix4fv(l, false, getViewMatrix());
             gl.clear(gl.COLOR_BUFFER_BIT);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
-            //console.timeEnd('render');
+            // console.timeEnd('render');
 
-            frame++;
-            let timeNew = new Date;
-            let fps = 1000/(timeNew - timePrevious);
+            frame += 1;
+            const timeNew = new Date();
+            const fps = 1000 / (timeNew - timePrevious);
             timePrevious = timeNew;
-            console.log("fps: ", fps);
+            console.log('fps: ', fps);
         }
         window.requestAnimationFrame(animate);
     };
     animate();
+}
+
+function main() {
+    doMain().catch(handleError);
 }
