@@ -142,14 +142,24 @@ function setupTextures(gl, programs) {
         cube[i] = GRID_UNIT;
         cube[i + 1] = 0.0;
     }
-    gl.texImage3D(
+    gl.texStorage3D(
         gl.TEXTURE_3D,
-        0,
-        gl.RG32F,
+        1, // number of mip-map levels
+        gl.RG32F, // internal format
         CUBE_SIZE,
         CUBE_SIZE,
         CUBE_SIZE,
-        0,
+    );
+
+    gl.texSubImage3D(
+        gl.TEXTURE_3D,
+        0, // mip-map level
+        0, // x-offset
+        0, // y-offset
+        0, // z-offset
+        CUBE_SIZE,
+        CUBE_SIZE,
+        CUBE_SIZE,
         gl.RG,
         gl.FLOAT,
         cube,
@@ -163,17 +173,13 @@ function setupTextures(gl, programs) {
     gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_R, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texImage3D(
+    gl.texStorage3D(
         gl.TEXTURE_3D,
-        0,
-        gl.RG32F,
+        1, // number of mip-map levels
+        gl.RG32F, // internal format
         CUBE_SIZE,
         CUBE_SIZE,
         CUBE_SIZE,
-        0,
-        gl.RG,
-        gl.FLOAT,
-        null,
     );
     gl.activeTexture(gl.TEXTURE3);
     const depthTexture = gl.createTexture();
