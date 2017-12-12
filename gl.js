@@ -22,13 +22,14 @@ const SDF_TRUNCATION = 0.01;
 // canvas across the whole screen, so we can just paint with the fragment shader
 const vertices = new Float32Array([
     // right bottom half of screen
-    -1.0, -1.0,
-     1.0, -1.0,
-     1.0,  1.0,
+    // x    y     tex.s tex.t
+    -1.0, -1.0,    0.0, 0.0,
+     1.0, -1.0,    1.0, 0.0,
+     1.0,  1.0,    1.0, 1.0,
     // left top half of screen
-    -1.0, -1.0,
-     1.0,  1.0,
-    -1.0,  1.0,
+    -1.0, -1.0,    0.0, 0.0,
+     1.0,  1.0,    1.0, 1.0,
+    -1.0,  1.0,    0.0, 1.0,
 ]);
 /* eslint-enable */
 
@@ -84,7 +85,8 @@ function initVertexBuffer(gl, programs) {
         gl.useProgram(program);
         const attrib = gl.getAttribLocation(program, 'position');
         gl.enableVertexAttribArray(attrib);
-        gl.vertexAttribPointer(attrib, 2, gl.FLOAT, false, 0, 0);
+        const stride = 4 * 4; // 4 items per row, times 4 bytes in gl.FLOAT
+        gl.vertexAttribPointer(attrib, 2, gl.FLOAT, false, stride, 0);
     });
 }
 
