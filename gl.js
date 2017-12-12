@@ -71,23 +71,27 @@ function setupPrograms(gl) {
     };
 }
 
-function initVertexBuffer(gl, programs) {
+function initAttributes(gl, programs) {
     const vbo = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
     gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
     const vao = gl.createVertexArray();
     gl.bindVertexArray(vao);
+    const stride = 4 * 4; // 4 items per row, times 4 bytes in gl.FLOAT
 
-    // all programs simply use a canvas vertex shader, the main things are in
-    // the fragment shaders
-    Object.keys(programs).forEach((key) => {
-        const program = programs[key];
-        gl.useProgram(program);
-        const attrib = gl.getAttribLocation(program, 'position');
+    const uploadAttribute = function (name, offset) {
+        const attrib = gl.getAttribLocation(program, name);
         gl.enableVertexAttribArray(attrib);
-        const stride = 4 * 4; // 4 items per row, times 4 bytes in gl.FLOAT
-        gl.vertexAttribPointer(attrib, 2, gl.FLOAT, false, stride, 0);
-    });
+        gl.vertexAttribPointer(attrib, 2, gl.FLOAT, false, stride, offset);
+    }
+
+    let program = programs.model;
+    gl.useProgram(program);
+    uploadAttribute('inPosition', 0);
+
+    program = programs.render;
+    gl.useProgram(program);
+    uploadAttribute('inPosition', 0);
 }
 
 // Take the parameters returned from `DepthCamera.getCameraCalibration` and

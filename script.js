@@ -95,7 +95,7 @@ async function doMain() {
         throw new Error(`Could not create WebGL2 context: ${e}`);
     }
     const programs = setupPrograms(gl);
-    initVertexBuffer(gl, programs);
+    initAttributes(gl, programs);
     const textures = setupTextures(gl, programs);
     gl.getExtension('EXT_color_buffer_float');
     gl.getExtension('OES_texture_float_linear');
