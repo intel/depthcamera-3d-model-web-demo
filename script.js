@@ -165,9 +165,9 @@ async function doMain() {
             } else {
                 gl.uniform1i(l, 1);
             }
-            l = gl.getUniformLocation(program, 'zslice');
+            l = gl.getUniformLocation(program, 'zTexCoord');
             for (let zslice = 0; zslice < CUBE_SIZE; zslice += 1) {
-                gl.uniform1ui(l, zslice);
+                gl.uniform1f(l, (zslice + 0.5) / CUBE_SIZE);
                 gl.bindFramebuffer(
                     gl.FRAMEBUFFER,
                     framebuffers[(frame + 1) % 2][zslice],

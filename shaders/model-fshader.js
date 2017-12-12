@@ -98,6 +98,7 @@ precision highp float;
 #define MAX_WEIGHT 20.0
 
 layout(location = 0) out vec2 outTexel;
+in vec3 texCoord;
 
 // Length of each side of the cubeTexture.
 uniform int cubeSize;
@@ -105,9 +106,6 @@ uniform int cubeSize;
 uniform highp sampler3D cubeTexture;
 // Depth image from the camera.
 uniform highp sampler2D depthTexture;
-// Which slice of the cubeTexture in the z direction we are rendering. Goes
-// from 0 to (cubeSize-1).
-uniform uint zslice;
 // Maximum distance from a surface where we still bother updating the
 // information about the distance - if too far, the weight of the new data is 0.
 uniform float sdfTruncation;
@@ -169,27 +167,15 @@ vec2 calculateSdf(vec3 texelCoordinate, vec3 position) {
     }
 }
 
-// Calculate the texel coordinate for a texel with index (i, j, k).
-vec3 texelCenter(uint i, uint j, uint k) {
-    float size = float(cubeSize);
-    return vec3((float(i) + 0.5) / size,
-                (float(j) + 0.5) / size,
-                (float(k) + 0.5) / size);
-}
-
 void main() {
-    // We are reading from the same texel as we are outputting.
-    vec3 texel = texelCenter(uint(gl_FragCoord.x),
-                              uint(gl_FragCoord.y),
-                              zslice);
     // Convert texel coordinate where each component is from 0 to 1, into global
     // coordinates where each component is from -0.5 to 0.5, i.e. the cube
     // texture is going to be centered at the origin.
-    vec3 position = texel - 0.5;
+    vec3 position = texCoord - 0.5;
     // Center the cube at (0, 0, 0.5). The camera will be at the origin and the
     // projection plane at z=-1.
     position.z += 0.5;
     position = (movement * vec4(position, 1.0)).xyz;
-    outTexel = calculateSdf(texel, position);
+    outTexel = calculateSdf(texCoord, position);
 }
 `;

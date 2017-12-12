@@ -63,10 +63,11 @@ function linkProgram(gl, vertexShader, fragmentShader) {
 // The shaders are defined in the html file.
 function setupPrograms(gl) {
     const canvas = createShader(gl, gl.VERTEX_SHADER, canvasShader);
+    const canvas3d = createShader(gl, gl.VERTEX_SHADER, canvas3dShader);
     const model = createShader(gl, gl.FRAGMENT_SHADER, modelShader);
     const render = createShader(gl, gl.FRAGMENT_SHADER, renderShader);
     return {
-        model: linkProgram(gl, canvas, model),
+        model: linkProgram(gl, canvas3d, model),
         render: linkProgram(gl, canvas, render),
     };
 }
@@ -77,21 +78,24 @@ function initAttributes(gl, programs) {
     gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
     const vao = gl.createVertexArray();
     gl.bindVertexArray(vao);
-    const stride = 4 * 4; // 4 items per row, times 4 bytes in gl.FLOAT
+    const stride = 4 * 4; // 4 items per row, times 4 bytes of gl.FLOAT
+    const posOffset = 0;
+    const texOffset = 2 * 4; // 2 items of vertex postions * 4 bytes gl.FLOAT
+    let program;
 
     const uploadAttribute = function (name, offset) {
         const attrib = gl.getAttribLocation(program, name);
         gl.enableVertexAttribArray(attrib);
         gl.vertexAttribPointer(attrib, 2, gl.FLOAT, false, stride, offset);
-    }
-
-    let program = programs.model;
+    };
+    program = programs.model;
     gl.useProgram(program);
-    uploadAttribute('inPosition', 0);
+    uploadAttribute('inPosition', posOffset);
+    uploadAttribute('inTexCoord', texOffset);
 
     program = programs.render;
     gl.useProgram(program);
-    uploadAttribute('inPosition', 0);
+    uploadAttribute('inPosition', posOffset);
 }
 
 // Take the parameters returned from `DepthCamera.getCameraCalibration` and
