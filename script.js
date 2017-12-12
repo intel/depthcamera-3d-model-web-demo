@@ -110,8 +110,26 @@ async function doMain() {
     depthStreamElement.oncanplay = function () { depthStreamReady = true; };
 
     let frame = 0;
-    const framebuffer0 = gl.createFramebuffer();
-    const framebuffer1 = gl.createFramebuffer();
+    gl.useProgram(programs.model);
+    const createFb = function (texture, zslice) {
+        const fb = gl.createFramebuffer();
+        gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+        gl.framebufferTextureLayer(
+            gl.FRAMEBUFFER,
+            gl.COLOR_ATTACHMENT0,
+            texture,
+            0,
+            zslice,
+        );
+        return fb;
+    };
+    const framebuffers0 = Array.from(
+        Array(CUBE_SIZE).keys(), i => createFb(textures.cube0, i)
+    );
+    const framebuffers1 = Array.from(
+        Array(CUBE_SIZE).keys(), i => createFb(textures.cube1, i)
+    );
+    const framebuffers = [framebuffers0, framebuffers1];
     let timePrevious = new Date();
     // Run for each frame. Will do nothing if the camera is not ready yet.
     const animate = function () {
@@ -139,30 +157,20 @@ async function doMain() {
 
             let l = 0;
             let program = programs.model;
-            let framebuffer = framebuffer1;
             console.time('model');
             gl.useProgram(program);
             l = gl.getUniformLocation(program, 'cubeTexture');
-            let framebufferTexture;
             if (frame % 2 === 0) {
                 gl.uniform1i(l, 0);
-                framebufferTexture = textures.cube1;
-                framebuffer = framebuffer1;
             } else {
                 gl.uniform1i(l, 1);
-                framebufferTexture = textures.cube0;
-                framebuffer = framebuffer0;
             }
-            gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
             l = gl.getUniformLocation(program, 'zslice');
             for (let zslice = 0; zslice < CUBE_SIZE; zslice += 1) {
                 gl.uniform1ui(l, zslice);
-                gl.framebufferTextureLayer(
+                gl.bindFramebuffer(
                     gl.FRAMEBUFFER,
-                    gl.COLOR_ATTACHMENT0,
-                    framebufferTexture,
-                    0,
-                    zslice,
+                    framebuffers[(frame + 1) % 2][zslice],
                 );
                 gl.drawArrays(gl.TRIANGLES, 0, 6);
             }
