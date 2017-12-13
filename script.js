@@ -166,8 +166,10 @@ async function doMain() {
                 gl.uniform1i(l, 1);
             }
             l = gl.getUniformLocation(program, 'zTexCoord');
+            let ll = gl.getUniformLocation(program, 'zslice');
             for (let zslice = 0; zslice < CUBE_SIZE; zslice += 1) {
                 gl.uniform1f(l, (zslice + 0.5) / CUBE_SIZE);
+                gl.uniform1ui(ll, zslice);
                 gl.bindFramebuffer(
                     gl.FRAMEBUFFER,
                     framebuffers[(frame + 1) % 2][zslice],
@@ -195,7 +197,7 @@ async function doMain() {
             const timeNew = new Date();
             const fps = 1000 / (timeNew - timePrevious);
             timePrevious = timeNew;
-            console.log('fps: ', fps);
+            //console.log('fps: ', fps);
         }
         window.requestAnimationFrame(animate);
     };
