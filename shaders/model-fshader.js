@@ -98,7 +98,7 @@ precision highp float;
 #define MAX_WEIGHT 20.0
 
 layout(location = 0) out vec2 outTexel;
-in vec3 texCoord;
+in vec2 texCoord;
 
 // Length of each side of the cubeTexture.
 uniform int cubeSize;
@@ -179,13 +179,13 @@ vec3 texelCenter(uint i, uint j, uint k) {
 }
 
 void main() {
-    vec3 texel2 = texCoord;
+    vec2 texel2 = texCoord;
     // We are reading from the same texel as we are outputting.
     vec3 texel = texelCenter(uint(gl_FragCoord.x),
                               uint(gl_FragCoord.y),
                               zslice);
     //if (abs(texel.x - texel2.x) < 0.5) {
-    if(texel2.y > 0.052) {
+    if(texel2.x < 0.001) {
         outTexel = vec2(0.0, 0.0);
     } else {
     // Convert texel coordinate where each component is from 0 to 1, into global

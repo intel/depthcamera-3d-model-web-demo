@@ -17,13 +17,14 @@ const canvas3dShader = `#version 300 es
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec2 inTexCoord;
 
-out vec3 texCoord;
+out vec2 texCoord;
 
 // Which slice of the cubeTexture in the z direction we are rendering.
 uniform float zTexCoord;
 
 void main() {
     gl_Position = vec4(inPosition, 1.0);
-    texCoord = vec3(inTexCoord, zTexCoord);
+    //texCoord = vec3(inTexCoord, zTexCoord);
+    texCoord = inTexCoord;
 }
 `;
