@@ -19,19 +19,19 @@ precision highp float;
 
 layout(location = 0) out vec4 outSum;
 
-//uniform highp sampler2D dataTexture;
-//uniform ivec2 dataSize;
+uniform highp sampler2D pointsTexture;
+uniform ivec2 pointsTextureSize;
 
 void main() {
     float sum = 0.0;
-    //for (int i = 0; i < dataSize.x; i++) {
-        //for (int j = 0; j < dataSize.y; j++) {
-            //vec2 coord = vec2(float(i)/float(dataSize.x),
-                              //float(j)/float(dataSize.y));
-            ////vec3 data = texture(dataTexture, coord);
-            ////sum += data.x;
-        //}
-    //}
+    for (int i = 0; i < pointsTextureSize.x; i++) {
+        for (int j = 0; j < pointsTextureSize.y; j++) {
+            vec2 coord = vec2(float(i)/float(pointsTextureSize.x),
+                              float(j)/float(pointsTextureSize.y));
+            vec4 data = texture(pointsTexture, coord);
+            sum += data.x;
+        }
+    }
     outSum = vec4(sum, 1.0, 2.0, 0.0);
 }
 `;

@@ -17,7 +17,7 @@ const pointsShader = `#version 300 es
 //
 precision highp float;
 
-layout(location = 0) out vec3 out_texel;
+layout(location = 0) out vec4 out_texel;
 
 // Two depth images from the camera.
 uniform highp sampler2D source_depth_texture;
@@ -50,6 +50,6 @@ vec3 deproject(vec2 coord) {
 }
 
 void main() {
-    out_texel = vec3(1.0, 1.0, 1.0);
+    out_texel = vec4(1.0, 1.0, 1.0, 1.0);
 }
 `;
