@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-const CUBE_SIZE = 32;
+const CUBE_SIZE = 128;
 const GRID_UNIT = 1.0 / CUBE_SIZE;
 // a variant of SDF called TSDF limits the signed distance between
 // -SDF_TRUNCATION and SDF_TRUNCATION
