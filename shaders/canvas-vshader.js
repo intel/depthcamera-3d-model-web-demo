@@ -13,9 +13,9 @@ const canvasShader = `#version 300 es
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-layout(location = 0) in vec2 inPosition;
+layout(location = 0) in vec3 inPosition;
 
 void main() {
-    gl_Position = vec4(inPosition, 0.0, 1.0);
+    gl_Position = vec4(inPosition, 1.0);
 }
 `;

@@ -14,7 +14,7 @@ const canvas3dShader = `#version 300 es
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-layout(location = 0) in vec2 inPosition;
+layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec2 inTexCoord;
 
 out vec3 texCoord;
@@ -23,7 +23,7 @@ out vec3 texCoord;
 uniform float zTexCoord;
 
 void main() {
-    gl_Position = vec4(inPosition, 0.0, 1.0);
+    gl_Position = vec4(inPosition, 1.0);
     texCoord = vec3(inTexCoord, zTexCoord);
 }
 `;

@@ -22,14 +22,14 @@ const SDF_TRUNCATION = 0.01;
 // canvas across the whole screen, so we can just paint with the fragment shader
 const vertices = new Float32Array([
     // right bottom half of screen
-    // x    y     tex.s tex.t
-    -1.0, -1.0,    0.0, 0.0,
-     1.0, -1.0,    1.0, 0.0,
-     1.0,  1.0,    1.0, 1.0,
+    // x    y   z    tex.s tex.t
+    -1.0, -1.0, 0.0,   0.0, 0.0,
+     1.0, -1.0, 0.0,   1.0, 0.0,
+     1.0,  1.0, 0.0,   1.0, 1.0,
     // left top half of screen
-    -1.0, -1.0,    0.0, 0.0,
-     1.0,  1.0,    1.0, 1.0,
-    -1.0,  1.0,    0.0, 1.0,
+    -1.0, -1.0, 0.0,   0.0, 0.0,
+     1.0,  1.0, 0.0,   1.0, 1.0,
+    -1.0,  1.0, 0.0,   0.0, 1.0,
 ]);
 /* eslint-enable */
 
@@ -78,24 +78,27 @@ function initAttributes(gl, programs) {
     gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
     const vao = gl.createVertexArray();
     gl.bindVertexArray(vao);
-    const stride = 4 * 4; // 4 items per row, times 4 bytes of gl.FLOAT
+    const bytesInFloat = 4; // gl.Float
     const posOffset = 0;
-    const texOffset = 2 * 4; // 2 items of vertex postions * 4 bytes gl.FLOAT
+    const posItems = 3;
+    const texOffset = posItems * bytesInFloat;
+    const texItems = 2;
+    const stride = (posItems + texItems) * bytesInFloat;
     let program;
 
-    const uploadAttribute = function (name, offset) {
+    const uploadAttribute = function (name, offset, items) {
         const attrib = gl.getAttribLocation(program, name);
         gl.enableVertexAttribArray(attrib);
-        gl.vertexAttribPointer(attrib, 2, gl.FLOAT, false, stride, offset);
+        gl.vertexAttribPointer(attrib, items, gl.FLOAT, false, stride, offset);
     };
     program = programs.model;
     gl.useProgram(program);
-    uploadAttribute('inPosition', posOffset);
-    uploadAttribute('inTexCoord', texOffset);
+    uploadAttribute('inPosition', posOffset, posItems);
+    uploadAttribute('inTexCoord', texOffset, texItems);
 
     program = programs.render;
     gl.useProgram(program);
-    uploadAttribute('inPosition', posOffset);
+    uploadAttribute('inPosition', posOffset, posItems);
 }
 
 // Take the parameters returned from `DepthCamera.getCameraCalibration` and
