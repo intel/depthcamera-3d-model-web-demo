@@ -64,9 +64,13 @@ function linkProgram(gl, vertexShader, fragmentShader) {
 function setupPrograms(gl) {
     const canvas = createShader(gl, gl.VERTEX_SHADER, canvasShader);
     const canvas3d = createShader(gl, gl.VERTEX_SHADER, canvas3dShader);
+    const points = createShader(gl, gl.FRAGMENT_SHADER, pointsShader);
+    const sum = createShader(gl, gl.FRAGMENT_SHADER, sumShader);
     const model = createShader(gl, gl.FRAGMENT_SHADER, modelShader);
     const render = createShader(gl, gl.FRAGMENT_SHADER, renderShader);
     return {
+        points: linkProgram(gl, canvas, points),
+        sum: linkProgram(gl, canvas, sum),
         model: linkProgram(gl, canvas3d, model),
         render: linkProgram(gl, canvas, render),
     };
@@ -91,6 +95,14 @@ function initAttributes(gl, programs) {
         gl.enableVertexAttribArray(attrib);
         gl.vertexAttribPointer(attrib, items, gl.FLOAT, false, stride, offset);
     };
+    program = programs.points;
+    gl.useProgram(program);
+    uploadAttribute('inPosition', posOffset, posItems);
+
+    program = programs.sum;
+    gl.useProgram(program);
+    uploadAttribute('inPosition', posOffset, posItems);
+
     program = programs.model;
     gl.useProgram(program);
     uploadAttribute('inPosition', posOffset, posItems);
@@ -202,10 +214,26 @@ function setupTextures(gl, programs) {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
 
+    gl.activeTexture(gl.TEXTURE4);
+    const sumTexture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, sumTexture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texStorage2D(
+        gl.TEXTURE_2D,
+        1, // number of mip-map levels
+        gl.RGBA32F, // internal format
+        14, // width
+        1, // height
+    );
+
     const textures = {
         cube0: cube0Texture,
         cube1: cube1Texture,
         depth: depthTexture,
+        sum: sumTexture,
     };
 
     let l = 0;

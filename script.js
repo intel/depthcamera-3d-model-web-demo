@@ -110,6 +110,20 @@ async function doMain() {
     depthStreamElement.oncanplay = function () { depthStreamReady = true; };
 
     let frame = 0;
+    gl.useProgram(programs.sum);
+    const sumFramebuffer = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, sumFramebuffer);
+    gl.bindTexture(gl.TEXTURE_2D, textures.sum);
+    gl.framebufferTexture2D(
+        gl.FRAMEBUFFER,
+        gl.COLOR_ATTACHMENT0,
+        gl.TEXTURE_2D,
+        textures.sum,
+        0,
+    );
+    const drawBuffers = [gl.COLOR_ATTACHMENT0];
+    gl.drawBuffers(drawBuffers);
+
     gl.useProgram(programs.model);
     const createFb = function (texture, zslice) {
         const fb = gl.createFramebuffer();
@@ -155,8 +169,18 @@ async function doMain() {
                     ${e.name}, ${e.message}`);
             }
 
-            let l = 0;
-            let program = programs.model;
+            let l;
+            let program;
+
+            program = programs.sum;
+            gl.useProgram(program);
+            gl.bindFramebuffer(gl.FRAMEBUFFER, sumFramebuffer);
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+            let data = new Float32Array(14*4);
+            gl.readPixels(0, 0, 14, 1, gl.RGBA, gl.FLOAT, data);
+
+
+            program = programs.model;
             console.time('model');
             gl.useProgram(program);
             l = gl.getUniformLocation(program, 'cubeTexture');
