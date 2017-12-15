@@ -63,7 +63,6 @@ function linkProgram(gl, vertexShader, fragmentShader) {
 // The shaders are defined in the html file.
 function setupPrograms(gl) {
     const canvas = createShader(gl, gl.VERTEX_SHADER, canvasShader);
-    const canvas3d = createShader(gl, gl.VERTEX_SHADER, canvas3dShader);
     const points = createShader(gl, gl.FRAGMENT_SHADER, pointsShader);
     const sum = createShader(gl, gl.FRAGMENT_SHADER, sumShader);
     const model = createShader(gl, gl.FRAGMENT_SHADER, modelShader);
@@ -71,7 +70,7 @@ function setupPrograms(gl) {
     return {
         points: linkProgram(gl, canvas, points),
         sum: linkProgram(gl, canvas, sum),
-        model: linkProgram(gl, canvas3d, model),
+        model: linkProgram(gl, canvas, model),
         render: linkProgram(gl, canvas, render),
     };
 }
