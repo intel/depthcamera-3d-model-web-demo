@@ -167,16 +167,9 @@ function initUniforms(gl, programs, parameters, width, height) {
 }
 
 
-// Create textures into which the camera output will be stored.
-function setupTextures(gl, programs, width, height) {
-    gl.activeTexture(gl.TEXTURE0);
-    const cube0Texture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_3D, cube0Texture);
-    gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_R, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+function fillCubeTexture(gl, name, id) {
+    gl.activeTexture(gl[`TEXTURE${id}`]);
+    gl.bindTexture(gl.TEXTURE_3D, name);
     const stride = 2;
     const size = CUBE_SIZE * CUBE_SIZE * CUBE_SIZE * stride;
     const cube = new Float32Array(size);
@@ -184,14 +177,6 @@ function setupTextures(gl, programs, width, height) {
         cube[i] = GRID_UNIT;
         cube[i + 1] = 0.0;
     }
-    gl.texStorage3D(
-        gl.TEXTURE_3D,
-        1, // number of mip-map levels
-        gl.RG32F, // internal format
-        CUBE_SIZE,
-        CUBE_SIZE,
-        CUBE_SIZE,
-    );
 
     gl.texSubImage3D(
         gl.TEXTURE_3D,
@@ -206,75 +191,64 @@ function setupTextures(gl, programs, width, height) {
         gl.FLOAT,
         cube,
     );
+}
 
-    gl.activeTexture(gl.TEXTURE1);
-    const cube1Texture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_3D, cube1Texture);
-    gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_R, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texStorage3D(
-        gl.TEXTURE_3D,
-        1, // number of mip-map levels
-        gl.RG32F, // internal format
-        CUBE_SIZE,
-        CUBE_SIZE,
-        CUBE_SIZE,
-    );
-    gl.activeTexture(gl.TEXTURE3);
-    const depthTexture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, depthTexture);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texStorage2D(
-        gl.TEXTURE_2D,
-        1, // number of mip-map levels
-        gl.R32F, // internal format
-        width,
-        height,
-    );
+// Create textures into which the camera output will be stored.
+function setupTextures(gl, programs, width, height) {
 
+    const createTexture3D = function (id) {
+        gl.activeTexture(gl[`TEXTURE${id}`]);
+        const texture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_3D, texture);
+        gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_R, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texStorage3D(
+            gl.TEXTURE_3D,
+            1, // number of mip-map levels
+            gl.RG32F, // internal format
+            CUBE_SIZE,
+            CUBE_SIZE,
+            CUBE_SIZE,
+        );
+        return texture;
+    }
 
-    gl.activeTexture(gl.TEXTURE4);
-    const sumTexture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, sumTexture);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texStorage2D(
-        gl.TEXTURE_2D,
-        1, // number of mip-map levels
-        gl.RGBA32F, // internal format TODO use RGB32F
-        14, // width
-        1, // height
-    );
+    const createTexture2D = function (id, format, width, height) {
+        gl.activeTexture(gl[`TEXTURE${id}`]);
+        const texture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texStorage2D(
+            gl.TEXTURE_2D,
+            1, // number of mip-map levels
+            format, // internal format
+            width,
+            height,
+        );
+        return texture;
+    };
 
-    gl.activeTexture(gl.TEXTURE6);
-    const pointsTexture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, pointsTexture);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texStorage2D(
-        gl.TEXTURE_2D,
-        1, // number of mip-map levels
-        gl.RGBA32F, // internal format TODO use RGB32F
-        width,
-        height,
-    );
+    const cube0 = createTexture3D(0);
+    const cube1 = createTexture3D(1);
+    fillCubeTexture(gl, cube0, 0);
+    const depth = createTexture2D(3, gl.R32F, width, height);
+    const sum = createTexture2D(4, gl.RGBA32F, 14, 1);
+    const crossProduct = createTexture2D(6, gl.RGBA32F, width, height);
 
     const textures = {
-        cube0: cube0Texture,
-        cube1: cube1Texture,
-        depth: depthTexture,
-        points: pointsTexture,
-        sum: sumTexture,
+        cube0,
+        cube1,
+        depth,
+        sum,
+        points: {
+            crossProduct,
+        }
     };
 
     let l = 0;
@@ -309,12 +283,12 @@ function initFramebuffers(gl, programs, textures) {
     gl.useProgram(programs.points);
     const pointsFramebuffer = gl.createFramebuffer();
     gl.bindFramebuffer(gl.FRAMEBUFFER, pointsFramebuffer);
-    gl.bindTexture(gl.TEXTURE_2D, textures.points);
+    gl.bindTexture(gl.TEXTURE_2D, textures.points.crossProduct);
     gl.framebufferTexture2D(
         gl.FRAMEBUFFER,
         gl.COLOR_ATTACHMENT0,
         gl.TEXTURE_2D,
-        textures.points,
+        textures.points.crossProduct,
         0,
     );
 
