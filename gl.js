@@ -240,6 +240,7 @@ function setupTextures(gl, programs, width, height) {
     const depth = createTexture2D(3, gl.R32F, width, height);
     const sum = createTexture2D(4, gl.RGBA32F, 14, 1);
     const crossProduct = createTexture2D(6, gl.RGBA32F, width, height);
+    const normal = createTexture2D(7, gl.RGBA32F, width, height);
 
     const textures = {
         cube0,
@@ -248,6 +249,7 @@ function setupTextures(gl, programs, width, height) {
         sum,
         points: {
             crossProduct,
+            normal,
         }
     };
 
@@ -280,37 +282,26 @@ function setupTextures(gl, programs, width, height) {
 }
 
 function initFramebuffers(gl, programs, textures) {
-    gl.useProgram(programs.points);
-    const pointsFramebuffer = gl.createFramebuffer();
-    gl.bindFramebuffer(gl.FRAMEBUFFER, pointsFramebuffer);
-    gl.bindTexture(gl.TEXTURE_2D, textures.points.crossProduct);
-    gl.framebufferTexture2D(
-        gl.FRAMEBUFFER,
-        gl.COLOR_ATTACHMENT0,
-        gl.TEXTURE_2D,
-        textures.points.crossProduct,
-        0,
-    );
 
-    gl.useProgram(programs.sum);
-    const sumFramebuffer = gl.createFramebuffer();
-    gl.bindFramebuffer(gl.FRAMEBUFFER, sumFramebuffer);
-    gl.activeTexture(gl.TEXTURE4);
-    gl.bindTexture(gl.TEXTURE_2D, textures.sum);
-    gl.framebufferTexture2D(
-        gl.FRAMEBUFFER,
-        gl.COLOR_ATTACHMENT0,
-        gl.TEXTURE_2D,
-        textures.sum,
-        0,
-    );
-    const drawBuffers = [gl.COLOR_ATTACHMENT0];
-    gl.drawBuffers(drawBuffers);
+    function createFramebuffer2D(textures) {
+        const framebuffer = gl.createFramebuffer();
+        gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+        for (let i = 0; i < textures.length; i += 1) {
+            const texture = textures[i];
+            gl.framebufferTexture2D(
+                gl.FRAMEBUFFER,
+                gl[`COLOR_ATTACHMENT${i}`],
+                gl.TEXTURE_2D,
+                texture,
+                0, // mip-map level
+            );
+        }
+        return framebuffer;
+    }
 
-    gl.useProgram(programs.model);
-    const createFb = function (texture, zslice) {
-        const fb = gl.createFramebuffer();
-        gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+    function createFramebuffer3D(texture, zslice) {
+        const framebuffer = gl.createFramebuffer();
+        gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
         gl.framebufferTextureLayer(
             gl.FRAMEBUFFER,
             gl.COLOR_ATTACHMENT0,
@@ -318,19 +309,32 @@ function initFramebuffers(gl, programs, textures) {
             0,
             zslice,
         );
-        return fb;
-    };
-    const framebuffers0 = Array.from(
-        Array(CUBE_SIZE).keys(),
-        i => createFb(textures.cube0, i),
+        return framebuffer;
+    }
+
+    gl.useProgram(programs.points);
+    const points = createFramebuffer2D(
+        [textures.points.crossProduct, textures.points.normal]
     );
-    const framebuffers1 = Array.from(
+
+    gl.useProgram(programs.sum);
+    const sum = createFramebuffer2D([textures.sum]);
+
+    drawBuffers = [gl.COLOR_ATTACHMENT0];
+    gl.drawBuffers(drawBuffers);
+
+    gl.useProgram(programs.model);
+    const cube0 = Array.from(
         Array(CUBE_SIZE).keys(),
-        i => createFb(textures.cube1, i),
+        i => createFramebuffer3D(textures.cube0, i),
+    );
+    const cube1 = Array.from(
+        Array(CUBE_SIZE).keys(),
+        i => createFramebuffer3D(textures.cube1, i),
     );
     return {
-        sum: sumFramebuffer,
-        points: pointsFramebuffer,
-        model: [framebuffers0, framebuffers1],
+        sum,
+        points,
+        model: [cube0, cube1],
     };
 }

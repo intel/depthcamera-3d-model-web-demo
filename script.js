@@ -146,12 +146,10 @@ async function doMain() {
 
             program = programs.points;
             gl.useProgram(program);
-            //gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.points);
-            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+            gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.points);
+            //gl.bindFramebuffer(gl.FRAMEBUFFER, null);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
 
-            window.requestAnimationFrame(animate);
-            return;
             program = programs.sum;
             gl.useProgram(program);
             gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.sum);

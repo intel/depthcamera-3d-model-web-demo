@@ -17,7 +17,9 @@ const pointsShader = `#version 300 es
 //
 precision highp float;
 
-layout(location = 0) out vec4 outTexel;
+layout(location = 0) out vec4 outCrossProduct;
+layout(location = 1) out vec4 outNormal;
+layout(location = 2) out vec2 outDotAndError;
 in vec2 texCoord;
 
 // Two depth images from the camera.
@@ -86,9 +88,15 @@ void main() {
     if (distance(sourcePosition, destPosition) < 0.2
             && dot(sourceNormal, destNormal) > 0.9) {
 
-        outTexel = vec4(sourcePosition, 1.0);
+       outCrossProduct = vec4(cross(sourcePosition, sourceNormal), 1.0);
+       outNormal = vec4(sourceNormal, 1.0);
+       float dotProduct = dot(sourcePosition - destPosition, sourceNormal);
+       float error = pow(dotProduct, 2.0);
+       outDotAndError = vec2(dotProduct, error);
     } else {
-        outTexel = zero;
+        outCrossProduct = zero;
+        outNormal = zero;
+        outDotAndError = vec2(0.0, 0.0); // TODO try non-zero error
     }
 }
 `;
