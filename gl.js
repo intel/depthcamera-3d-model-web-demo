@@ -106,7 +106,6 @@ function initAttributes(gl, programs) {
     program = programs.model;
     gl.useProgram(program);
     uploadAttribute('inPosition', posOffset, posItems);
-    uploadAttribute('inTexCoord', texOffset, texItems);
 
     program = programs.render;
     gl.useProgram(program);

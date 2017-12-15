@@ -98,7 +98,6 @@ precision highp float;
 #define MAX_WEIGHT 20.0
 
 layout(location = 0) out vec2 outTexel;
-in vec2 texCoord;
 
 // Length of each side of the cubeTexture.
 uniform int cubeSize;
@@ -179,15 +178,10 @@ vec3 texelCenter(uint i, uint j, uint k) {
 }
 
 void main() {
-    vec2 texel2 = texCoord;
     // We are reading from the same texel as we are outputting.
     vec3 texel = texelCenter(uint(gl_FragCoord.x),
                               uint(gl_FragCoord.y),
                               zslice);
-    //if (abs(texel.x - texel2.x) < 0.5) {
-    if(texel2.x < 0.001) {
-        outTexel = vec2(0.0, 0.0);
-    } else {
     // Convert texel coordinate where each component is from 0 to 1, into global
     // coordinates where each component is from -0.5 to 0.5, i.e. the cube
     // texture is going to be centered at the origin.
@@ -197,6 +191,5 @@ void main() {
     position.z += 0.5;
     position = (movement * vec4(position, 1.0)).xyz;
     outTexel = calculateSdf(texel, position);
-    }
 }
 `;
