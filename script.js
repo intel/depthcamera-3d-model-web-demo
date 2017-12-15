@@ -147,7 +147,7 @@ async function doMain() {
             program = programs.points;
             gl.useProgram(program);
             gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.points);
-            //gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+            // gl.bindFramebuffer(gl.FRAMEBUFFER, null);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
 
             program = programs.sum;
@@ -157,10 +157,9 @@ async function doMain() {
             // TODO this is slow
             const data = new Float32Array(14 * 4);
             gl.readPixels(0, 0, 14, 1, gl.RGBA, gl.FLOAT, data);
-            if(frame === 0) {
+            if (frame === 0) {
                 console.log(data);
             }
-
 
             program = programs.model;
             console.time('model');

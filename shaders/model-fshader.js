@@ -122,6 +122,13 @@ uniform vec2 depthOffset;
 // Focal length of the depth camera.
 uniform vec2 depthFocalLength;
 
+// Return true if the coordinate is lower than (0, 0) or higher than (1, 1).
+bool coordIsOutOfRange(vec2 texCoord) {
+    bvec2 high = greaterThan(texCoord, vec2(1.0, 1.0));
+    bvec2 low = lessThan(texCoord, vec2(0.0, 0.0));
+    return high.x || high.y || low.x || low.y;
+}
+
 // Project the point at position onto the plane at approximately z=-1 with the
 // camera at origin.
 vec2 project(vec3 position) {
@@ -136,6 +143,10 @@ vec3 deproject(vec2 coord) {
     // convert into texture coordinate
     vec2 texCoord = coord + 0.5;
     float depth = float(texture(depthTexture, texCoord).r) * depthScale;
+    // Set depth to 0 if texCoord is outside of the texture. Works only if
+    // texture has filtering GL_NEAREST. See
+    // https://wiki.linaro.org/WorkingGroups/Middleware/Graphics/GLES2PortingTips
+    depth = mix(depth, 0.0, coordIsOutOfRange(texCoord));
     vec2 position2d = (coord - depthOffset)/depthFocalLength;
     return vec3(position2d*depth, depth);
 }
@@ -150,13 +161,10 @@ vec2 calculateSdf(vec3 texelCoordinate, vec3 position) {
     // Current value in the texture, to be updated.
     vec2 old = texture(cubeTexture, texelCoordinate).rg;
     vec2 p = project(position);
-    // Landed outside of the projection plane.
-    if (p.x < -0.5 || p.y < -0.5 || p.x >= 0.5 || p.y >= 0.5) return old;
     vec3 depth = deproject(p);
     // The depth camera stores zero if depth is undefined.
-    if (depth.z == 0.0) return old;
+    //if (depth.z == 0.0) return old;
     vec3 camera = vec3(0.0, 0.0, 0.0);
-    //vec3 camera = (movement*vec4(0.0, 0.0, 0.0, 1.0)).xyz;
     float sdf = distance(depth, camera) - distance(position, camera);
     if (sdf >= -sdfTruncation && sdf <= sdfTruncation) {
         float newWeight = old.y + 1.0;
