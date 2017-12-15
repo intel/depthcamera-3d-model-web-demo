@@ -98,6 +98,7 @@ function initAttributes(gl, programs) {
     program = programs.points;
     gl.useProgram(program);
     uploadAttribute('inPosition', posOffset, posItems);
+    uploadAttribute('inTexCoord', texOffset, texItems);
 
     program = programs.sum;
     gl.useProgram(program);
@@ -126,6 +127,14 @@ function initUniforms(gl, programs, parameters, width, height) {
     let program;
     program = programs.points;
     gl.useProgram(program);
+    l = gl.getUniformLocation(program, 'movement');
+    gl.uniformMatrix4fv(l, false, mat4.create());
+    l = gl.getUniformLocation(program, 'depthScale');
+    gl.uniform1f(l, parameters.depthScale);
+    l = gl.getUniformLocation(program, 'depthFocalLength');
+    gl.uniform2f(l, focalx, focaly);
+    l = gl.getUniformLocation(program, 'depthOffset');
+    gl.uniform2f(l, offsetx, offsety);
 
     program = programs.sum;
     gl.useProgram(program);
@@ -271,6 +280,12 @@ function setupTextures(gl, programs, width, height) {
 
     let l = 0;
     let program;
+    program = programs.points;
+    gl.useProgram(program);
+    l = gl.getUniformLocation(program, 'sourceDepthTexture');
+    gl.uniform1i(l, 3);
+    l = gl.getUniformLocation(program, 'destDepthTexture');
+    gl.uniform1i(l, 3);  // TODO upload a different one
 
     program = programs.sum;
     gl.useProgram(program);

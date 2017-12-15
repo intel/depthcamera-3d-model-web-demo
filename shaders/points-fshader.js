@@ -17,39 +17,78 @@ const pointsShader = `#version 300 es
 //
 precision highp float;
 
-layout(location = 0) out vec4 out_texel;
+layout(location = 0) out vec4 outTexel;
+in vec2 texCoord;
 
 // Two depth images from the camera.
-uniform highp sampler2D source_depth_texture;
-uniform highp sampler2D destination_depth_texture;
+uniform highp sampler2D sourceDepthTexture;
+uniform highp sampler2D destDepthTexture;
 
+uniform mat4 movement;
 // Information from the depth camera on how to convert the values from the
-// 'depth_texture' into meters.
-uniform float depth_scale;
+// 'depthTexture' into meters.
+uniform float depthScale;
 // Offset of the princilal point of the camera.
-uniform vec2 depth_offset;
+uniform vec2 depthOffset;
 // Focal lenght of the depth camera.
-uniform vec2 depth_focal_length;
+uniform vec2 depthFocalLength;
 
 // Project the point at position onto the plane at approximately z=-1 with the
 // camera at origin.
 vec2 project(vec3 position) {
     vec2 position2d = position.xy / position.z;
-    return position2d*depth_focal_length + depth_offset;
+    return position2d*depthFocalLength + depthOffset;
 }
 
 // Use depth data to "reverse" projection.
 // The 'coord' argument should be between (-0.5, -0.5) and (0.5, 0.5), i.e.
 // a point on the projection plane.
-vec3 deproject(vec2 coord) {
+vec3 deproject(sampler2D tex, vec2 imageCoord) {
     // convert into texture coordinate
-    vec2 tex_coord = coord + 0.5;
-    float depth = float(texture(source_depth_texture, tex_coord).r) * depth_scale;
-    vec2 position2d = (coord - depth_offset)/depth_focal_length;
+    vec2 coord = imageCoord + 0.5;
+    float depth = texture(tex, coord).r * depthScale;
+    vec2 position2d = (imageCoord - depthOffset)/depthFocalLength;
     return vec3(position2d*depth, depth);
 }
 
+vec3 estimateNormal(sampler2D tex, vec2 imageCoord) {
+    vec3 position = deproject(tex, imageCoord);
+
+    ivec2 texSize = textureSize(tex, 0);
+    vec2 coord = imageCoord + 0.5;
+    vec2 texStep = vec2(1.0/float(texSize.x), 1.0/float(texSize.y));
+
+    vec3 positionRight = deproject(tex, coord + vec2(texStep.x, 0.0));
+    vec3 positionTop   = deproject(tex, coord + vec2(0.0, texStep.y));
+
+    vec3 normal = cross(positionTop - position, positionRight - position);
+    return normalize(normal);
+}
+
+
 void main() {
-    out_texel = vec4(1.0, 1.0, 1.0, 1.0);
+    vec4 zero = vec4(0.0, 0.0, 0.0, 0.0);
+    vec2 imageCoord = texCoord - 0.5;
+    vec3 sourcePosition = deproject(sourceDepthTexture, imageCoord);
+    //if (sourcePosition.z == 0.0) {outTexel = zero; } else {
+    vec3 sourceNormal = estimateNormal(sourceDepthTexture, imageCoord);
+    //if (sourceNormal == vec3(0.0, 0.0, 0.0)) {outTexel = zero; } else {
+
+    sourcePosition = (movement * vec4(sourcePosition, 1.0)).xyz;
+    sourceNormal = mat3(movement) * sourceNormal;
+
+    vec2 destImageCoord = project(sourcePosition.xyz);
+    vec3 destPosition = deproject(destDepthTexture, destImageCoord);
+    //if (destPosition.z == 0.0) {outTexel = zero; } else {
+    vec3 destNormal = estimateNormal(destDepthTexture, destImageCoord);
+    //if (destNormal == vec3(0.0, 0.0, 0.0)) outTexel = zero;
+
+    if (distance(sourcePosition, destPosition) < 0.2
+            && dot(sourceNormal, destNormal) > 0.9) {
+
+        outTexel = vec4(sourcePosition, 1.0);
+    } else {
+        outTexel = zero;
+    }
 }
 `;
