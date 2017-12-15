@@ -115,7 +115,7 @@ function initAttributes(gl, programs) {
 
 // Take the parameters returned from `DepthCamera.getCameraCalibration` and
 // upload them as uniforms into the shaders.
-function initUniforms(gl, programs, parameters, width, height) {
+function initUniforms(gl, programs, textures, parameters, width, height) {
     const intrin = parameters.getDepthIntrinsics(width, height);
     const offsetx = (intrin.offset[0] / width) - 0.5;
     const offsety = (intrin.offset[1] / height) - 0.5;
@@ -126,6 +126,11 @@ function initUniforms(gl, programs, parameters, width, height) {
     let program;
     program = programs.points;
     gl.useProgram(program);
+    l = gl.getUniformLocation(program, 'sourceDepthTexture');
+    gl.uniform1i(l, textures.depth.glId());
+    l = gl.getUniformLocation(program, 'destDepthTexture');
+    // TODO upload a different one
+    gl.uniform1i(l, textures.depth.glId());
     l = gl.getUniformLocation(program, 'movement');
     gl.uniformMatrix4fv(l, false, mat4.create());
     l = gl.getUniformLocation(program, 'depthScale');
@@ -137,11 +142,17 @@ function initUniforms(gl, programs, parameters, width, height) {
 
     program = programs.sum;
     gl.useProgram(program);
+    l = gl.getUniformLocation(program, 'pointsTexture');
+    gl.uniform1i(l, textures.points.crossProduct.glId());
     l = gl.getUniformLocation(program, 'pointsTextureSize');
     gl.uniform2i(l, width, height);
 
     program = programs.model;
     gl.useProgram(program);
+    l = gl.getUniformLocation(program, 'cubeTexture');
+    gl.uniform1i(l, textures.cube0.glId());
+    l = gl.getUniformLocation(program, 'depthTexture');
+    gl.uniform1i(l, textures.depth.glId());
     l = gl.getUniformLocation(program, 'cubeSize');
     gl.uniform1i(l, CUBE_SIZE);
     l = gl.getUniformLocation(program, 'sdfTruncation');
@@ -158,6 +169,8 @@ function initUniforms(gl, programs, parameters, width, height) {
 
     program = programs.render;
     gl.useProgram(program);
+    l = gl.getUniformLocation(program, 'cubeTexture');
+    gl.uniform1i(l, textures.cube1.glId());
     l = gl.getUniformLocation(program, 'canvasSize');
     gl.uniform2ui(l, gl.canvas.width, gl.canvas.height);
     l = gl.getUniformLocation(program, 'viewMatrix');
@@ -167,15 +180,15 @@ function initUniforms(gl, programs, parameters, width, height) {
 }
 
 
-function fillCubeTexture(gl, name, id) {
-    gl.activeTexture(gl[`TEXTURE${id}`]);
-    gl.bindTexture(gl.TEXTURE_3D, name);
+function fillCubeTexture(gl, texture) {
+    gl.activeTexture(gl[`TEXTURE${texture.glId()}`]);
+    gl.bindTexture(gl.TEXTURE_3D, texture);
     const stride = 2;
     const size = CUBE_SIZE * CUBE_SIZE * CUBE_SIZE * stride;
-    const cube = new Float32Array(size);
+    const data = new Float32Array(size);
     for (let i = 0; i < size; i += stride) {
-        cube[i] = GRID_UNIT;
-        cube[i + 1] = 0.0;
+        data[i] = GRID_UNIT;
+        data[i + 1] = 0.0;
     }
 
     gl.texSubImage3D(
@@ -189,15 +202,15 @@ function fillCubeTexture(gl, name, id) {
         CUBE_SIZE,
         gl.RG,
         gl.FLOAT,
-        cube,
+        data,
     );
 }
 
 // Create textures into which the camera output will be stored.
 function setupTextures(gl, programs, width, height) {
-
-    const createTexture3D = function (id) {
-        gl.activeTexture(gl[`TEXTURE${id}`]);
+    let lastTextureId = 0;
+    function createTexture3D() {
+        gl.activeTexture(gl[`TEXTURE${lastTextureId}`]);
         const texture = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_3D, texture);
         gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -213,11 +226,16 @@ function setupTextures(gl, programs, width, height) {
             CUBE_SIZE,
             CUBE_SIZE,
         );
+        const texId = lastTextureId;
+        texture.glId = function () {
+            return texId;
+        };
+        lastTextureId += 1;
         return texture;
     }
 
-    const createTexture2D = function (id, format, width, height) {
-        gl.activeTexture(gl[`TEXTURE${id}`]);
+    function createTexture2D(format, w, h) {
+        gl.activeTexture(gl[`TEXTURE${lastTextureId}`]);
         const texture = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_2D, texture);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
@@ -228,21 +246,26 @@ function setupTextures(gl, programs, width, height) {
             gl.TEXTURE_2D,
             1, // number of mip-map levels
             format, // internal format
-            width,
-            height,
+            w,
+            h,
         );
+        const texId = lastTextureId;
+        texture.glId = function () {
+            return texId;
+        };
+        lastTextureId += 1;
         return texture;
-    };
+    }
 
-    const cube0 = createTexture3D(0);
-    const cube1 = createTexture3D(1);
-    fillCubeTexture(gl, cube0, 0);
-    const depth = createTexture2D(3, gl.R32F, width, height);
-    const sum = createTexture2D(4, gl.RGBA32F, 14, 1);
-    const crossProduct = createTexture2D(6, gl.RGBA32F, width, height);
-    const normal = createTexture2D(7, gl.RGBA32F, width, height);
+    const cube0 = createTexture3D();
+    const cube1 = createTexture3D();
+    fillCubeTexture(gl, cube0);
+    const depth = createTexture2D(gl.R32F, width, height);
+    const sum = createTexture2D(gl.RGBA32F, 14, 1);
+    const crossProduct = createTexture2D(gl.RGBA32F, width, height);
+    const normal = createTexture2D(gl.RGBA32F, width, height);
 
-    const textures = {
+    return {
         cube0,
         cube1,
         depth,
@@ -250,44 +273,16 @@ function setupTextures(gl, programs, width, height) {
         points: {
             crossProduct,
             normal,
-        }
+        },
     };
-
-    let l = 0;
-    let program;
-    program = programs.points;
-    gl.useProgram(program);
-    l = gl.getUniformLocation(program, 'sourceDepthTexture');
-    gl.uniform1i(l, 3);
-    l = gl.getUniformLocation(program, 'destDepthTexture');
-    gl.uniform1i(l, 3);  // TODO upload a different one
-
-    program = programs.sum;
-    gl.useProgram(program);
-    l = gl.getUniformLocation(program, 'pointsTexture');
-    gl.uniform1i(l, 6);
-
-    program = programs.model;
-    gl.useProgram(program);
-    l = gl.getUniformLocation(program, 'cubeTexture');
-    gl.uniform1i(l, 0);
-    l = gl.getUniformLocation(program, 'depthTexture');
-    gl.uniform1i(l, 3);
-
-    program = programs.render;
-    gl.useProgram(program);
-    l = gl.getUniformLocation(program, 'cubeTexture');
-    gl.uniform1i(l, 1);
-    return textures;
 }
 
 function initFramebuffers(gl, programs, textures) {
-
-    function createFramebuffer2D(textures) {
+    function createFramebuffer2D(textureList) {
         const framebuffer = gl.createFramebuffer();
         gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
-        for (let i = 0; i < textures.length; i += 1) {
-            const texture = textures[i];
+        for (let i = 0; i < textureList.length; i += 1) {
+            const texture = textureList[i];
             gl.framebufferTexture2D(
                 gl.FRAMEBUFFER,
                 gl[`COLOR_ATTACHMENT${i}`],
@@ -313,15 +308,11 @@ function initFramebuffers(gl, programs, textures) {
     }
 
     gl.useProgram(programs.points);
-    const points = createFramebuffer2D(
-        [textures.points.crossProduct, textures.points.normal]
-    );
+    const tmp = textures.points;
+    const points = createFramebuffer2D([tmp.crossProduct, tmp.normal]);
 
     gl.useProgram(programs.sum);
     const sum = createFramebuffer2D([textures.sum]);
-
-    drawBuffers = [gl.COLOR_ATTACHMENT0];
-    gl.drawBuffers(drawBuffers);
 
     gl.useProgram(programs.model);
     const cube0 = Array.from(

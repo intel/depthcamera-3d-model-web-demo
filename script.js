@@ -118,8 +118,8 @@ async function doMain() {
             const width = depthStreamElement.videoWidth;
             const height = depthStreamElement.videoHeight;
             if (frame === 0) {
-                initUniforms(gl, programs, cameraParams, width, height);
                 textures = setupTextures(gl, programs, width, height);
+                initUniforms(gl, programs, textures, cameraParams, width, height);
                 framebuffers = initFramebuffers(gl, programs, textures);
             }
             try {
@@ -167,9 +167,9 @@ async function doMain() {
             gl.useProgram(program);
             l = gl.getUniformLocation(program, 'cubeTexture');
             if (frame % 2 === 0) {
-                gl.uniform1i(l, 0);
+                gl.uniform1i(l, textures.cube0.glId());
             } else {
-                gl.uniform1i(l, 1);
+                gl.uniform1i(l, textures.cube1.glId());
             }
             l = gl.getUniformLocation(program, 'zTexCoord');
             const ll = gl.getUniformLocation(program, 'zslice');
@@ -189,9 +189,9 @@ async function doMain() {
             gl.bindFramebuffer(gl.FRAMEBUFFER, null);
             l = gl.getUniformLocation(program, 'cubeTexture');
             if (frame % 2 === 0) {
-                gl.uniform1i(l, 1);
+                gl.uniform1i(l, textures.cube1.glId());
             } else {
-                gl.uniform1i(l, 0);
+                gl.uniform1i(l, textures.cube0.glId());
             }
             l = gl.getUniformLocation(program, 'viewMatrix');
             gl.uniformMatrix4fv(l, false, getViewMatrix());
