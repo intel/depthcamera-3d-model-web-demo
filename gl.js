@@ -141,10 +141,12 @@ function initUniforms(gl, programs, textures, parameters, width, height) {
 
     program = programs.sum;
     gl.useProgram(program);
-    l = gl.getUniformLocation(program, 'pointsTexture');
+    l = gl.getUniformLocation(program, 'crossProductTexture');
     gl.uniform1i(l, textures.points.crossProduct.glId());
-    l = gl.getUniformLocation(program, 'pointsTextureSize');
-    gl.uniform2i(l, width, height);
+    l = gl.getUniformLocation(program, 'normalTexture');
+    gl.uniform1i(l, textures.points.normal.glId());
+    l = gl.getUniformLocation(program, 'dotAndErrorTexture');
+    gl.uniform1i(l, textures.points.dotAndError.glId());
 
     program = programs.model;
     gl.useProgram(program);
@@ -261,9 +263,10 @@ function setupTextures(gl, programs, width, height) {
     const cube1 = createTexture3D();
     fillCubeTexture(gl, cube0);
     const depth = createTexture2D(gl.R32F, width, height);
-    const sum = createTexture2D(gl.RGBA32F, 14, 1);
+    const sum = createTexture2D(gl.RGBA32F, 15, 1);
     const crossProduct = createTexture2D(gl.RGBA32F, width, height);
     const normal = createTexture2D(gl.RGBA32F, width, height);
+    const dotAndError = createTexture2D(gl.RG32F, width, height);
 
     return {
         cube0,
@@ -273,6 +276,7 @@ function setupTextures(gl, programs, width, height) {
         points: {
             crossProduct,
             normal,
+            dotAndError,
         },
     };
 }
@@ -280,9 +284,11 @@ function setupTextures(gl, programs, width, height) {
 function initFramebuffers(gl, programs, textures) {
     function createFramebuffer2D(textureList) {
         const framebuffer = gl.createFramebuffer();
+        let drawBuffers = [];
         gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
         for (let i = 0; i < textureList.length; i += 1) {
             const texture = textureList[i];
+            drawBuffers.push(gl[`COLOR_ATTACHMENT${i}`]);
             gl.framebufferTexture2D(
                 gl.FRAMEBUFFER,
                 gl[`COLOR_ATTACHMENT${i}`],
@@ -291,6 +297,7 @@ function initFramebuffers(gl, programs, textures) {
                 0, // mip-map level
             );
         }
+        gl.drawBuffers(drawBuffers);
         return framebuffer;
     }
 
@@ -308,8 +315,11 @@ function initFramebuffers(gl, programs, textures) {
     }
 
     gl.useProgram(programs.points);
-    const tmp = textures.points;
-    const points = createFramebuffer2D([tmp.crossProduct, tmp.normal]);
+    const points = createFramebuffer2D([
+        textures.points.crossProduct,
+        textures.points.normal,
+        textures.points.dotAndError,
+    ]);
 
     gl.useProgram(programs.sum);
     const sum = createFramebuffer2D([textures.sum]);

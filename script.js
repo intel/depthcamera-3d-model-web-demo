@@ -155,8 +155,8 @@ async function doMain() {
             gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.sum);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
             // TODO this is slow
-            const data = new Float32Array(14 * 4);
-            gl.readPixels(0, 0, 14, 1, gl.RGBA, gl.FLOAT, data);
+            const data = new Float32Array(15 * 4);
+            gl.readPixels(0, 0, 15, 1, gl.RGBA, gl.FLOAT, data);
             if (frame === 0) {
                 console.log(data);
             }
