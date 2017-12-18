@@ -84,7 +84,7 @@ const modelShader = `#version 300 es
 //
 // It is possible to use different weighting, for example the new data could
 // have equal weight to the old data. The weight will be maxed out at
-// 'MAX_WEIGHT', chosen arbitrarily.
+// 'MAX_WEIGHT' (chosen arbitrarily) and needs to be > 0.
 //
 // The distance function will be calculated only close to the surface, given by
 // 'sdfTruncation', otherwise there would be a lot of noise in places far away
@@ -166,18 +166,14 @@ vec2 calculateSdf(vec3 texelCoordinate, vec3 position) {
     vec2 p = project(position);
     vec3 depth = deproject(p);
     // The depth camera stores zero if depth is undefined.
+    // TODO make sure not checking this won't affect results
     //if (depth.z == 0.0) return old;
     vec3 camera = vec3(0.0, 0.0, 0.0);
     float sdf = distance(depth, camera) - distance(position, camera);
-    if (sdf >= -sdfTruncation && sdf <= sdfTruncation) {
-        float newWeight = old.y + 1.0;
-        float newSdf = (old.x*old.y + sdf)/newWeight;
-        return vec2(newSdf, min(newWeight, MAX_WEIGHT));
-    } else {
-        // Don't update sub-cubes that are too far away from the surface. Same
-        // as setting weight to zero if too far.
-        return old;
-    }
+    float weight = float(sdf >= -sdfTruncation && sdf <= sdfTruncation);
+    float newWeight = old.y + weight;
+    float newSdf = (old.x*old.y + sdf*weight)/newWeight;
+    return vec2(newSdf, min(newWeight, MAX_WEIGHT));
 }
 
 // Calculate the texel coordinate for a texel with index (i, j, k).

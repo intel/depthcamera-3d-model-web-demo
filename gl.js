@@ -187,7 +187,8 @@ function fillCubeTexture(gl, texture) {
     const data = new Float32Array(size);
     for (let i = 0; i < size; i += stride) {
         data[i] = GRID_UNIT;
-        data[i + 1] = 0.0;
+        // This has to be bigger than 0, otherwise the shader will divide by 0.
+        data[i + 1] = 0.1;
     }
 
     gl.texSubImage3D(
