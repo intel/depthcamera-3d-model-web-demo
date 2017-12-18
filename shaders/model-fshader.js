@@ -160,6 +160,9 @@ vec3 deproject(vec2 coord) {
 vec2 calculateSdf(vec3 texelCoordinate, vec3 position) {
     // Current value in the texture, to be updated.
     vec2 old = texture(cubeTexture, texelCoordinate).rg;
+    // Make sure no division by 0 in prjecting occurs.
+    // TODO: can this be done without a condition?
+    if (position.z == 0.0) return old;
     vec2 p = project(position);
     vec3 depth = deproject(p);
     // The depth camera stores zero if depth is undefined.
