@@ -37,46 +37,18 @@ void main() {
                               float(j)/float(texSize.y));
             vec3 c = texture(crossProductTexture, coord).rgb;
             vec3 n = texture(normalTexture, coord).rgb;
-            vec2 dotAndError = texture(dotAndErrorTexture, coord).rg;
+            vec3 dotAndError = texture(dotAndErrorTexture, coord).rrg;
             float d = dotAndError.x;
             float e = dotAndError.y;
 
-            if (part == 0) {
-                sum += c.x * c;
-            } else if (part == 1) {
-                sum += c.y * c;
-            } else if (part == 2) {
-                sum += c.z * c;
-
-            } else if (part == 3) {
-                sum += n.x * c;
-            } else if (part == 4) {
-                sum += n.y * c;
-            } else if (part == 5) {
-                sum += n.z * c;
-
-            } else if (part == 6) {
-                sum += c.x * n;
-            } else if (part == 7) {
-                sum += c.y * n;
-            } else if (part == 8) {
-                sum += c.z * n;
-
-            } else if (part == 9) {
-                sum += n.x * n;
-            } else if (part == 10) {
-                sum += n.y * n;
-            } else if (part == 11) {
-                sum += n.z * n;
-
-            } else if (part == 12) {
-                sum += d * c;
-            } else if (part == 13) {
-                sum += d * n;
-
-            } else if (part == 14) {
-                sum.x += e;
-            }
+            vec3 vector = mix(n, c, float(part < 6));
+            vector = mix(vec3(1.0, 0.0, 0.0), vector, float(part < 14));
+            vec3 scalarSource = mix(n, c,
+                                float(part < 3 || (part > 5 && part < 9)));
+            scalarSource = mix(dotAndError, scalarSource,
+                                float(part < 12));
+            float scalar = scalarSource[part % 3];
+            sum += scalar * vector;
         }
     }
     outSum = vec4(sum, 0.0);
