@@ -155,10 +155,41 @@ async function doMain() {
             gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.sum);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
             // TODO this is slow
-            const data = new Float32Array(15 * 4);
+            const stride = 4;
+            const data = new Float32Array(15 * stride);
             gl.readPixels(0, 0, 15, 1, gl.RGBA, gl.FLOAT, data);
             if (frame === 0) {
-                console.log(data);
+                const error = data[14*stride];
+                let A = Array(6);
+                let b = new Float32Array(6);
+                for (let i = 0; i < 6; i += 1) {
+                    A[i] = new Float32Array(6);
+                }
+                for (let i = 0; i < 6; i += 1) {
+                    A[0][i] = data[i*stride];
+                    A[1][i] = data[i*stride + 1];
+                    A[2][i] = data[i*stride + 2];
+                    A[3][i] = data[(i+6)*stride];
+                    A[4][i] = data[(i+6)*stride + 1];
+                    A[5][i] = data[(i+6)*stride + 2];
+                }
+                for (let i = 0; i < 3; i += 1) {
+                    b[i] = data[12*stride + i]
+                    b[i + 3] = data[13*stride + i]
+                }
+                //console.log("error: ", error);
+                //console.log("A: ", A);
+                //console.log("b: ", b);
+                const result = numeric.solve(A, b);
+                console.log(result);
+                let movement = mat4.create();
+                mat4.rotateX(movement, movement, result[0]);
+                mat4.rotateY(movement, movement, result[1]);
+                mat4.rotateZ(movement, movement, result[2]);
+                mat4.translate(movement, movement,
+                               vec3.fromValues(result[3], result[4], result[5]));
+                console.log(movement);
+
             }
 
             program = programs.model;
