@@ -114,42 +114,7 @@ uniform float sdfTruncation;
 // Estimated movement of the (real-world) camera.
 uniform mat4 movement;
 
-// Information from the depth camera on how to convert the values from the
-// 'depthTexture' into meters.
-uniform float depthScale;
-// Offset of the principal point of the camera.
-uniform vec2 depthOffset;
-// Focal length of the depth camera.
-uniform vec2 depthFocalLength;
-
-// Return true if the coordinate is lower than (0, 0) or higher than (1, 1).
-bool coordIsOutOfRange(vec2 texCoord) {
-    bvec2 high = greaterThan(texCoord, vec2(1.0, 1.0));
-    bvec2 low = lessThan(texCoord, vec2(0.0, 0.0));
-    return high.x || high.y || low.x || low.y;
-}
-
-// Project the point at position onto the plane at approximately z=-1 with the
-// camera at origin.
-vec2 project(vec3 position) {
-    vec2 position2d = position.xy / position.z;
-    return position2d*depthFocalLength + depthOffset;
-}
-
-// Use depth data to "reverse" projection.
-// The 'coord' argument should be between (-0.5, -0.5) and (0.5, 0.5), i.e.
-// a point on the projection plane.
-vec3 deproject(vec2 coord) {
-    // convert into texture coordinate
-    vec2 texCoord = coord + 0.5;
-    float depth = float(texture(depthTexture, texCoord).r) * depthScale;
-    // Set depth to 0 if texCoord is outside of the texture. Works only if
-    // texture has filtering GL_NEAREST. See
-    // https://wiki.linaro.org/WorkingGroups/Middleware/Graphics/GLES2PortingTips
-    depth = mix(depth, 0.0, coordIsOutOfRange(texCoord));
-    vec2 position2d = (coord - depthOffset)/depthFocalLength;
-    return vec3(position2d*depth, depth);
-}
+${PROJECT_DEPROJECT_SHADER_FUNCTIONS}
 
 // Return the new sdf value to be stored in the sub-cube.
 // The 'position' argument is the center of the sub-cube for which we are
@@ -164,7 +129,7 @@ vec2 calculateSdf(vec3 texelCoordinate, vec3 position) {
     // TODO: can this be done without a condition?
     if (position.z == 0.0) return old;
     vec2 p = project(position);
-    vec3 depth = deproject(p);
+    vec3 depth = deproject(depthTexture, p);
     // The depth camera stores zero if depth is undefined.
     // TODO make sure not checking this won't affect results
     //if (depth.z == 0.0) return old;

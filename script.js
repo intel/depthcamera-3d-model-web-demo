@@ -177,7 +177,7 @@ async function doMain() {
                     b[i] = data[12*stride + i]
                     b[i + 3] = data[13*stride + i]
                 }
-                //console.log("error: ", error);
+                console.log("error: ", error);
                 //console.log("A: ", A);
                 //console.log("b: ", b);
                 const result = numeric.solve(A, b);
@@ -192,6 +192,9 @@ async function doMain() {
 
             }
 
+            //window.requestAnimationFrame(animate);
+            //frame += 1;
+            //return;
             program = programs.model;
             console.time('model');
             gl.useProgram(program);

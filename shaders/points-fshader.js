@@ -29,40 +29,8 @@ uniform highp sampler2D destDepthTexture;
 uniform mat4 movement;
 // Information from the depth camera on how to convert the values from the
 // 'depthTexture' into meters.
-uniform float depthScale;
-// Offset of the princilal point of the camera.
-uniform vec2 depthOffset;
-// Focal lenght of the depth camera.
-uniform vec2 depthFocalLength;
 
-// Return true if the coordinate is lower than (0, 0) or higher than (1, 1).
-bool coordIsOutOfRange(vec2 texCoord) {
-    bvec2 high = greaterThan(texCoord, vec2(1.0, 1.0));
-    bvec2 low = lessThan(texCoord, vec2(0.0, 0.0));
-    return high.x || high.y || low.x || low.y;
-}
-
-// Project the point at position onto the plane at approximately z=-1 with the
-// camera at origin.
-vec2 project(vec3 position) {
-    vec2 position2d = position.xy / position.z;
-    return position2d*depthFocalLength + depthOffset;
-}
-
-// Use depth data to "reverse" projection.
-// The 'coord' argument should be between (-0.5, -0.5) and (0.5, 0.5), i.e.
-// a point on the projection plane.
-vec3 deproject(sampler2D tex, vec2 imageCoord) {
-    // convert into texture coordinate
-    vec2 coord = imageCoord + 0.5;
-    float depth = texture(tex, coord).r * depthScale;
-    // Set depth to 0 if texCoord is outside of the texture. Works only if
-    // texture has filtering GL_NEAREST. See
-    // https://wiki.linaro.org/WorkingGroups/Middleware/Graphics/GLES2PortingTips
-    depth = mix(depth, 0.0, coordIsOutOfRange(texCoord));
-    vec2 position2d = (imageCoord - depthOffset)/depthFocalLength;
-    return vec3(position2d*depth, depth);
-}
+${PROJECT_DEPROJECT_SHADER_FUNCTIONS}
 
 vec3 estimateNormal(sampler2D tex, vec2 imageCoord) {
     vec3 position = deproject(tex, imageCoord);
