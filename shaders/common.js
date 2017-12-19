@@ -13,41 +13,47 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// GLSL functions for handling the data in the depth camera, used in multiple
+// shaders. The newlines in this are removed, so that the line numbers in the
+// shader strings that include this are still somewhat valid (easier to find the
+// origin of an error message). All comments in this piece of GLSL need to use
+// the /* comment */ notation, so that the newline removal doesn't change the
+// semantics.
 const PROJECT_DEPROJECT_SHADER_FUNCTIONS = `
-// Information from the depth camera on how to convert the values from the
-// 'depthTexture' into meters.
+/*Information from the depth camera on how to convert the values from the
+'depthTexture' into meters.*/
 uniform float depthScale;
-// Offset of the principal point of the camera.
+/*Offset of the principal point of the camera.*/
 uniform vec2 depthOffset;
-// Focal length of the depth camera.
+/*Focal length of the depth camera.*/
 uniform vec2 depthFocalLength;
 
-// Return true if the coordinate is lower than (0, 0) or higher than (1, 1).
+/*Return true if the coordinate is lower than (0, 0) or higher than (1, 1).*/
 bool coordIsOutOfRange(vec2 texCoord) {
     bvec2 high = greaterThan(texCoord, vec2(1.0, 1.0));
     bvec2 low = lessThan(texCoord, vec2(0.0, 0.0));
     return high.x || high.y || low.x || low.y;
 }
 
-// Project the point at position onto the plane at approximately z=-1 with the
-// camera at origin.
+/*Project the point at position onto the plane at approximately z=-1 with the
+camera at origin.*/
 vec2 project(vec3 position) {
     vec2 position2d = position.xy / position.z;
     return position2d*depthFocalLength + depthOffset;
 }
 
-// Use depth data to "reverse" projection.
-// The 'coord' argument should be between (-0.5, -0.5) and (0.5, 0.5), i.e.
-// a point on the projection plane.
+/*Use depth data to "reverse" projection.
+The 'coord' argument should be between (-0.5, -0.5) and (0.5, 0.5), i.e.
+a point on the projection plane.*/
 vec3 deproject(sampler2D tex, vec2 coord) {
-    // convert into texture coordinate
+    /*convert into texture coordinate*/
     vec2 texCoord = coord + 0.5;
     float depth = float(texture(tex, texCoord).r) * depthScale;
-    // Set depth to 0 if texCoord is outside of the texture. Works only if
-    // texture has filtering GL_NEAREST. See
-    // https://wiki.linaro.org/WorkingGroups/Middleware/Graphics/GLES2PortingTips
+    /*Set depth to 0 if texCoord is outside of the texture. Works only if
+    texture has filtering GL_NEAREST. See
+    https://wiki.linaro.org/WorkingGroups/Middleware/Graphics/GLES2PortingTips*/
     depth = mix(depth, 0.0, coordIsOutOfRange(texCoord));
     vec2 position2d = (coord - depthOffset)/depthFocalLength;
     return vec3(position2d*depth, depth);
 }
-`
+`.replace(/\n|\r/g,"");
