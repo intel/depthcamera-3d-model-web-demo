@@ -19,36 +19,18 @@ precision highp float;
 
 layout(location = 0) out vec4 outSum;
 
-uniform highp sampler2D crossProductTexture;
-uniform highp sampler2D normalTexture;
-uniform highp sampler2D dotAndErrorTexture;
-
-#define EPSILON 0.0001
-
+uniform highp sampler2D matricesTexture;
 
 void main() {
-    int part = int(gl_FragCoord.x);
+    int x = int(mod(floor(gl_FragCoord.x), 5.0));
+    int y = int(mod(floor(gl_FragCoord.y), 3.0));
     vec3 sum = vec3(0.0, 0.0, 0.0);
-    // The size of the input textures should be the same.
-    ivec2 texSize = textureSize(crossProductTexture, 0);
-    for (int i = 0; i < texSize.x; i++) {
-        for (int j = 0; j < texSize.y; j++) {
-            vec2 coord = vec2(float(i)/float(texSize.x),
-                              float(j)/float(texSize.y));
-            vec3 c = texture(crossProductTexture, coord).rgb;
-            vec3 n = texture(normalTexture, coord).rgb;
-            vec3 dotAndError = texture(dotAndErrorTexture, coord).rrg;
-            float d = dotAndError.x;
-            float e = dotAndError.y;
-
-            vec3 vector = mix(n, c, float(part < 6));
-            vector = mix(vec3(1.0, 0.0, 0.0), vector, float(part < 14));
-            vec3 scalarSource = mix(n, c,
-                                float(part < 3 || (part > 5 && part < 9)));
-            scalarSource = mix(dotAndError, scalarSource,
-                                float(part < 12));
-            float scalar = scalarSource[part % 3];
-            sum += scalar * vector;
+    ivec2 texSize = textureSize(matricesTexture, 0);
+    for (int i = x; i < texSize.x; i += 5) {
+        for (int j = y; j < texSize.y; j += 3) {
+            vec2 coord = vec2((float(i)+0.5)/float(texSize.x),
+                              (float(j)+0.5)/float(texSize.y));
+            sum += texture(matricesTexture, coord).rgb;
         }
     }
     outSum = vec4(sum, 0.0);

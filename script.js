@@ -150,15 +150,20 @@ async function doMain() {
             // gl.bindFramebuffer(gl.FRAMEBUFFER, null);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
 
+            program = programs.matrices;
+            gl.useProgram(program);
+            gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.matrices);
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+
             program = programs.sum;
             gl.useProgram(program);
             gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.sum);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
-            // TODO this is slow
             const stride = 4;
-            const data = new Float32Array(15 * stride);
-            gl.readPixels(0, 0, 15, 1, gl.RGBA, gl.FLOAT, data);
+            const data = new Float32Array(5 * 3 * stride);
+            gl.readPixels(0, 0, 5, 3, gl.RGBA, gl.FLOAT, data);
             if (frame === 0) {
+                console.log(data);
                 const error = data[14*stride];
                 let A = Array(6);
                 let b = new Float32Array(6);
@@ -178,8 +183,8 @@ async function doMain() {
                     b[i + 3] = data[13*stride + i]
                 }
                 console.log("error: ", error);
-                //console.log("A: ", A);
-                //console.log("b: ", b);
+                console.log("A: ", A);
+                console.log("b: ", b);
                 const result = numeric.solve(A, b);
                 console.log(result);
                 let movement = mat4.create();

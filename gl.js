@@ -64,11 +64,13 @@ function linkProgram(gl, vertexShader, fragmentShader) {
 function setupPrograms(gl) {
     const canvas = createShader(gl, gl.VERTEX_SHADER, canvasShader);
     const points = createShader(gl, gl.FRAGMENT_SHADER, pointsShader);
+    const matrices = createShader(gl, gl.FRAGMENT_SHADER, matricesShader);
     const sum = createShader(gl, gl.FRAGMENT_SHADER, sumShader);
     const model = createShader(gl, gl.FRAGMENT_SHADER, modelShader);
     const render = createShader(gl, gl.FRAGMENT_SHADER, renderShader);
     return {
         points: linkProgram(gl, canvas, points),
+        matrices: linkProgram(gl, canvas, matrices),
         sum: linkProgram(gl, canvas, sum),
         model: linkProgram(gl, canvas, model),
         render: linkProgram(gl, canvas, render),
@@ -95,6 +97,11 @@ function initAttributes(gl, programs) {
         gl.vertexAttribPointer(attrib, items, gl.FLOAT, false, stride, offset);
     };
     program = programs.points;
+    gl.useProgram(program);
+    uploadAttribute('inPosition', posOffset, posItems);
+    uploadAttribute('inTexCoord', texOffset, texItems);
+
+    program = programs.matrices;
     gl.useProgram(program);
     uploadAttribute('inPosition', posOffset, posItems);
     uploadAttribute('inTexCoord', texOffset, texItems);
@@ -139,7 +146,7 @@ function initUniforms(gl, programs, textures, parameters, width, height) {
     l = gl.getUniformLocation(program, 'depthOffset');
     gl.uniform2f(l, offsetx, offsety);
 
-    program = programs.sum;
+    program = programs.matrices;
     gl.useProgram(program);
     l = gl.getUniformLocation(program, 'crossProductTexture');
     gl.uniform1i(l, textures.points.crossProduct.glId());
@@ -147,6 +154,11 @@ function initUniforms(gl, programs, textures, parameters, width, height) {
     gl.uniform1i(l, textures.points.normal.glId());
     l = gl.getUniformLocation(program, 'dotAndErrorTexture');
     gl.uniform1i(l, textures.points.dotAndError.glId());
+
+    program = programs.sum;
+    gl.useProgram(program);
+    l = gl.getUniformLocation(program, 'matricesTexture');
+    gl.uniform1i(l, textures.matrices.glId());
 
     program = programs.model;
     gl.useProgram(program);
@@ -263,7 +275,8 @@ function setupTextures(gl, programs, width, height) {
     const cube1 = createTexture3D();
     fillCubeTexture(gl, cube0);
     const depth = createTexture2D(gl.R32F, width, height);
-    const sum = createTexture2D(gl.RGBA32F, 15, 1);
+    const sum = createTexture2D(gl.RGBA32F, 5, 3);
+    const matrices = createTexture2D(gl.RGBA32F, 5*width, 3*height);
     const crossProduct = createTexture2D(gl.RGBA32F, width, height);
     const normal = createTexture2D(gl.RGBA32F, width, height);
     const dotAndError = createTexture2D(gl.RG32F, width, height);
@@ -273,6 +286,7 @@ function setupTextures(gl, programs, width, height) {
         cube1,
         depth,
         sum,
+        matrices,
         points: {
             crossProduct,
             normal,
@@ -321,6 +335,9 @@ function initFramebuffers(gl, programs, textures) {
         textures.points.dotAndError,
     ]);
 
+    gl.useProgram(programs.matrices);
+    const matrices = createFramebuffer2D([textures.matrices]);
+
     gl.useProgram(programs.sum);
     const sum = createFramebuffer2D([textures.sum]);
 
@@ -334,8 +351,9 @@ function initFramebuffers(gl, programs, textures) {
         i => createFramebuffer3D(textures.cube1, i),
     );
     return {
-        sum,
         points,
+        matrices,
+        sum,
         model: [cube0, cube1],
     };
 }
