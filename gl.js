@@ -357,3 +357,51 @@ function initFramebuffers(gl, programs, textures) {
         model: [cube0, cube1],
     };
 }
+
+
+function createFakeData(width, height, transform) {
+    function fakeSphere(x, y) {
+        const r = 0.1;
+        const tmp = r*r - x*x - y*y;
+        if (tmp < 0.0) return 0.0;
+        let z = -Math.sqrt(tmp);
+        z += 0.5; // center it at (0, 0, 0.5)
+        return z;
+    }
+
+    const cameraParams = {
+        depthScale: 1.0,
+        getDepthIntrinsics: function(width, height) {
+            return {
+                offset: [width/2.0, height/2.0],
+                focalLength: [width, height],
+            };
+        },
+    };
+
+    const data = new Float32Array(width*height);
+    for (let i = 0; i < width*height; i++) {
+        data[i] = 0.0;
+    }
+    for (let i = 0; i < width; i++) {
+        for (let j = 0; j < height; j++) {
+            // project points between (-0.1, -0.1) and (0.1, 0.1), sphere won't
+            // be any bigger anyway
+            let x = (i/width - 0.5)/5.0;
+            let y = (j/height - 0.5)/5.0;
+            let z = fakeSphere(x, y);
+            if (z==0) continue;
+            let position = vec3.fromValues(x, y, z);
+            vec3.transformMat3(position, position, transform);
+
+            let xx = position[0]/position[2];
+            let yy = position[1]/position[2];
+            let ii = Math.floor((xx + 0.5)*width);
+            let jj = Math.floor((yy + 0.5)*height);
+            if (ii < 0 || jj < 0 || ii >= width || jj >= height) continue;
+            data[ii + width*jj] = position[2];
+        }
+    }
+
+    return [data, cameraParams];
+}

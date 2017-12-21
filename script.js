@@ -22,6 +22,8 @@ let lastMousePositionY = 0;
 let yaw = 0;
 let pitch = 0;
 
+const USE_FAKE_DATA = true;
+
 // Use this for displaying errors to the user. More details should be put into
 // `console.error` messages.
 function showErrorToUser(message) {
@@ -87,6 +89,13 @@ async function doMain() {
     document.onmouseup = handleMouseUp;
     document.onmousemove = handleMouseMove;
 
+    const colorStreamElement = document.getElementById('colorStream');
+    const depthStreamElement = document.getElementById('depthStream');
+    let colorStreamReady = false;
+    let depthStreamReady = false;
+    colorStreamElement.oncanplay = function () { colorStreamReady = true; };
+    depthStreamElement.oncanplay = function () { depthStreamReady = true; };
+
     let gl;
     try {
         gl = canvasElement.getContext('webgl2');
@@ -99,14 +108,20 @@ async function doMain() {
     gl.getExtension('EXT_color_buffer_float');
     gl.getExtension('OES_texture_float_linear');
 
-    const cameraParams = await setupCamera();
 
-    const colorStreamElement = document.getElementById('colorStream');
-    const depthStreamElement = document.getElementById('depthStream');
-    let colorStreamReady = false;
-    let depthStreamReady = false;
-    colorStreamElement.oncanplay = function () { colorStreamReady = true; };
-    depthStreamElement.oncanplay = function () { depthStreamReady = true; };
+    let width;
+    let height;
+    let cameraParams;
+    if (USE_FAKE_DATA) {
+        width = 100;
+        height = 100;
+        [fakeData, cameraParams] = createFakeData(width, height, mat3.create());
+        depthStreamReady = true;
+        colorStreamReady = true;
+    } else {
+        cameraParams = await setupCamera();
+    }
+
 
     let frame = 0;
     let timePrevious = new Date();
@@ -115,14 +130,18 @@ async function doMain() {
     // Run for each frame. Will do nothing if the camera is not ready yet.
     const animate = function () {
         if (depthStreamReady && colorStreamReady) {
-            const width = depthStreamElement.videoWidth;
-            const height = depthStreamElement.videoHeight;
             if (frame === 0) {
+                if (!USE_FAKE_DATA) {
+                    width = depthStreamElement.videoWidth;
+                    height = depthStreamElement.videoHeight;
+                }
                 textures = setupTextures(gl, programs, width, height);
                 initUniforms(gl, programs, textures, cameraParams, width, height);
                 framebuffers = initFramebuffers(gl, programs, textures);
             }
             try {
+                let source = depthStreamElement;
+                if (USE_FAKE_DATA) source = fakeData;
                 gl.activeTexture(gl.TEXTURE3);
                 gl.bindTexture(gl.TEXTURE_2D, textures.depth);
                 gl.texSubImage2D(
@@ -134,7 +153,7 @@ async function doMain() {
                     height,
                     gl.RED,
                     gl.FLOAT,
-                    depthStreamElement,
+                    source,
                 );
             } catch (e) {
                 console.error(`Error uploading video to WebGL:
