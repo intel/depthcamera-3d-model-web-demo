@@ -132,7 +132,7 @@ vec2 calculateSdf(vec3 texelCoordinate, vec3 position) {
     vec3 depth = deproject(depthTexture, p);
     // The depth camera stores zero if depth is undefined.
     // TODO make sure not checking this won't affect results
-    //if (depth.z == 0.0) return old;
+    if (depth.z == 0.0) return old;
     vec3 camera = vec3(0.0, 0.0, 0.0);
     float sdf = distance(depth, camera) - distance(position, camera);
     float weight = float(sdf >= -sdfTruncation && sdf <= sdfTruncation);
