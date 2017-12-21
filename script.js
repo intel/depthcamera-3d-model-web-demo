@@ -124,7 +124,6 @@ async function doMain() {
 
 
     let frame = 0;
-    let timePrevious = new Date();
     let textures;
     let framebuffers;
     // Run for each frame. Will do nothing if the camera is not ready yet.
@@ -213,14 +212,12 @@ async function doMain() {
                 mat4.translate(movement, movement,
                                vec3.fromValues(result[3], result[4], result[5]));
                 console.log(movement);
-
             }
 
             //window.requestAnimationFrame(animate);
             //frame += 1;
             //return;
             program = programs.model;
-            console.time('model');
             gl.useProgram(program);
             l = gl.getUniformLocation(program, 'cubeTexture');
             if (frame % 2 === 0) {
@@ -237,8 +234,6 @@ async function doMain() {
                 );
                 gl.drawArrays(gl.TRIANGLES, 0, 6);
             }
-            // console.timeEnd('model');
-            console.time('render');
             program = programs.render;
             gl.useProgram(program);
             gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -252,13 +247,8 @@ async function doMain() {
             gl.uniformMatrix4fv(l, false, getViewMatrix());
             gl.clear(gl.COLOR_BUFFER_BIT);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
-            // console.timeEnd('render');
 
             frame += 1;
-            const timeNew = new Date();
-            const fps = 1000 / (timeNew - timePrevious);
-            timePrevious = timeNew;
-            // console.log('fps: ', fps);
         }
         window.requestAnimationFrame(animate);
     };
