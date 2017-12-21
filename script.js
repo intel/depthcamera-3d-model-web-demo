@@ -113,8 +113,8 @@ async function doMain() {
     let height;
     let cameraParams;
     if (USE_FAKE_DATA) {
-        width = 100;
-        height = 100;
+        width = 10;
+        height = 10;
         [fakeData, cameraParams] = createFakeData(width, height, mat3.create());
         depthStreamReady = true;
         colorStreamReady = true;
