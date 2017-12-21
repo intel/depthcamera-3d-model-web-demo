@@ -18,7 +18,7 @@ const matricesShader = `#version 300 es
 precision highp float;
 
 layout(location = 0) out vec4 outMatrixPart;
-in vec2 texCoord;
+in vec2 aTexCoord;
 
 uniform highp sampler2D crossProductTexture;
 uniform highp sampler2D normalTexture;
@@ -28,9 +28,9 @@ void main() {
     int x = int(mod(floor(gl_FragCoord.x), 5.0));
     int y = int(mod(floor(gl_FragCoord.y), 3.0));
     int part = y * 5 + x;
-    vec3 c = texture(crossProductTexture, texCoord).rgb;
-    vec3 n = texture(normalTexture, texCoord).rgb;
-    vec3 dotAndError = texture(dotAndErrorTexture, texCoord).rrg;
+    vec3 c = texture(crossProductTexture, aTexCoord).rgb;
+    vec3 n = texture(normalTexture, aTexCoord).rgb;
+    vec3 dotAndError = texture(dotAndErrorTexture, aTexCoord).rrg;
     float d = dotAndError.x;
     float e = dotAndError.y;
 

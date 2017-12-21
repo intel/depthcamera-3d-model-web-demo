@@ -20,7 +20,7 @@ precision highp float;
 layout(location = 0) out vec4 outCrossProduct;
 layout(location = 1) out vec4 outNormal;
 layout(location = 2) out vec2 outDotAndError;
-in vec2 texCoord;
+in vec2 aTexCoord;
 
 // Two depth images from the camera.
 uniform highp sampler2D sourceDepthTexture;
@@ -63,33 +63,37 @@ void main() {
     // TODO most of these if conditions could be removed or replaced by somthing
     // that doesn't use branching, but this should be done only after I test
     // that it works properly.
-    vec2 imageCoord = texCoord - 0.5;
-    vec3 sourcePosition = deproject(sourceDepthTexture, imageCoord);
-    if (sourcePosition.z != 0.0) {
-        vec3 sourceNormal = estimateNormal(sourceDepthTexture, imageCoord);
-        if (sourceNormal != vec3(0.0, 0.0, 0.0)) {
-
-            sourcePosition = (movement * vec4(sourcePosition, 1.0)).xyz;
-            sourceNormal = mat3(movement) * sourceNormal;
-
-            vec2 destImageCoord = project(sourcePosition);
-            vec3 destPosition = deproject(destDepthTexture, destImageCoord);
-            if (destPosition.z != 0.0) {
-                vec3 destNormal = estimateNormal(destDepthTexture, destImageCoord);
-                if (destNormal != vec3(0.0, 0.0, 0.0)) {
-
-                    if (distance(sourcePosition, destPosition) < 0.2
-                            && dot(sourceNormal, destNormal) > 0.9) {
-
-                        outCrossProduct = vec4(cross(sourcePosition, sourceNormal), 1.0);
-                        outNormal = vec4(sourceNormal, 1.0);
-                        float dotProduct = dot(sourcePosition - destPosition, sourceNormal);
-                        float error = pow(dotProduct, 2.0);
-                        outDotAndError = vec2(dotProduct, error);
-                    }
-                }
-            }
-        }
+    //vec2 imageCoord = aTexCoord - 0.5;
+    //vec3 sourcePosition = deproject(sourceDepthTexture, imageCoord);
+    //float depth = texture(destDepthTexture, vec2(0.5, 0.5)).r;
+    if (aTexCoord.x < 0.5) {
+        outCrossProduct = vec4(0.5, 0.5, 0.5, 0.5);
     }
+    //if (sourcePosition.z != 0.0) {
+        //vec3 sourceNormal = estimateNormal(sourceDepthTexture, imageCoord);
+        //if (sourceNormal != vec3(0.0, 0.0, 0.0)) {
+
+            //sourcePosition = (movement * vec4(sourcePosition, 1.0)).xyz;
+            //sourceNormal = mat3(movement) * sourceNormal;
+
+            //vec2 destImageCoord = project(sourcePosition);
+            //vec3 destPosition = deproject(destDepthTexture, destImageCoord);
+            //if (destPosition.z != 0.0) {
+                //vec3 destNormal = estimateNormal(destDepthTexture, destImageCoord);
+                //if (destNormal != vec3(0.0, 0.0, 0.0)) {
+
+                    //if (distance(sourcePosition, destPosition) < 0.2
+                            //&& dot(sourceNormal, destNormal) > 0.9) {
+
+                        //outCrossProduct = vec4(cross(sourcePosition, sourceNormal), 1.0);
+                        //outNormal = vec4(sourceNormal, 1.0);
+                        //float dotProduct = dot(sourcePosition - destPosition, sourceNormal);
+                        //float error = pow(dotProduct, 2.0);
+                        //outDotAndError = vec2(dotProduct, error);
+                    //}
+                //}
+            //}
+        //}
+    //}
 }
 `;

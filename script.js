@@ -141,7 +141,7 @@ async function doMain() {
             try {
                 let source = depthStreamElement;
                 if (USE_FAKE_DATA) source = fakeData;
-                gl.activeTexture(gl.TEXTURE3);
+                //gl.activeTexture(gl[`TEXTURE${textures.depth.glId()}`]);
                 gl.bindTexture(gl.TEXTURE_2D, textures.depth);
                 gl.texSubImage2D(
                     gl.TEXTURE_2D,
@@ -165,10 +165,16 @@ async function doMain() {
             program = programs.points;
             gl.useProgram(program);
             gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.points);
-            // gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+            //gl.bindFramebuffer(gl.FRAMEBUFFER, null);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
+            const stride = 4;
+            const data2 = new Float32Array(10 * stride);
+            gl.readPixels(0, 0, 10, 1, gl.RGBA, gl.FLOAT, data2);
+            if (frame === 0) {
+                console.log(data2);
+            }
 
-            program = programs.matrices;
+            /*program = programs.matrices;
             gl.useProgram(program);
             gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.matrices);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
@@ -177,7 +183,6 @@ async function doMain() {
             gl.useProgram(program);
             gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.sum);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
-            const stride = 4;
             const data = new Float32Array(5 * 3 * stride);
             gl.readPixels(0, 0, 5, 3, gl.RGBA, gl.FLOAT, data);
             if (frame === 0) {
@@ -247,7 +252,7 @@ async function doMain() {
             gl.uniformMatrix4fv(l, false, getViewMatrix());
             gl.clear(gl.COLOR_BUFFER_BIT);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
-
+*/
             frame += 1;
         }
         window.requestAnimationFrame(animate);
