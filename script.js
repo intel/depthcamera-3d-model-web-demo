@@ -141,7 +141,7 @@ async function doMain() {
             try {
                 let source = depthStreamElement;
                 if (USE_FAKE_DATA) source = fakeData;
-                gl.activeTexture(gl.TEXTURE3);
+                gl.activeTexture(gl[`TEXTURE${textures.depth.glId()}`]);
                 gl.bindTexture(gl.TEXTURE_2D, textures.depth);
                 gl.texSubImage2D(
                     gl.TEXTURE_2D,
@@ -165,8 +165,9 @@ async function doMain() {
             program = programs.points;
             gl.useProgram(program);
             gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.points);
-            // gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+            //gl.bindFramebuffer(gl.FRAMEBUFFER, null);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
+            const stride = 4;
 
             program = programs.matrices;
             gl.useProgram(program);
@@ -177,7 +178,6 @@ async function doMain() {
             gl.useProgram(program);
             gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.sum);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
-            const stride = 4;
             const data = new Float32Array(5 * 3 * stride);
             gl.readPixels(0, 0, 5, 3, gl.RGBA, gl.FLOAT, data);
             if (frame === 0) {

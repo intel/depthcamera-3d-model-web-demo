@@ -20,7 +20,7 @@ precision highp float;
 layout(location = 0) out vec4 outCrossProduct;
 layout(location = 1) out vec4 outNormal;
 layout(location = 2) out vec2 outDotAndError;
-in vec2 texCoord;
+in vec2 aTexCoord;
 
 // Two depth images from the camera.
 uniform highp sampler2D sourceDepthTexture;
@@ -60,10 +60,13 @@ void main() {
     outNormal = zero;
     outDotAndError = vec2(0.0, 0.0);
 
+    ivec2 texSize = textureSize(sourceDepthTexture, 0);
+    vec2 coord = vec2(float(gl_FragCoord.x)/float(texSize.x),
+                      float(gl_FragCoord.y)/float(texSize.y));
     // TODO most of these if conditions could be removed or replaced by somthing
     // that doesn't use branching, but this should be done only after I test
     // that it works properly.
-    vec2 imageCoord = texCoord - 0.5;
+    vec2 imageCoord = coord - 0.5;
     vec3 sourcePosition = deproject(sourceDepthTexture, imageCoord);
     if (sourcePosition.z != 0.0) {
         vec3 sourceNormal = estimateNormal(sourceDepthTexture, imageCoord);

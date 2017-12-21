@@ -99,12 +99,12 @@ function initAttributes(gl, programs) {
     program = programs.points;
     gl.useProgram(program);
     uploadAttribute('inPosition', posOffset, posItems);
-    uploadAttribute('inTexCoord', texOffset, texItems);
+    //uploadAttribute('inTexCoord', texOffset, texItems);
 
     program = programs.matrices;
     gl.useProgram(program);
     uploadAttribute('inPosition', posOffset, posItems);
-    uploadAttribute('inTexCoord', texOffset, texItems);
+    //uploadAttribute('inTexCoord', texOffset, texItems);
 
     program = programs.sum;
     gl.useProgram(program);
