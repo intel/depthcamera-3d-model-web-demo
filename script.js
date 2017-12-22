@@ -141,7 +141,7 @@ async function doMain() {
             try {
                 let source = depthStreamElement;
                 if (USE_FAKE_DATA) source = fakeData;
-                //gl.activeTexture(gl[`TEXTURE${textures.depth.glId()}`]);
+                gl.activeTexture(gl[`TEXTURE${textures.depth.glId()}`]);
                 gl.bindTexture(gl.TEXTURE_2D, textures.depth);
                 gl.texSubImage2D(
                     gl.TEXTURE_2D,
