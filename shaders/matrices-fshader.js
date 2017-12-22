@@ -38,8 +38,6 @@ void main() {
     vec3 c = texture(crossProductTexture, coord).rgb;
     vec3 n = texture(normalTexture, coord).rgb;
     vec3 dotAndError = texture(dotAndErrorTexture, coord).rrg;
-    float d = dotAndError.x;
-    float e = dotAndError.y;
 
     vec3 vector = mix(n, c, float(part < 6));
     vector = mix(vec3(1.0, 0.0, 0.0), vector, float(part < 14));

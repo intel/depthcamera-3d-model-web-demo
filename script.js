@@ -22,7 +22,7 @@ let lastMousePositionY = 0;
 let yaw = 0;
 let pitch = 0;
 
-const USE_FAKE_DATA = true;
+const USE_FAKE_DATA = false;
 
 // Use this for displaying errors to the user. More details should be put into
 // `console.error` messages.
@@ -115,7 +115,10 @@ async function doMain() {
     if (USE_FAKE_DATA) {
         width = 100;
         height = 100;
-        [fakeData, cameraParams] = createFakeData(width, height, mat3.create());
+        let fakeMovement = mat4.create();
+        mat4.rotateX(fakeMovement, fakeMovement, 0.01*3.14);
+        [fakeData, cameraParams] = createFakeData(width, height, mat4.create());
+        [fakeData2, cameraParams] = createFakeData(width, height, fakeMovement);
         depthStreamReady = true;
         colorStreamReady = true;
     } else {
@@ -140,9 +143,12 @@ async function doMain() {
             }
             try {
                 let source = depthStreamElement;
-                if (USE_FAKE_DATA) source = fakeData;
-                gl.activeTexture(gl[`TEXTURE${textures.depth.glId()}`]);
-                gl.bindTexture(gl.TEXTURE_2D, textures.depth);
+                if (USE_FAKE_DATA) {
+                    source = fakeData;
+                    if (frame === 1) source = fakeData2;
+                }
+                gl.activeTexture(gl[`TEXTURE${textures.depth[frame%2].glId()}`]);
+                gl.bindTexture(gl.TEXTURE_2D, textures.depth[frame%2]);
                 gl.texSubImage2D(
                     gl.TEXTURE_2D,
                     0, // mip-map level
@@ -162,63 +168,18 @@ async function doMain() {
             let l;
             let program;
 
-            program = programs.points;
-            gl.useProgram(program);
-            gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.points);
-            //gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-            gl.drawArrays(gl.TRIANGLES, 0, 6);
-            const stride = 4;
-
-            program = programs.matrices;
-            gl.useProgram(program);
-            gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.matrices);
-            gl.drawArrays(gl.TRIANGLES, 0, 6);
-
-            program = programs.sum;
-            gl.useProgram(program);
-            gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.sum);
-            gl.drawArrays(gl.TRIANGLES, 0, 6);
-            const data = new Float32Array(5 * 3 * stride);
-            gl.readPixels(0, 0, 5, 3, gl.RGBA, gl.FLOAT, data);
-            if (frame === 0) {
-                console.log(data);
-                const error = data[14*stride];
-                let A = Array(6);
-                let b = new Float32Array(6);
-                for (let i = 0; i < 6; i += 1) {
-                    A[i] = new Float32Array(6);
-                }
-                for (let i = 0; i < 6; i += 1) {
-                    A[0][i] = data[i*stride];
-                    A[1][i] = data[i*stride + 1];
-                    A[2][i] = data[i*stride + 2];
-                    A[3][i] = data[(i+6)*stride];
-                    A[4][i] = data[(i+6)*stride + 1];
-                    A[5][i] = data[(i+6)*stride + 2];
-                }
-                for (let i = 0; i < 3; i += 1) {
-                    b[i] = data[12*stride + i]
-                    b[i + 3] = data[13*stride + i]
-                }
-                console.log("error: ", error);
-                console.log("A: ", A);
-                console.log("b: ", b);
-                const result = numeric.solve(A, b);
-                console.log(result);
-                let movement = mat4.create();
-                mat4.rotateX(movement, movement, result[0]);
-                mat4.rotateY(movement, movement, result[1]);
-                mat4.rotateZ(movement, movement, result[2]);
-                mat4.translate(movement, movement,
-                               vec3.fromValues(result[3], result[4], result[5]));
-                console.log(movement);
-            }
-
-            //window.requestAnimationFrame(animate);
-            //frame += 1;
-            //return;
+            //const movement = estimateMovement(
+                //gl,
+                //programs,
+                //textures,
+                //framebuffers,
+                //frame,
+            //);
+            //console.log(movement);
             program = programs.model;
             gl.useProgram(program);
+            l = gl.getUniformLocation(program, 'depthTexture');
+            gl.uniform1i(l, textures.depth[frame%2].glId());
             l = gl.getUniformLocation(program, 'cubeTexture');
             if (frame % 2 === 0) {
                 gl.uniform1i(l, textures.cube0.glId());

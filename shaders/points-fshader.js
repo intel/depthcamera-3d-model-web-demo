@@ -38,8 +38,8 @@ vec3 estimateNormal(sampler2D tex, vec2 imageCoord) {
     ivec2 texSize = textureSize(tex, 0);
     vec2 texStep = vec2(1.0/float(texSize.x), 1.0/float(texSize.y));
     // TODO remove this
-    if (imageCoord.x + texStep.x >= 1.0 ||
-        imageCoord.y + texStep.y >= 1.0)
+    if (imageCoord.x + texStep.x >= 0.5 ||
+        imageCoord.y + texStep.y >= 0.5)
             return vec3(0.0, 0.0, 0.0);
 
     vec3 positionRight = deproject(tex, imageCoord + vec2(texStep.x, 0.0));
@@ -61,8 +61,8 @@ void main() {
     outDotAndError = vec2(0.0, 0.0);
 
     ivec2 texSize = textureSize(sourceDepthTexture, 0);
-    vec2 coord = vec2(float(gl_FragCoord.x)/float(texSize.x),
-                      float(gl_FragCoord.y)/float(texSize.y));
+    vec2 coord = vec2((gl_FragCoord.x)/float(texSize.x),
+                      (gl_FragCoord.y)/float(texSize.y));
     // TODO most of these if conditions could be removed or replaced by somthing
     // that doesn't use branching, but this should be done only after I test
     // that it works properly.
@@ -75,7 +75,16 @@ void main() {
             sourcePosition = (movement * vec4(sourcePosition, 1.0)).xyz;
             sourceNormal = mat3(movement) * sourceNormal;
 
+            // Snap the coord to the texel center. Lowers the error (the texture
+            // is without interpolation so it doesn't matter for the depth).
+            // TODO see if I can get rid of this, or at least simplify it
             vec2 destImageCoord = project(sourcePosition);
+            vec2 destTexCoord = destImageCoord + 0.5;
+            ivec2 destIndex = ivec2(round(destTexCoord.x*float(texSize.x) - 0.5),
+                                    round(destTexCoord.y*float(texSize.y) - 0.5));
+            destTexCoord = vec2((float(destIndex.x)+0.5)/float(texSize.x),
+                                (float(destIndex.y)+0.5)/float(texSize.y));
+            destImageCoord = destTexCoord - 0.5;
             vec3 destPosition = deproject(destDepthTexture, destImageCoord);
             if (destPosition.z != 0.0) {
                 vec3 destNormal = estimateNormal(destDepthTexture, destImageCoord);
@@ -84,8 +93,8 @@ void main() {
                     if (distance(sourcePosition, destPosition) < 0.2
                             && dot(sourceNormal, destNormal) > 0.9) {
 
-                        outCrossProduct = vec4(cross(sourcePosition, sourceNormal), 1.0);
-                        outNormal = vec4(sourceNormal, 1.0);
+                        outCrossProduct = vec4(cross(sourcePosition, sourceNormal), 0.0);
+                        outNormal = vec4(sourceNormal, 0.0);
                         float dotProduct = dot(sourcePosition - destPosition, sourceNormal);
                         float error = pow(dotProduct, 2.0);
                         outDotAndError = vec2(dotProduct, error);
