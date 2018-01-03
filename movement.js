@@ -80,6 +80,10 @@ function estimateMovement(gl, programs, textures, framebuffers, frame) {
                 break;
         }*/
         const result = numeric.solve(A, b);
+        console.log("result: ", result);
+        if (Number.isNaN(result[0])) {
+            throw Error('No corresponding points between frames found.');
+        }
         //console.log(result);
         mat4.translate(
             movement, movement,
