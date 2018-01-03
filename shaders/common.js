@@ -56,4 +56,4 @@ vec3 deproject(sampler2D tex, vec2 coord) {
     vec2 position2d = (coord - depthOffset)/depthFocalLength;
     return vec3(position2d*depth, depth);
 }
-`.replace(/\n|\r/g,"");
+`.replace(/\n|\r/g, '');

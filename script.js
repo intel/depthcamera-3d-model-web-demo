@@ -115,7 +115,7 @@ async function doMain() {
     if (USE_FAKE_DATA) {
         width = 100;
         height = 100;
-        let fakeMovement = mat4.create();
+        const fakeMovement = mat4.create();
         mat4.rotateX(fakeMovement, fakeMovement, 0.01*3.14);
         [fakeData, cameraParams] = createFakeData(width, height, mat4.create());
         [fakeData2, cameraParams] = createFakeData(width, height, fakeMovement);
@@ -168,14 +168,14 @@ async function doMain() {
             let l;
             let program;
 
-            //const movement = estimateMovement(
-                //gl,
-                //programs,
-                //textures,
-                //framebuffers,
-                //frame,
-            //);
-            //console.log(movement);
+            /*const movement = estimateMovement(
+                gl,
+                programs,
+                textures,
+                framebuffers,
+                frame,
+            );
+            console.log(movement);*/
             program = programs.model;
             gl.useProgram(program);
             l = gl.getUniformLocation(program, 'depthTexture');

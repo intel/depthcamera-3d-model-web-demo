@@ -6,6 +6,11 @@ module.exports = {
         "no-undef": "off",
         "no-unused-vars": "off",
 
+        "spaced-comment": "off",
+        "no-continue": "off",
+        "space-infix-ops": "off",
+        "prefer-destructuring": ["error", {"object": true, "array": false}],
+
         "no-console": "off",
         "func-names": ["off", "never"],
     },

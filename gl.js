@@ -298,7 +298,7 @@ function setupTextures(gl, programs, width, height) {
 function initFramebuffers(gl, programs, textures) {
     function createFramebuffer2D(textureList) {
         const framebuffer = gl.createFramebuffer();
-        let drawBuffers = [];
+        const drawBuffers = [];
         gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
         for (let i = 0; i < textureList.length; i += 1) {
             const texture = textureList[i];
@@ -362,7 +362,7 @@ function initFramebuffers(gl, programs, textures) {
 function createFakeData(width, height, transform) {
     function fakeSphere(x, y) {
         const r = 0.1;
-        const tmp = r*r - x*x - y*y;
+        const tmp = (r*r) - (x*x) - (y*y);
         if (tmp < 0.0) return 0.0;
         let z = -Math.sqrt(tmp);
         z += 0.5; // center it at (0, 0, 0.5)
@@ -371,7 +371,7 @@ function createFakeData(width, height, transform) {
 
     const cameraParams = {
         depthScale: 1.0,
-        getDepthIntrinsics: function(width, height) {
+        getDepthIntrinsics(_, __) {
             return {
                 offset: [width/2.0, height/2.0],
                 focalLength: [width, height],
@@ -380,26 +380,26 @@ function createFakeData(width, height, transform) {
     };
 
     const data = new Float32Array(width*height);
-    for (let i = 0; i < width*height; i++) {
+    for (let i = 0; i < width * height; i += 1) {
         data[i] = 0.0;
     }
-    for (let i = 0; i < width; i++) {
-        for (let j = 0; j < height; j++) {
+    for (let i = 0; i < width; i += 1) {
+        for (let j = 0; j < height; j += 1) {
             // project points between (-0.1, -0.1) and (0.1, 0.1), sphere won't
             // be any bigger anyway
-            let x = (i/width - 0.5)/5.0;
-            let y = (j/height - 0.5)/5.0;
-            let z = fakeSphere(x, y);
-            if (z==0) continue;
-            let position = vec4.fromValues(x, y, z, 1.0);
+            const x = ((i/width) - 0.5)/5.0;
+            const y = ((j/height) - 0.5)/5.0;
+            const z = fakeSphere(x, y);
+            if (z === 0) continue;
+            const position = vec4.fromValues(x, y, z, 1.0);
             vec4.transformMat4(position, position, transform);
 
-            let xx = position[0]/position[2];
-            let yy = position[1]/position[2];
-            let ii = Math.floor((xx + 0.5)*width);
-            let jj = Math.floor((yy + 0.5)*height);
+            const xx = position[0]/position[2];
+            const yy = position[1]/position[2];
+            const ii = Math.floor((xx + 0.5)*width);
+            const jj = Math.floor((yy + 0.5)*height);
             if (ii < 0 || jj < 0 || ii >= width || jj >= height) continue;
-            data[ii + width*jj] = position[2];
+            data[ii + (width*jj)] = position[2];
         }
     }
 

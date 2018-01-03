@@ -19,24 +19,24 @@ const ERROR_DIFF_THRESHOLD = 0.0001;
 function constructEquation(data) {
     const stride = 4;
     const error = data[14*stride];
-    let A = Array(6);
-    let b = new Float32Array(6);
+    const A = Array(6);
+    const b = new Float32Array(6);
     for (let i = 0; i < 6; i += 1) {
         A[i] = new Float32Array(6);
     }
     for (let i = 0; i < 6; i += 1) {
         A[0][i] = data[i*stride];
-        A[1][i] = data[i*stride + 1];
-        A[2][i] = data[i*stride + 2];
+        A[1][i] = data[(i*stride) + 1];
+        A[2][i] = data[(i*stride) + 2];
         A[3][i] = data[(i+6)*stride];
-        A[4][i] = data[(i+6)*stride + 1];
-        A[5][i] = data[(i+6)*stride + 2];
+        A[4][i] = data[((i+6)*stride) + 1];
+        A[5][i] = data[((i+6)*stride) + 2];
     }
     for (let i = 0; i < 3; i += 1) {
-        b[i] = -data[12*stride + i]
-        b[i + 3] = -data[13*stride + i]
+        b[i] = -data[(12*stride) + i];
+        b[i + 3] = -data[(13*stride) + i];
     }
-    console.log("error: ", error);
+    console.log('error: ', error);
     //console.log("A: ", A);
     //console.log("b: ", b);
     return [A, b, error];
@@ -51,7 +51,7 @@ function estimateMovement(gl, programs, textures, framebuffers, frame) {
     l = gl.getUniformLocation(program, 'destDepthTexture');
     gl.uniform1i(l, textures.depth[(frame+1)%2].glId());
 
-    let movement = mat4.create();
+    const movement = mat4.create();
     let previousError = 0;
     for (let step = 0; step < MAX_STEPS; step += 1) {
         program = programs.points;
@@ -75,14 +75,16 @@ function estimateMovement(gl, programs, textures, framebuffers, frame) {
         gl.readPixels(0, 0, 5, 3, gl.RGBA, gl.FLOAT, data);
 
         const [A, b, error] = constructEquation(data);
-        //if (error < ERROR_THRESHOLD
-            //|| Math.abs(error - previousError) < ERROR_DIFF_THRESHOLD) {
-                //break;
-        //}
+        /*if (error < ERROR_THRESHOLD
+            || Math.abs(error - previousError) < ERROR_DIFF_THRESHOLD) {
+                break;
+        }*/
         const result = numeric.solve(A, b);
         //console.log(result);
-        mat4.translate(movement, movement,
-            vec3.fromValues(result[3], result[4], result[5]));
+        mat4.translate(
+            movement, movement,
+            vec3.fromValues(result[3], result[4], result[5]),
+        );
         mat4.rotateX(movement, movement, result[0]);
         mat4.rotateY(movement, movement, result[1]);
         mat4.rotateZ(movement, movement, result[2]);
