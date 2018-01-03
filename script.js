@@ -116,7 +116,7 @@ async function doMain() {
         width = 100;
         height = 100;
         const fakeMovement = mat4.create();
-        mat4.rotateX(fakeMovement, fakeMovement, 0.01*3.14);
+        mat4.translate(fakeMovement, fakeMovement, vec3.fromValues(0.01, 0, 0));
         [fakeData, cameraParams] = createFakeData(width, height, mat4.create());
         [fakeData2, cameraParams] = createFakeData(width, height, fakeMovement);
         depthStreamReady = true;
