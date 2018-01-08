@@ -35,17 +35,47 @@ void main() {
     int x = int(mod(floor(gl_FragCoord.x), 5.0));
     int y = int(mod(floor(gl_FragCoord.y), 3.0));
     int part = y * 5 + x;
-    vec3 c = texture(crossProductTexture, coord).rgb;
-    vec3 n = texture(normalTexture, coord).rgb;
-    vec3 dotAndError = texture(dotAndErrorTexture, coord).rrg;
+    vec4 c = vec4(texture(crossProductTexture, coord).rgb, 0.0);
+    vec4 n = vec4(texture(normalTexture, coord).rgb, 0.0);
+    vec2 dotAndError = texture(dotAndErrorTexture, coord).rg;
+    float d = dotAndError.x;
+    float e = dotAndError.y;
 
-    vec3 vector = mix(n, c, float(part < 6));
-    vector = mix(vec3(1.0, 0.0, 0.0), vector, float(part < 14));
-    vec3 scalarSource = mix(n, c,
-            float(part < 3 || (part > 5 && part < 9)));
-    scalarSource = mix(dotAndError, scalarSource,
-            float(part < 12));
-    float scalar = scalarSource[part % 3];
-    outMatrixPart = vec4(scalar * vector, 0.0);
+    if (part == 0) {
+        outMatrixPart = c.x * c;
+    } else if (part == 1) {
+        outMatrixPart = c.y * c;
+    } else if (part == 2) {
+        outMatrixPart = c.z * c;
+
+    } else if (part == 3) {
+        outMatrixPart = n.x * c;
+    } else if (part == 4) {
+        outMatrixPart = n.y * c;
+    } else if (part == 5) {
+        outMatrixPart = n.z * c;
+
+    } else if (part == 6) {
+        outMatrixPart = c.x * n;
+    } else if (part == 7) {
+        outMatrixPart = c.y * n;
+    } else if (part == 8) {
+        outMatrixPart = c.z * n;
+
+    } else if (part == 9) {
+        outMatrixPart = n.x * n;
+    } else if (part == 10) {
+        outMatrixPart = n.y * n;
+    } else if (part == 11) {
+        outMatrixPart = n.z * n;
+
+    } else if (part == 12) {
+        outMatrixPart = d * c;
+    } else if (part == 13) {
+        outMatrixPart = d * n;
+
+    } else if (part == 14) {
+        outMatrixPart.x = e;
+    }
 }
 `;
