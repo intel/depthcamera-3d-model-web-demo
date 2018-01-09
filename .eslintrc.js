@@ -2,6 +2,7 @@ module.exports = {
     "extends": "airbnb-base",
     "rules": {
         "indent": ["error", 4],
+        "no-bitwise": "off",
         // these two are a problem when not using proper modules
         "no-undef": "off",
         "no-unused-vars": "off",

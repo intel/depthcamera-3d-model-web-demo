@@ -69,8 +69,15 @@ function estimateMovement(gl, programs, textures, framebuffers, frame) {
 
         program = programs.sum;
         gl.useProgram(program);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.sum);
-        gl.drawArrays(gl.TRIANGLES, 0, 6);
+        l = gl.getUniformLocation(program, 'inputTexture');
+        gl.uniform1i(l, textures.matrices.glId());
+        for (let i = 0; i < framebuffers.sum.length; i += 1) {
+            gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.sum[i]);
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+            gl.finish();
+            l = gl.getUniformLocation(program, 'inputTexture');
+            gl.uniform1i(l, textures.sum[i].glId());
+        }
         const data = new Float32Array(5 * 3 * stride);
         gl.readPixels(0, 0, 5, 3, gl.RGBA, gl.FLOAT, data);
 

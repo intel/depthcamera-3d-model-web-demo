@@ -33,6 +33,14 @@ const vertices = new Float32Array([
 ]);
 /* eslint-enable */
 
+// Find smallest power of two that is bigger than `number`. For example, if
+// `number` is 100, the result will be 128.
+function smallestPowerOfTwo(number) {
+    let result = 1;
+    while (result < number) result <<= 1;
+    return result;
+}
+
 // Compile the shader from `source` and return a reference to it.
 function createShader(gl, type, source) {
     const shader = gl.createShader(type);
@@ -154,11 +162,6 @@ function initUniforms(gl, programs, textures, parameters, width, height) {
     l = gl.getUniformLocation(program, 'dotAndErrorTexture');
     gl.uniform1i(l, textures.points.dotAndError.glId());
 
-    program = programs.sum;
-    gl.useProgram(program);
-    l = gl.getUniformLocation(program, 'matricesTexture');
-    gl.uniform1i(l, textures.matrices.glId());
-
     program = programs.model;
     gl.useProgram(program);
     l = gl.getUniformLocation(program, 'cubeTexture');
@@ -275,11 +278,16 @@ function setupTextures(gl, programs, width, height) {
     fillCubeTexture(gl, cube0);
     const depth0 = createTexture2D(gl.R32F, width, height);
     const depth1 = createTexture2D(gl.R32F, width, height);
-    const sum = createTexture2D(gl.RGBA32F, 5, 3);
     const matrices = createTexture2D(gl.RGBA32F, 5*width, 3*height);
     const crossProduct = createTexture2D(gl.RGBA32F, width, height);
     const normal = createTexture2D(gl.RGBA32F, width, height);
     const dotAndError = createTexture2D(gl.RG32F, width, height);
+
+    const biggestSize = smallestPowerOfTwo(Math.max(width, height)) >> 1;
+    const sum = [];
+    for (let size = biggestSize; size > 0; size >>= 1) {
+        sum.push(createTexture2D(gl.RGBA32F, 5*size, 3*size));
+    }
 
     return {
         cube0,
@@ -339,7 +347,10 @@ function initFramebuffers(gl, programs, textures) {
     const matrices = createFramebuffer2D([textures.matrices]);
 
     gl.useProgram(programs.sum);
-    const sum = createFramebuffer2D([textures.sum]);
+    const sum = [];
+    for (let i = 0; i < textures.sum.length; i += 1) {
+        sum.push(createFramebuffer2D([textures.sum[i]]));
+    }
 
     gl.useProgram(programs.model);
     const cube0 = Array.from(
