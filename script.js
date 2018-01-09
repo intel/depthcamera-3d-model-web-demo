@@ -129,6 +129,7 @@ async function doMain() {
     let frame = 0;
     let textures;
     let framebuffers;
+    let globalMovement = mat4.create();
     // Run for each frame. Will do nothing if the camera is not ready yet.
     const animate = function () {
         if (depthStreamReady && colorStreamReady) {
@@ -175,9 +176,14 @@ async function doMain() {
                 framebuffers,
                 frame,
             );
-            console.log(movement);
+            mat4.mul(globalMovement, movement, globalMovement);
+            // console.log(movement);
+            console.log("");
+
             program = programs.model;
             gl.useProgram(program);
+            l = gl.getUniformLocation(program, 'movement');
+            gl.uniformMatrix4fv(l, false, globalMovement);
             l = gl.getUniformLocation(program, 'depthTexture');
             gl.uniform1i(l, textures.depth[frame%2].glId());
             l = gl.getUniformLocation(program, 'cubeTexture');
