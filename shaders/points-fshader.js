@@ -75,16 +75,7 @@ void main() {
             sourcePosition = (movement * vec4(sourcePosition, 1.0)).xyz;
             sourceNormal = mat3(movement) * sourceNormal;
 
-            // Snap the coord to the texel center. Lowers the error (the texture
-            // is without interpolation so it doesn't matter for the depth).
-            // TODO see if I can get rid of this, or at least simplify it
             vec2 destImageCoord = project(sourcePosition);
-            vec2 destTexCoord = destImageCoord + 0.5;
-            ivec2 destIndex = ivec2(round(destTexCoord.x*float(texSize.x) - 0.5),
-                                    round(destTexCoord.y*float(texSize.y) - 0.5));
-            destTexCoord = vec2((float(destIndex.x))/float(texSize.x),
-                                (float(destIndex.y))/float(texSize.y));
-            destImageCoord = destTexCoord - 0.5;
             vec3 destPosition = deproject(destDepthTexture, destImageCoord);
             if (destPosition.z != 0.0) {
                 vec3 destNormal = estimateNormal(destDepthTexture, destImageCoord);
