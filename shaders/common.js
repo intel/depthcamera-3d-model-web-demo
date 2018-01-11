@@ -1,4 +1,4 @@
-// vim: set filetype=glsl:
+// vim: set filetype=glsl commentstring=/*\ %s\ */:
 // Copyright 2017 Intel Corporation.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +20,7 @@
 // the /* comment */ notation, so that the newline removal doesn't change the
 // semantics.
 const PROJECT_DEPROJECT_SHADER_FUNCTIONS = `
+precision highp float;
 /*Information from the depth camera on how to convert the values from the
 'depthTexture' into meters.*/
 uniform float depthScale;

@@ -15,6 +15,7 @@ const canvasShader = `#version 300 es
 // limitations under the License.
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec2 inTexCoord;
+precision highp float;
 
 out vec2 aTexCoord;
 
