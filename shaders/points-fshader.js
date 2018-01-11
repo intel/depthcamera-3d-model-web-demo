@@ -82,8 +82,8 @@ void main() {
             vec2 destTexCoord = destImageCoord + 0.5;
             ivec2 destIndex = ivec2(round(destTexCoord.x*float(texSize.x) - 0.5),
                                     round(destTexCoord.y*float(texSize.y) - 0.5));
-            destTexCoord = vec2((float(destIndex.x)+0.5)/float(texSize.x),
-                                (float(destIndex.y)+0.5)/float(texSize.y));
+            destTexCoord = vec2((float(destIndex.x))/float(texSize.x),
+                                (float(destIndex.y))/float(texSize.y));
             destImageCoord = destTexCoord - 0.5;
             vec3 destPosition = deproject(destDepthTexture, destImageCoord);
             if (destPosition.z != 0.0) {
