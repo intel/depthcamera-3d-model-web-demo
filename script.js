@@ -168,14 +168,14 @@ async function doMain() {
             let l;
             let program;
 
-            /*const movement = estimateMovement(
+            const movement = estimateMovement(
                 gl,
                 programs,
                 textures,
                 framebuffers,
                 frame,
             );
-            console.log(movement);*/
+            console.log(movement);
             program = programs.model;
             gl.useProgram(program);
             l = gl.getUniformLocation(program, 'depthTexture');

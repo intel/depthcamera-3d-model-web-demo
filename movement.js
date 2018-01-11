@@ -37,8 +37,8 @@ function constructEquation(data) {
         b[i + 3] = -data[(13*stride) + i];
     }
     console.log('error: ', error);
-    //console.log("A: ", A);
-    //console.log("b: ", b);
+    // console.log('A: ', A);
+    // console.log('b: ', b);
     return [A, b, error];
 }
 
@@ -75,16 +75,15 @@ function estimateMovement(gl, programs, textures, framebuffers, frame) {
         gl.readPixels(0, 0, 5, 3, gl.RGBA, gl.FLOAT, data);
 
         const [A, b, error] = constructEquation(data);
-        /*if (error < ERROR_THRESHOLD
+        if (error < ERROR_THRESHOLD
             || Math.abs(error - previousError) < ERROR_DIFF_THRESHOLD) {
                 break;
-        }*/
+        }
         const result = numeric.solve(A, b);
-        console.log("result: ", result);
+        // console.log("result: ", result);
         if (Number.isNaN(result[0])) {
             throw Error('No corresponding points between frames found.');
         }
-        //console.log(result);
         mat4.translate(
             movement, movement,
             vec3.fromValues(result[3], result[4], result[5]),
