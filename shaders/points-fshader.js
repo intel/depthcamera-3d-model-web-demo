@@ -1,4 +1,3 @@
-// vim: set filetype=glsl:
 const pointsShader = `#version 300 es
 // Copyright 2017 Intel Corporation.
 //
@@ -140,3 +139,4 @@ void main() {
     }
 }
 `;
+// vim: set filetype=glsl:

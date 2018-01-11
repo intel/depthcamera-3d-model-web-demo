@@ -1,4 +1,3 @@
-// vim: set filetype=glsl:
 const matricesShader = `#version 300 es
 // Copyright 2017 Intel Corporation.
 //
@@ -79,3 +78,4 @@ void main() {
     }
 }
 `;
+// vim: set filetype=glsl:

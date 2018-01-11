@@ -1,4 +1,3 @@
-// vim: set filetype=glsl:
 const modelShader = `#version 300 es
 // Copyright 2017 Intel Corporation.
 //
@@ -165,3 +164,4 @@ void main() {
     outTexel = calculateSdf(texel, position);
 }
 `;
+// vim: set filetype=glsl:

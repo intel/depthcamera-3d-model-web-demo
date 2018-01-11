@@ -1,4 +1,3 @@
-// vim: set filetype=glsl:
 const sumShader = `#version 300 es
 // Copyright 2017 Intel Corporation.
 //
@@ -73,3 +72,4 @@ void main() {
     outSum = vec4(sum, 0.0);
 }
 `;
+// vim: set filetype=glsl:

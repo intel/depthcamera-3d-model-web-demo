@@ -1,4 +1,3 @@
-// vim: set filetype=glsl:
 const renderShader = `#version 300 es
 // Copyright 2017 Intel Corporation.
 //
@@ -159,3 +158,4 @@ void main() {
     outColor = raymarch(position.xyz, viewDirection.xyz);
 }
 `;
+// vim: set filetype=glsl:

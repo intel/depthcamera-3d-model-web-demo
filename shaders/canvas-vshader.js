@@ -1,4 +1,3 @@
-// vim: set filetype=glsl:
 const canvasShader = `#version 300 es
 // Copyright 2017 Intel Corporation.
 //
@@ -24,3 +23,4 @@ void main() {
     aTexCoord = inTexCoord;
 }
 `;
+// vim: set filetype=glsl:
