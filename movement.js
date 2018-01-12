@@ -16,8 +16,6 @@
 // because higher numbers tend to be slow. A high number does not necessarily
 // mean it will be able to estimate it better.
 const MAX_STEPS = 20;
-// Stop the motion estimation when the error is lower than this.
-const ERROR_THRESHOLD = 0.0001;
 // Stop the motion estimation when the difference between the previous and
 // current error is smaller than this (the algorithm has converged).
 const ERROR_DIFF_THRESHOLD = 0.0001;
@@ -154,10 +152,13 @@ function estimateMovement(gl, programs, textures, framebuffers, frame) {
         gl.readPixels(0, 0, 5, 3, gl.RGBA, gl.FLOAT, data);
         const [A, b, error] = constructEquation(data);
 
-        // The algorithm has converged.
-        if (error < ERROR_THRESHOLD
-            || Math.abs(error - previousError) < ERROR_DIFF_THRESHOLD) {
-                break;
+        // The algorithm has converged, because the error didn't change much
+        // from the last loop. Note that the error might actually get higher
+        // (and this is not a bad thing), because a better movement estimate may
+        // match more points to each other. A very small error could simply mean
+        // that there isn't much overlap between the point clouds.
+        if (Math.abs(error - previousError) < ERROR_DIFF_THRESHOLD) {
+            break;
         }
         // Solve Ax = b. The x vector will contain the 3 rotation angles (around
         // the x axis, y axis and z axis) and the translation (tx, ty, tz).
