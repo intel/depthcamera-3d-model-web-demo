@@ -48,6 +48,21 @@ function constructEquation(data) {
     return [A, b, error];
 }
 
+// The parameter 'x' should contain a vector with 6 items, which holds the
+// 3 rotations around the 3 axes and the translation vector.
+// Return a 4x4 matrix that represents this movement.
+function constructMovement(x) {
+    const movement = mat4.create();
+    mat4.rotateX(movement, movement, x[0]);
+    mat4.rotateY(movement, movement, x[1]);
+    mat4.rotateZ(movement, movement, x[2]);
+    mat4.translate(
+        movement, movement,
+        vec3.fromValues(x[3], x[4], x[5]),
+    );
+    return movement;
+}
+
 // Given the depth data in the two textures 'textures.depth', estimate the
 // movement between them and return the resulting 4x4 matrix that describes this
 // motion. When this motion matrix is applied to the source point cloud, it will
@@ -162,18 +177,11 @@ function estimateMovement(gl, programs, textures, framebuffers, frame) {
         }
         // Solve Ax = b. The x vector will contain the 3 rotation angles (around
         // the x axis, y axis and z axis) and the translation (tx, ty, tz).
-        const result = numeric.solve(A, b);
-        // console.log("result: ", result);
-        if (Number.isNaN(result[0])) {
+        const x = numeric.solve(A, b);
+        if (Number.isNaN(x[0])) {
             throw Error('No corresponding points between frames found.');
         }
-        mat4.translate(
-            movement, movement,
-            vec3.fromValues(result[3], result[4], result[5]),
-        );
-        mat4.rotateX(movement, movement, result[0]);
-        mat4.rotateY(movement, movement, result[1]);
-        mat4.rotateZ(movement, movement, result[2]);
+        mat4.mul(movement, constructMovement(x), movement);
         previousError = error;
     }
     return movement;
