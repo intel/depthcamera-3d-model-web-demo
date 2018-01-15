@@ -281,7 +281,7 @@ function setupTextures(gl, programs, width, height) {
     const matrices = createTexture2D(gl.RGBA32F, 5*width, 3*height);
     const crossProduct = createTexture2D(gl.RGBA32F, width, height);
     const normal = createTexture2D(gl.RGBA32F, width, height);
-    const dotAndError = createTexture2D(gl.RG32F, width, height);
+    const dotAndError = createTexture2D(gl.RGBA32F, width, height);
 
     const biggestSize = smallestPowerOfTwo(Math.max(width, height)) >> 1;
     const sum = [];

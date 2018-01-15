@@ -36,9 +36,10 @@ void main() {
     int part = y * 5 + x;
     vec4 c = vec4(texture(crossProductTexture, coord).rgb, 0.0);
     vec4 n = vec4(texture(normalTexture, coord).rgb, 0.0);
-    vec2 dotAndError = texture(dotAndErrorTexture, coord).rg;
+    vec3 dotAndError = texture(dotAndErrorTexture, coord).rgb;
     float d = dotAndError.x;
     float e = dotAndError.y;
+    float b = dotAndError.z;
 
     if (part == 0) {
         outMatrixPart = c.x * c;
@@ -75,6 +76,7 @@ void main() {
 
     } else if (part == 14) {
         outMatrixPart.x = e;
+        outMatrixPart.y = b;
     }
 }
 `;

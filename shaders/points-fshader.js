@@ -61,7 +61,7 @@ precision highp float;
 
 layout(location = 0) out vec4 outCrossProduct;
 layout(location = 1) out vec4 outNormal;
-layout(location = 2) out vec2 outDotAndError;
+layout(location = 2) out vec4 outDotAndError;
 in vec2 aTexCoord;
 
 // Two depth images from the camera.
@@ -100,7 +100,7 @@ void main() {
     vec4 zero = vec4(0.0, 0.0, 0.0, 0.0);
     outCrossProduct = zero;
     outNormal = zero;
-    outDotAndError = vec2(0.0, 0.0);
+    outDotAndError = vec4(0.0, 0.0, 0.0, 0.0);
 
     // TODO use aTexCoord
     ivec2 texSize = textureSize(sourceDepthTexture, 0);
@@ -131,7 +131,7 @@ void main() {
                         outNormal = vec4(sourceNormal, 0.0);
                         float dotProduct = dot(sourcePosition - destPosition, sourceNormal);
                         float error = pow(dotProduct, 2.0);
-                        outDotAndError = vec2(dotProduct, error);
+                        outDotAndError = vec4(dotProduct, error, 1.0, 0.0);
                     }
                 }
             }

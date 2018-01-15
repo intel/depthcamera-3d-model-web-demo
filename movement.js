@@ -25,6 +25,7 @@ const ERROR_DIFF_THRESHOLD = 0.0001;
 function constructEquation(data) {
     const stride = 4;
     const error = data[14*stride];
+    const pointsUsed = data[14*stride + 1]
     const A = Array(6);
     const b = new Float32Array(6);
     for (let i = 0; i < 6; i += 1) {
@@ -42,10 +43,20 @@ function constructEquation(data) {
         b[i] = -data[(12*stride) + i];
         b[i + 3] = -data[(13*stride) + i];
     }
-    console.log('error: ', error);
+    // console.log('error: ', error);
     // console.log('A: ', A);
     // console.log('b: ', b);
-    return [A, b, error];
+    // console.log("points used: ", pointsUsed);
+    console.log("relative error: ", error/pointsUsed);
+    const AA = numeric.transpose(A);
+    for (let i = 0; i < A.length; i += 1) {
+        for (let j = 0; j < A[i].length; j += 1) {
+            if (A[i][j] !== AA[i][j]) {
+                console.error("A not symmetric, diff is ", A[i][j] - AA[i][j]);
+            }
+        }
+    }
+    return [A, b, error, pointsUsed];
 }
 
 // The parameter 'x' should contain a vector with 6 items, which holds the
@@ -165,7 +176,7 @@ function estimateMovement(gl, programs, textures, framebuffers, frame) {
         // containing the matrix A, the vector b and the error
         const data = new Float32Array(5 * 3 * stride);
         gl.readPixels(0, 0, 5, 3, gl.RGBA, gl.FLOAT, data);
-        const [A, b, error] = constructEquation(data);
+        const [A, b, error, pointsUsed] = constructEquation(data);
 
         // The algorithm has converged, because the error didn't change much
         // from the last loop. Note that the error might actually get higher
@@ -180,6 +191,22 @@ function estimateMovement(gl, programs, textures, framebuffers, frame) {
         const x = numeric.solve(A, b);
         if (Number.isNaN(x[0])) {
             throw Error('No corresponding points between frames found.');
+        }
+        // Verify that Ax = b, at least approximately.
+        // This seems to freeze the browser, so let's multiply manually
+        // const Ax = numeric.mul(A, x);
+        const Ax = new Float32Array(6);
+        for (i = 0; i < b.length; i += 1) {
+            Ax[i] = 0.0;
+            for (j = 0; j < b.length; j += 1) {
+                Ax[i] += A[i][j]*x[j];
+            }
+        }
+        for (i = 0; i < Ax.length; i += 1) {
+            if (Math.abs(b[i] - Ax[i]) > 0.00001) {
+                const diff = b[i] - Ax[i];
+                console.error("b and Ax are not the same, diff ", diff);
+            }
         }
         mat4.mul(movement, constructMovement(x), movement);
         previousError = error;
