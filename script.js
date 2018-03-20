@@ -22,7 +22,7 @@ let lastMousePositionY = 0;
 let yaw = 0;
 let pitch = 0;
 
-const USE_FAKE_DATA = false;
+const USE_FAKE_DATA = true;
 
 // Use this for displaying errors to the user. More details should be put into
 // `console.error` messages.
@@ -116,7 +116,7 @@ async function doMain() {
         width = 100;
         height = 100;
         const fakeMovement = mat4.create();
-        mat4.translate(fakeMovement, fakeMovement, vec3.fromValues(0.01, 0, 0));
+        // mat4.translate(fakeMovement, fakeMovement, vec3.fromValues(0.01, 0, 0));
         [fakeData, cameraParams] = createFakeData(width, height, mat4.create());
         [fakeData2, cameraParams] = createFakeData(width, height, fakeMovement);
         depthStreamReady = true;
@@ -148,8 +148,8 @@ async function doMain() {
                     source = fakeData;
                     if (frame === 1) source = fakeData2;
                 }
-                gl.activeTexture(gl[`TEXTURE${textures.depth[frame%2].glId()}`]);
-                gl.bindTexture(gl.TEXTURE_2D, textures.depth[frame%2]);
+                gl.activeTexture(gl[`TEXTURE${textures.depth.glId()}`]);
+                gl.bindTexture(gl.TEXTURE_2D, textures.depth);
                 gl.texSubImage2D(
                     gl.TEXTURE_2D,
                     0, // mip-map level
@@ -177,15 +177,13 @@ async function doMain() {
                 frame,
             );
             mat4.mul(globalMovement, movement, globalMovement);
-            // console.log(movement);
+            console.log(movement);
             console.log("");
 
             program = programs.model;
             gl.useProgram(program);
             l = gl.getUniformLocation(program, 'movement');
             gl.uniformMatrix4fv(l, false, globalMovement);
-            l = gl.getUniformLocation(program, 'depthTexture');
-            gl.uniform1i(l, textures.depth[frame%2].glId());
             l = gl.getUniformLocation(program, 'cubeTexture');
             if (frame % 2 === 0) {
                 gl.uniform1i(l, textures.cube0.glId());

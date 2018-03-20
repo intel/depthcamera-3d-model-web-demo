@@ -46,8 +46,12 @@ function constructEquation(data) {
     // console.log('error: ', error);
     // console.log('A: ', A);
     // console.log('b: ', b);
-    // console.log("points used: ", pointsUsed);
-    console.log("relative error: ", error/pointsUsed);
+    console.log("points used: ", pointsUsed);
+    console.log("relative error: ", (error/pointsUsed).toExponential());
+    const det = numeric.det(A);
+    if (Number.isNaN(det) || Math.abs(det) < 1e-15) {
+        console.error("Invalid determinant of A");
+    }
     const AA = numeric.transpose(A);
     for (let i = 0; i < A.length; i += 1) {
         for (let j = 0; j < A[i].length; j += 1) {
@@ -126,12 +130,12 @@ function estimateMovement(gl, programs, textures, framebuffers, frame) {
     if (frame === 0) return mat4.create();
     program = programs.points;
     gl.useProgram(program);
-    // Swap between depth textures, so that the older one is referenced as
-    // destDepthTexture.
-    l = gl.getUniformLocation(program, 'sourceDepthTexture');
-    gl.uniform1i(l, textures.depth[frame%2].glId());
-    l = gl.getUniformLocation(program, 'destDepthTexture');
-    gl.uniform1i(l, textures.depth[(frame+1)%2].glId());
+    let l = gl.getUniformLocation(program, 'cubeTexture');
+    if (frame % 2 === 0) {
+        gl.uniform1i(l, textures.cube0.glId());
+    } else {
+        gl.uniform1i(l, textures.cube1.glId());
+    }
     // Number of items in each texel, 4 means RGBA, 3 means RGB.
     const stride = 4;
 
@@ -147,7 +151,12 @@ function estimateMovement(gl, programs, textures, framebuffers, frame) {
         l = gl.getUniformLocation(program, 'movement');
         gl.uniformMatrix4fv(l, false, movement);
         gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.points);
+        // gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         gl.drawArrays(gl.TRIANGLES, 0, 6);
+        // throw Error("test");
+        const d = new Float32Array(stride)
+        gl.readPixels(55, 55, 1, 1, gl.RGBA, gl.FLOAT, d);
+        console.log("data from points shader", d);
 
         // Use the textures created by the points shader to construct a 6x6
         // matrix A and 6x1 vector b for each point and store it into a texture.

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-const CUBE_SIZE = 128;
+const CUBE_SIZE = 256;
 const GRID_UNIT = 1.0 / CUBE_SIZE;
 // a variant of SDF called TSDF limits the signed distance between
 // -SDF_TRUNCATION and SDF_TRUNCATION
@@ -140,10 +140,10 @@ function initUniforms(gl, programs, textures, parameters, width, height) {
     let program;
     program = programs.points;
     gl.useProgram(program);
-    l = gl.getUniformLocation(program, 'sourceDepthTexture');
-    gl.uniform1i(l, textures.depth[0].glId());
-    l = gl.getUniformLocation(program, 'destDepthTexture');
-    gl.uniform1i(l, textures.depth[1].glId());
+    l = gl.getUniformLocation(program, 'cubeTexture');
+    gl.uniform1i(l, textures.cube0.glId());
+    l = gl.getUniformLocation(program, 'depthTexture');
+    gl.uniform1i(l, textures.depth.glId());
     l = gl.getUniformLocation(program, 'movement');
     gl.uniformMatrix4fv(l, false, mat4.create());
     l = gl.getUniformLocation(program, 'depthScale');
@@ -167,7 +167,7 @@ function initUniforms(gl, programs, textures, parameters, width, height) {
     l = gl.getUniformLocation(program, 'cubeTexture');
     gl.uniform1i(l, textures.cube0.glId());
     l = gl.getUniformLocation(program, 'depthTexture');
-    gl.uniform1i(l, textures.depth[0].glId());
+    gl.uniform1i(l, textures.depth.glId());
     l = gl.getUniformLocation(program, 'cubeSize');
     gl.uniform1i(l, CUBE_SIZE);
     l = gl.getUniformLocation(program, 'sdfTruncation');
@@ -276,8 +276,7 @@ function setupTextures(gl, programs, width, height) {
     const cube0 = createTexture3D();
     const cube1 = createTexture3D();
     fillCubeTexture(gl, cube0);
-    const depth0 = createTexture2D(gl.R32F, width, height);
-    const depth1 = createTexture2D(gl.R32F, width, height);
+    const depth = createTexture2D(gl.R32F, width, height);
     const matrices = createTexture2D(gl.RGBA32F, 5*width, 3*height);
     const crossProduct = createTexture2D(gl.RGBA32F, width, height);
     const normal = createTexture2D(gl.RGBA32F, width, height);
@@ -292,7 +291,7 @@ function setupTextures(gl, programs, width, height) {
     return {
         cube0,
         cube1,
-        depth: [depth0, depth1],
+        depth,
         sum,
         matrices,
         points: {

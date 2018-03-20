@@ -54,19 +54,21 @@ precision highp float;
 
 // Throw out points whose distance is higher than this.
 #define MAX_DISTANCE 0.2
-// Throw out points which have normals n and m where dot(n, m) is smaller than
-// this value (the dot function returns 1 if the normals are identical, -1 if
-// they are opposite).
-#define MIN_NORMAL_DOT 0.9
+// How many steps the raymarcher will take at most.
+#define MAX_STEPS 1024
+// Floats with a difference smaller than this are considered equal.
+#define EPSILON 0.000001
 
 layout(location = 0) out vec4 outCrossProduct;
 layout(location = 1) out vec4 outNormal;
 layout(location = 2) out vec4 outDotAndError;
 in vec2 aTexCoord;
 
-// Two depth images from the camera.
-uniform highp sampler2D sourceDepthTexture;
-uniform highp sampler2D destDepthTexture;
+// Depth data from the camera.
+uniform highp sampler2D depthTexture;
+// Representation of the volumetric model.
+uniform highp sampler3D cubeTexture;
+
 
 uniform mat4 movement;
 
@@ -94,45 +96,104 @@ vec3 estimateNormal(sampler2D tex, vec2 imageCoord) {
     vec3 normal = cross(positionTop - position, positionRight - position);
     return normalize(normal);
 }
+// Convert world coordinates of the cube into uvw texture coordinates. Imagine
+// there is a cube of size 1x1x1 at origin - this function will return the
+// coordinate of the texel as if the texture was positioned like that.
+vec3 getTexelCoordinate(vec3 position) {
+    return position + 0.5;
+}
+
+// Signed distance function for a box.
+float signedDistanceBox(vec3 position) {
+    vec3 d = abs(position) - 0.5; // 0.5 is half of the size of each side
+    return min(max(d.x, max(d.y, d.z)), 0.0) + length(max(d, 0.0));
+}
+
+// Signed distance function for some objects - negative when inside of some
+// object, positive when outside, zero on the boundary.
+float signedDistance(vec3 position) {
+    // Move the cube to the front of the camera so that it is all visible.
+    position -= vec3(0.0, 0.0, 0.5);
+    // Since the values outside of the texture are 0, we need to draw a box at
+    // the same position as the texture cube, which will show us the distance
+    // towards it.
+    // return max(signedDistanceBox(position),
+    //            texture(cubeTexture, getTexelCoordinate(position)).r);
+    return texture(cubeTexture, getTexelCoordinate(position)).r;
+    // return signedDistanceBox(position);
+    // return texture(cubeTexture, vec3(0.6, 0.5, 0.5)).r;
+}
+
+
+vec3 raymarch(vec3 position, vec3 viewDirection) {
+    // float dist1 = signedDistance(position);
+    // position += dist1 * viewDirection;
+    // float dist2 = signedDistance(position);
+    // position += dist2 * viewDirection;
+    // float dist3 = signedDistance(position);
+    // return vec3(dist1, dist2, dist3);
+    for (int i = 0; i < MAX_STEPS; i++) {
+        float dist = signedDistance(position);
+        if (abs(dist) < 0.00001) {
+            return position;
+        } else {
+            position += dist * viewDirection;
+        }
+    }
+    return vec3(0.0, 0.0, 0.0);
+}
+
+// Guess what the normal of the surface is at this position by looking at nearby
+// points on the surface.
+vec3 estimateNormal(vec3 position) {
+    vec3 normal;
+    float gridUnit = 1.0/256.0;
+    float unit = gridUnit/2.0;
+    normal.x = signedDistance(position + vec3(unit, 0.0, 0.0))
+             - signedDistance(position - vec3(unit, 0.0, 0.0));
+    normal.y = signedDistance(position + vec3(0.0, unit, 0.0))
+             - signedDistance(position - vec3(0.0, unit, 0.0));
+    normal.z = signedDistance(position + vec3(0.0, 0.0, unit))
+             - signedDistance(position - vec3(0.0, 0.0, unit));
+    return normalize(normal);
+}
 
 
 void main() {
     vec4 zero = vec4(0.0, 0.0, 0.0, 0.0);
-    outCrossProduct = zero;
+    outCrossProduct = vec4(0.0, 0.0, 0.0, 0.0);
     outNormal = zero;
     outDotAndError = vec4(0.0, 0.0, 0.0, 0.0);
 
     // TODO use aTexCoord
-    ivec2 texSize = textureSize(sourceDepthTexture, 0);
+    ivec2 texSize = textureSize(depthTexture, 0);
     vec2 coord = vec2((gl_FragCoord.x)/float(texSize.x),
-                      (gl_FragCoord.y)/float(texSize.y));
+            (gl_FragCoord.y)/float(texSize.y));
     // TODO most of these if conditions could be removed or replaced by
     // something that doesn't use branching, but this should be done only after
     // I test that it works properly.
     vec2 imageCoord = coord - 0.5;
-    vec3 sourcePosition = deproject(sourceDepthTexture, imageCoord);
+    vec3 sourcePosition = deproject(depthTexture, imageCoord);
     if (sourcePosition.z != 0.0) {
-        vec3 sourceNormal = estimateNormal(sourceDepthTexture, imageCoord);
-        if (sourceNormal != vec3(0.0, 0.0, 0.0)) {
+        sourcePosition = (movement * vec4(sourcePosition, 1.0)).xyz;
+        // outCrossProduct = vec4(sourcePosition, 0.0);
 
-            sourcePosition = (movement * vec4(sourcePosition, 1.0)).xyz;
-            sourceNormal = mat3(movement) * sourceNormal;
-
-            vec2 destImageCoord = project(sourcePosition);
-            vec3 destPosition = deproject(destDepthTexture, destImageCoord);
-            if (destPosition.z != 0.0) {
-                vec3 destNormal = estimateNormal(destDepthTexture, destImageCoord);
-                if (destNormal != vec3(0.0, 0.0, 0.0)) {
-
-                    if (distance(sourcePosition, destPosition) < MAX_DISTANCE
-                            && dot(sourceNormal, destNormal) > MIN_NORMAL_DOT) {
-
-                        outCrossProduct = vec4(cross(sourcePosition, sourceNormal), 0.0);
-                        outNormal = vec4(sourceNormal, 0.0);
-                        float dotProduct = dot(sourcePosition - destPosition, sourceNormal);
-                        float error = pow(dotProduct, 2.0);
-                        outDotAndError = vec4(dotProduct, error, 1.0, 0.0);
-                    }
+        vec3 camera = vec3(0.0, 0.0, 0.0);
+        vec3 viewDirection = normalize(sourcePosition-camera);
+        vec3 destPosition = raymarch(sourcePosition, viewDirection);
+        // outCrossProduct = vec4(normalize(destPosition), 0.0);
+        outCrossProduct = vec4(destPosition, 0.0);
+        if (destPosition.z != 0.0) {
+            vec3 normal = estimateNormal(destPosition);
+            if (normal != vec3(0.0, 0.0, 0.0)) {
+                if (distance(sourcePosition, destPosition) < MAX_DISTANCE) {
+                    // outCrossProduct = vec4(cross(sourcePosition, normal), 0.0);
+                    outNormal = vec4(normal, 0.0);
+                    float dotProduct = dot(sourcePosition - destPosition, normal);
+                    // outCrossProduct = vec4(sourcePosition- destPosition, 0.0);
+                    // outCrossProduct = vec4(destPosition, 0.0);
+                    float error = pow(dotProduct, 2.0);
+                    outDotAndError = vec4(dotProduct, error, 1.0, 0.0);
                 }
             }
         }
