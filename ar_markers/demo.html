@@ -152,6 +152,18 @@
         gl.bindTexture(gl.TEXTURE_2D, gl.video_texture);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.video);
 
+        if (gl.timer_query) {
+          // check if previous run results are available:
+          if (gl.timer_query_pending &&
+              gl.getQueryParameter(gl.timer_query, gl.QUERY_RESULT_AVAILABLE)) {
+            const elapsed = gl.getQueryParameter(gl.timer_query, gl.QUERY_RESULT) / 1000000;
+            console.log("GPU time elapsed on recognition passes: " + elapsed + "ms.");
+            gl.timer_query_pending = false;
+          }
+          if (!gl.timer_query_pending)
+            gl.beginQuery(gl.timer_extension.TIME_ELAPSED_EXT, gl.timer_query);
+        }
+
         for (let i = 0; i < gl.passes.length; ++i) {
           const pass = gl.passes[i];
           // comment previous two lines and uncomment following to measure
@@ -163,7 +175,6 @@
           gl.bindBuffer(gl.ARRAY_BUFFER, gl.vertex_buffer);
           gl.vertexAttribPointer(pass.program.vertex_location, 2, gl.FLOAT, false, 0, 0);
 
-          
           if(pass.outlines) {
             gl.lineWidth(3);
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, gl.line_index_buffer);
@@ -177,6 +188,10 @@
           } else {
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, gl.index_buffer);
             gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);              
+          }
+          if (i == 5 && gl.timer_query && !gl.timer_query_pending) {
+            gl.endQuery(gl.timer_extension.TIME_ELAPSED_EXT);
+            gl.timer_query_pending = true;
           }
         }
 
@@ -1164,6 +1179,10 @@
       };
       image.src = "64.png";
       gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+      gl.timer_extension = gl.getExtension("EXT_disjoint_timer_query_webgl2") || gl.getExtension("EXT_disjoint_timer_query");
+      if (gl.timer_extension)
+        gl.timer_query = gl.createQuery();
+
       return gl;
     }
 
