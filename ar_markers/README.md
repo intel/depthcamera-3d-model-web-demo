@@ -1,6 +1,8 @@
-# Fast, low latency fiducial marker detection on GPU in browser (WebGL)
+# Fast, low latency fiducial marker detection on GPU in browser (WebGL) using standard webcam
 
-Work in progress.
+Work in progress. Although it is going to be used for 3D scanning, code in this
+folder doesn't require depth camera, but only a standard webcam. It is tested
+with webcams doing 30 and 60 Hz capture.
 
 <img src="doc/images/image4.gif" alt="Video of the demo is loading..."/>
 
