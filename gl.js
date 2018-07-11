@@ -85,6 +85,19 @@ function setupPrograms(gl) {
     };
 }
 
+function setupGL(canvasElement) {
+    let gl;
+    try {
+        gl = canvasElement.getContext('webgl2');
+    } catch (e) {
+        showErrorToUser('Your browser doesn\'t support WebGL2.');
+        throw new Error(`Could not create WebGL2 context: ${e}`);
+    }
+    gl.getExtension('EXT_color_buffer_float');
+    gl.getExtension('OES_texture_float_linear');
+    return gl;
+}
+
 function initAttributes(gl, programs) {
     const vbo = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
@@ -366,52 +379,4 @@ function initFramebuffers(gl, programs, textures) {
         sum,
         model: [cube0, cube1],
     };
-}
-
-
-function createFakeData(width, height, transform) {
-    function fakeSphere(x, y) {
-        const r = 0.1;
-        const tmp = (r*r) - (x*x) - (y*y);
-        if (tmp < 0.0) return 0.0;
-        let z = -Math.sqrt(tmp);
-        z += 0.5; // center it at (0, 0, 0.5)
-        return z;
-    }
-
-    const cameraParams = {
-        depthScale: 1.0,
-        getDepthIntrinsics(_, __) {
-            return {
-                offset: [width/2.0, height/2.0],
-                focalLength: [width, height],
-            };
-        },
-    };
-
-    const data = new Float32Array(width*height);
-    for (let i = 0; i < width * height; i += 1) {
-        data[i] = 0.0;
-    }
-    for (let i = 0; i < width; i += 1) {
-        for (let j = 0; j < height; j += 1) {
-            // project points between (-0.1, -0.1) and (0.1, 0.1), sphere won't
-            // be any bigger anyway
-            const x = ((i/width) - 0.5)/5.0;
-            const y = ((j/height) - 0.5)/5.0;
-            const z = fakeSphere(x, y);
-            if (z === 0) continue;
-            const position = vec4.fromValues(x, y, z, 1.0);
-            vec4.transformMat4(position, position, transform);
-
-            const xx = position[0]/position[2];
-            const yy = position[1]/position[2];
-            const ii = Math.floor((xx + 0.5)*width);
-            const jj = Math.floor((yy + 0.5)*height);
-            if (ii < 0 || jj < 0 || ii >= width || jj >= height) continue;
-            data[ii + (width*jj)] = position[2];
-        }
-    }
-
-    return [data, cameraParams];
 }

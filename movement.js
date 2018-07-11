@@ -50,13 +50,13 @@ function constructEquation(data) {
     console.log("relative error: ", (error/pointsUsed).toExponential());
     const det = numeric.det(A);
     if (Number.isNaN(det) || Math.abs(det) < 1e-15) {
-        console.error("Invalid determinant of A");
+        throw Error("Invalid determinant of A");
     }
     const AA = numeric.transpose(A);
     for (let i = 0; i < A.length; i += 1) {
         for (let j = 0; j < A[i].length; j += 1) {
             if (A[i][j] !== AA[i][j]) {
-                console.error("A not symmetric, diff is ", A[i][j] - AA[i][j]);
+                console.warn("A not symmetric, diff is ", A[i][j] - AA[i][j]);
             }
         }
     }
@@ -185,7 +185,14 @@ function estimateMovement(gl, programs, textures, framebuffers, frame) {
         // containing the matrix A, the vector b and the error
         const data = new Float32Array(5 * 3 * stride);
         gl.readPixels(0, 0, 5, 3, gl.RGBA, gl.FLOAT, data);
-        const [A, b, error, pointsUsed] = constructEquation(data);
+        let A, b, error, pointsUsed;
+        try {
+            [A, b, error, pointsUsed] = constructEquation(data);
+        } catch (e) {
+            console.error("Ignoring frame ", frame,
+                          " for movement estimation: ", e);
+            return mat4.create();
+        }
 
         // The algorithm has converged, because the error didn't change much
         // from the last loop. Note that the error might actually get higher
@@ -214,7 +221,7 @@ function estimateMovement(gl, programs, textures, framebuffers, frame) {
         for (i = 0; i < Ax.length; i += 1) {
             if (Math.abs(b[i] - Ax[i]) > 0.00001) {
                 const diff = b[i] - Ax[i];
-                console.error("b and Ax are not the same, diff ", diff);
+                console.warn("b and Ax are not the same, diff ", diff);
             }
         }
         mat4.mul(movement, constructMovement(x), movement);

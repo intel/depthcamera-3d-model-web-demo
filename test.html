@@ -32,26 +32,15 @@ limitations under the License.
         <script type="text/javascript" src="third_party/gl-matrix.js"></script>
         <script type="text/javascript" src="third_party/numeric.js"></script>
     </head>
-    <body style="background: white; color: #888888" onload="main()">
+    <body style="background: white; color: #888888" onload="testMain()">
         <div id="errormessages" style="font-color: red">
             <!-- Print error messages here. -->
         </div>
-        <canvas id="webglcanvas" width="800px" height="600px"
+        <canvas id="webglcanvas" width="400px" height="400px"
                 style="position: relative; background-color: black;">
         </canvas>
         <canvas id="debugcanvas" width="0px" height="0px"
                 style="position: relative; background-color: black;">
         </canvas>
-        <!-- Dummy <video> elements, will be shown via WebGL, not here. -->
-        <h4>Raw color data:</h4>
-        <video id="colorStream" autoplay
-            style="position: relative; width: 100px;
-                   border: 1px solid grey">
-        </video>
-        <h4>Raw depth data:</h4>
-        <video id="depthStream" autoplay
-            style="position:relative; width: 100px;
-                   border: 1px solid grey">
-        </video>
     </body>
 </html>

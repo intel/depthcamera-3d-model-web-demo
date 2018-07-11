@@ -22,7 +22,7 @@ let lastMousePositionY = 0;
 let yaw = 0;
 let pitch = 0;
 
-const USE_FAKE_DATA = true;
+const USE_FAKE_DATA = false;
 
 // Use this for displaying errors to the user. More details should be put into
 // `console.error` messages.
@@ -63,12 +63,12 @@ function handleMouseMove(event) {
     lastMousePositionY = event.clientY;
 }
 
-function getViewMatrix() {
+function getViewMatrix(yaw_degrees, pitch_degrees, zcenter) {
     const view = mat4.create();
-    mat4.translate(view, view, vec3.fromValues(0, 0, 1.8));
-    mat4.rotateY(view, view, glMatrix.toRadian(yaw));
-    mat4.rotateX(view, view, glMatrix.toRadian(pitch));
-    mat4.translate(view, view, vec3.fromValues(0, 0, -1.8));
+    mat4.translate(view, view, vec3.fromValues(0, 0, zcenter));
+    mat4.rotateY(view, view, glMatrix.toRadian(yaw_degrees));
+    mat4.rotateX(view, view, glMatrix.toRadian(pitch_degrees));
+    mat4.translate(view, view, vec3.fromValues(0, 0, -zcenter));
     return view;
 }
 
@@ -96,25 +96,16 @@ async function doMain() {
     colorStreamElement.oncanplay = function () { colorStreamReady = true; };
     depthStreamElement.oncanplay = function () { depthStreamReady = true; };
 
-    let gl;
-    try {
-        gl = canvasElement.getContext('webgl2');
-    } catch (e) {
-        showErrorToUser('Your browser doesn\'t support WebGL2.');
-        throw new Error(`Could not create WebGL2 context: ${e}`);
-    }
+    const gl = setupGL(canvasElement);
     const programs = setupPrograms(gl);
     initAttributes(gl, programs);
-    gl.getExtension('EXT_color_buffer_float');
-    gl.getExtension('OES_texture_float_linear');
-
 
     let width;
     let height;
     let cameraParams;
     if (USE_FAKE_DATA) {
-        width = 100;
-        height = 100;
+        width = 200;
+        height = 200;
         const fakeMovement = mat4.create();
         // mat4.translate(fakeMovement, fakeMovement, vec3.fromValues(0.01, 0, 0));
         [fakeData, cameraParams] = createFakeData(width, height, mat4.create());
@@ -209,7 +200,7 @@ async function doMain() {
                 gl.uniform1i(l, textures.cube0.glId());
             }
             l = gl.getUniformLocation(program, 'viewMatrix');
-            gl.uniformMatrix4fv(l, false, getViewMatrix());
+            gl.uniformMatrix4fv(l, false, getViewMatrix(yaw, pitch, 1.8));
             gl.clear(gl.COLOR_BUFFER_BIT);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
 
