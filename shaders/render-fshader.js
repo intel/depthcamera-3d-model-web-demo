@@ -75,8 +75,6 @@ float signedDistanceBox(vec3 position) {
 // Signed distance function for some objects - negative when inside of some
 // object, positive when outside, zero on the boundary.
 float signedDistance(vec3 position) {
-    // Move the cube to the front of the camera so that it is all visible.
-    position -= vec3(0.0, 0.0, 1.8);
     // Since the values outside of the texture are 0, we need to draw a box at
     // the same position as the texture cube, which will show us the distance
     // towards it.

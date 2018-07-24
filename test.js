@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-const EPSILON = 0.00001;
+const EPSILON = 0.001;
 
 function signedDistanceSphere(position, center, radius) {
     return vec3.distance(position, center) - radius; 
@@ -37,16 +37,13 @@ function signedDistanceBox(position, center, size) {
 // direction. Will be close to 0 if the position is right at the surface of the
 // object, negative if it's inside an object.
 function signedDistance(position) {
-    let p = vec3.create();
-    // place the objects at (0, 0, 0.5)
-    vec3.add(p, position, vec3.fromValues(0.0, 0.0, -0.5));
     const sphereCenter = vec3.fromValues(0.0, 0.0, 0.0);
-    const sphereRadius = 0.1;
-    const boxCenter =  vec3.fromValues(-0.2, 0.1, 0.0);
-    const boxSize = vec3.fromValues(0.05, 0.05, 0.05);
+    const sphereRadius = 0.2;
+    const boxCenter =  vec3.fromValues(0.2, -0.1, -0.1);
+    const boxSize = vec3.fromValues(0.08, 0.08, 0.08);
     // show a spere and a box
-    return Math.min(signedDistanceSphere(p, sphereCenter, sphereRadius),
-                    signedDistanceBox(p, boxCenter, boxSize));
+    return Math.min(signedDistanceSphere(position, sphereCenter, sphereRadius),
+                    signedDistanceBox(position, boxCenter, boxSize));
 }
 
 // Cast a ray from 'position' in the direction of 'viewDirection' until we hit
@@ -79,8 +76,8 @@ function createFakeData(width, height, transform) {
     };
 
     const data = new Float32Array(width*height);
-    // transform = getViewMatrix(20, 50, 0.5);
-    transform = getViewMatrix(0, 0, 0.5);
+    // transform = getViewMatrix(0, 0, 1.0);
+    transform = getViewMatrix(0, 30, 1.0);
     for (let i = 0; i < width; i += 1) {
         for (let j = 0; j < height; j += 1) {
             let coordx = -(i - width/2.0)/width;
@@ -95,7 +92,7 @@ function createFakeData(width, height, transform) {
 
             let result = raymarch(position, viewDirection);
             if (result) {
-                data[i*width + j] = vec3.distance(camera, result);
+                data[j*width + i] = vec3.distance(camera, result);
             }
         }
     }
@@ -104,7 +101,8 @@ function createFakeData(width, height, transform) {
 
 
 function showDepthData(canvasElement, data, width, height) {
-    // show the raw generated depth data on the webpage
+    // Show the raw generated depth data on the webpage (don't use this for raw
+    // camera data, those need to be scaled too).
     canvasElement.width = width;
     canvasElement.height = height;
     const context = canvasElement.getContext('2d');
@@ -112,7 +110,15 @@ function showDepthData(canvasElement, data, width, height) {
     for(let i=0; i < width*height*4; i += 1) {
         let depth = data[i/4];
         if (depth) {
-            debugData.data[i++] = 256 - ((depth*256) % 256);
+            // Make the data more visible - it assumes that the camera is 1.0
+            // away from the center of the object and the object is about 0.1 to
+            // 0.3 in diameter, so the range will be about 0.7-1.3. This should
+            // put it approximately in the 0.0-1.0 range so it can be displayed
+            // in red.
+            depth = (depth - 0.7)*2.0;
+            depth = Math.max(depth, 0.0);
+            depth = Math.min(depth, 1.0);
+            debugData.data[i++] = 255 - ((depth*256) % 256);
         } else {
             debugData.data[i++] = 0;
         }

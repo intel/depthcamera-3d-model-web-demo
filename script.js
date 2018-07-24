@@ -63,9 +63,10 @@ function handleMouseMove(event) {
     lastMousePositionY = event.clientY;
 }
 
+// zcenter is the displacement of the camera from the center, a reasonable value
+// would be 1.0.
 function getViewMatrix(yaw_degrees, pitch_degrees, zcenter) {
     const view = mat4.create();
-    mat4.translate(view, view, vec3.fromValues(0, 0, zcenter));
     mat4.rotateY(view, view, glMatrix.toRadian(yaw_degrees));
     mat4.rotateX(view, view, glMatrix.toRadian(pitch_degrees));
     mat4.translate(view, view, vec3.fromValues(0, 0, -zcenter));
