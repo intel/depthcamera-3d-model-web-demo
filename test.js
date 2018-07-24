@@ -99,31 +99,33 @@ function createFakeData(width, height, transform) {
             }
         }
     }
-    if (true) {
-        // show the raw generated depth data on the webpage
-        const canvas = document.getElementById('debugcanvas');
-        canvas.width = width;
-        canvas.height = height;
-        const context = canvas.getContext('2d');
-        let debugData = context.createImageData(width, height);
-        for(let i=0; i < width*height*4; i += 1) {
-            let depth = data[i/4];
-            if (depth) {
-                debugData.data[i++] = 256 - ((depth*256) % 256);
-            } else {
-                debugData.data[i++] = 0;
-            }
-            debugData.data[i++] = 0;
-            debugData.data[i++] = 0;
-            debugData.data[i] = 255;
-        }
-        context.putImageData(debugData, 0, 0);
-    }
     return [data, cameraParams];
+}
+
+
+function showDepthData(canvasElement, data, width, height) {
+    // show the raw generated depth data on the webpage
+    canvasElement.width = width;
+    canvasElement.height = height;
+    const context = canvasElement.getContext('2d');
+    let debugData = context.createImageData(width, height);
+    for(let i=0; i < width*height*4; i += 1) {
+        let depth = data[i/4];
+        if (depth) {
+            debugData.data[i++] = 256 - ((depth*256) % 256);
+        } else {
+            debugData.data[i++] = 0;
+        }
+        debugData.data[i++] = 0;
+        debugData.data[i++] = 0;
+        debugData.data[i] = 255;
+    }
+    context.putImageData(debugData, 0, 0);
 }
 
 async function doTestMain() {
     const canvasElement = document.getElementById('webglcanvas');
+    const debugCanvasElement = document.getElementById('debugcanvas');
     canvasElement.onmousedown = handleMouseDown;
     document.onmouseup = handleMouseUp;
     document.onmousemove = handleMouseMove;
@@ -137,6 +139,7 @@ async function doTestMain() {
     let height = 200;
     let cameraParams;
     [fakeData, cameraParams] = createFakeData(width, height, mat4.create());
+    showDepthData(debugCanvasElement, fakeData, width, height);
 
     let textures = setupTextures(gl, programs, width, height);
     initUniforms(gl, programs, textures, cameraParams, width, height);
