@@ -380,3 +380,25 @@ function initFramebuffers(gl, programs, textures) {
         model: [cube0, cube1],
     };
 }
+
+function uploadDepthData(gl, textures, data, width, height) {
+    try {
+        gl.activeTexture(gl[`TEXTURE${textures.depth.glId()}`]);
+        gl.bindTexture(gl.TEXTURE_2D, textures.depth);
+        gl.texSubImage2D(
+            gl.TEXTURE_2D,
+            0, // mip-map level
+            0, // x-offset
+            0, // y-offset
+            width,
+            height,
+            gl.RED,
+            gl.FLOAT,
+            data,
+        );
+    } catch (e) {
+        console.error(`Error uploading video to WebGL:
+                    ${e.name}, ${e.message}`);
+        throw e;
+    }
+}

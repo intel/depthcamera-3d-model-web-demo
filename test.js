@@ -141,24 +141,7 @@ async function doTestMain() {
     let textures = setupTextures(gl, programs, width, height);
     initUniforms(gl, programs, textures, cameraParams, width, height);
     let framebuffers = initFramebuffers(gl, programs, textures);
-    try {
-        gl.activeTexture(gl[`TEXTURE${textures.depth.glId()}`]);
-        gl.bindTexture(gl.TEXTURE_2D, textures.depth);
-        gl.texSubImage2D(
-            gl.TEXTURE_2D,
-            0, // mip-map level
-            0, // x-offset
-            0, // y-offset
-            width,
-            height,
-            gl.RED,
-            gl.FLOAT,
-            fakeData,
-        );
-    } catch (e) {
-        console.error(`Error uploading video to WebGL:
-            ${e.name}, ${e.message}`);
-    }
+    uploadDepthData(gl, textures, fakeData, width, height);
 
     let l;
     let program;

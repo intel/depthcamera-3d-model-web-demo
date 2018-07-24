@@ -133,29 +133,12 @@ async function doMain() {
                 initUniforms(gl, programs, textures, cameraParams, width, height);
                 framebuffers = initFramebuffers(gl, programs, textures);
             }
-            try {
-                let source = depthStreamElement;
-                if (USE_FAKE_DATA) {
-                    source = fakeData;
-                    if (frame === 1) source = fakeData2;
-                }
-                gl.activeTexture(gl[`TEXTURE${textures.depth.glId()}`]);
-                gl.bindTexture(gl.TEXTURE_2D, textures.depth);
-                gl.texSubImage2D(
-                    gl.TEXTURE_2D,
-                    0, // mip-map level
-                    0, // x-offset
-                    0, // y-offset
-                    width,
-                    height,
-                    gl.RED,
-                    gl.FLOAT,
-                    source,
-                );
-            } catch (e) {
-                console.error(`Error uploading video to WebGL:
-                    ${e.name}, ${e.message}`);
+            let source = depthStreamElement;
+            if (USE_FAKE_DATA) {
+                source = fakeData;
+                if (frame === 1) source = fakeData2;
             }
+            uploadDepthData(gl, textures, source, width, height);
 
             let l;
             let program;
