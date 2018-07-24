@@ -140,9 +140,6 @@ async function doMain() {
             }
             uploadDepthData(gl, textures, source, width, height);
 
-            let l;
-            let program;
-
             const movement = estimateMovement(
                 gl,
                 programs,
@@ -156,20 +153,7 @@ async function doMain() {
 
             createModel(gl, programs, framebuffers, textures, frame,
                         globalMovement);
-            program = programs.render;
-            gl.useProgram(program);
-            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-            l = gl.getUniformLocation(program, 'cubeTexture');
-            if (frame % 2 === 0) {
-                gl.uniform1i(l, textures.cube1.glId());
-            } else {
-                gl.uniform1i(l, textures.cube0.glId());
-            }
-            l = gl.getUniformLocation(program, 'viewMatrix');
-            gl.uniformMatrix4fv(l, false, getViewMatrix(yaw, pitch, 1.8));
-            gl.clear(gl.COLOR_BUFFER_BIT);
-            gl.drawArrays(gl.TRIANGLES, 0, 6);
-
+            renderModel(gl, programs, textures, frame);
             frame += 1;
         }
         window.requestAnimationFrame(animate);

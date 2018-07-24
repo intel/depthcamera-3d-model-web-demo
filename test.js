@@ -143,22 +143,10 @@ async function doTestMain() {
     let framebuffers = initFramebuffers(gl, programs, textures);
     uploadDepthData(gl, textures, fakeData, width, height);
 
-    let l;
-    let program;
-
     createModel(gl, programs, framebuffers, textures, 0, mat4.create());
 
     const animate = function () {
-        program = programs.render;
-        gl.useProgram(program);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-        l = gl.getUniformLocation(program, 'cubeTexture');
-        gl.uniform1i(l, textures.cube1.glId());
-        l = gl.getUniformLocation(program, 'viewMatrix');
-        gl.uniformMatrix4fv(l, false, getViewMatrix(yaw, pitch, 1.8));
-        gl.clear(gl.COLOR_BUFFER_BIT);
-        gl.drawArrays(gl.TRIANGLES, 0, 6);
-
+        renderModel(gl, programs, textures, 0);
         window.requestAnimationFrame(animate);
     };
     animate();
