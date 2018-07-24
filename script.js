@@ -154,25 +154,8 @@ async function doMain() {
             console.log(movement);
             console.log("");
 
-            program = programs.model;
-            gl.useProgram(program);
-            l = gl.getUniformLocation(program, 'movement');
-            gl.uniformMatrix4fv(l, false, globalMovement);
-            l = gl.getUniformLocation(program, 'cubeTexture');
-            if (frame % 2 === 0) {
-                gl.uniform1i(l, textures.cube0.glId());
-            } else {
-                gl.uniform1i(l, textures.cube1.glId());
-            }
-            l = gl.getUniformLocation(program, 'zslice');
-            for (let zslice = 0; zslice < CUBE_SIZE; zslice += 1) {
-                gl.uniform1ui(l, zslice);
-                gl.bindFramebuffer(
-                    gl.FRAMEBUFFER,
-                    framebuffers.model[(frame + 1) % 2][zslice],
-                );
-                gl.drawArrays(gl.TRIANGLES, 0, 6);
-            }
+            createModel(gl, programs, framebuffers, textures, frame,
+                        globalMovement);
             program = programs.render;
             gl.useProgram(program);
             gl.bindFramebuffer(gl.FRAMEBUFFER, null);

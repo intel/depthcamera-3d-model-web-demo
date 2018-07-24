@@ -146,19 +146,7 @@ async function doTestMain() {
     let l;
     let program;
 
-    program = programs.model;
-    gl.useProgram(program);
-    l = gl.getUniformLocation(program, 'cubeTexture');
-    gl.uniform1i(l, textures.cube0.glId());
-    l = gl.getUniformLocation(program, 'zslice');
-    for (let zslice = 0; zslice < CUBE_SIZE; zslice += 1) {
-        gl.uniform1ui(l, zslice);
-        gl.bindFramebuffer(
-            gl.FRAMEBUFFER,
-            framebuffers.model[1][zslice],
-        );
-        gl.drawArrays(gl.TRIANGLES, 0, 6);
-    }
+    createModel(gl, programs, framebuffers, textures, 0, mat4.create());
 
     const animate = function () {
         program = programs.render;
