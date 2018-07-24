@@ -19,7 +19,6 @@ limitations under the License.
         <meta charset="utf-8"/>
         <script type="text/javascript" src="script.js"></script>
         <script type="text/javascript" src="movement.js"></script>
-        <script type="text/javascript" src="test.js"></script>
         <script type="text/javascript" src="depth-camera.js"></script>
         <script type="text/javascript" src="shaders/common.js"></script>
         <script type="text/javascript" src="shaders/canvas-vshader.js"></script>
@@ -31,15 +30,32 @@ limitations under the License.
         <script type="text/javascript" src="gl.js"></script>
         <script type="text/javascript" src="third_party/gl-matrix.js"></script>
         <script type="text/javascript" src="third_party/numeric.js"></script>
+        <script type="text/javascript" src="testdata.js"></script>
+        <script type="text/javascript" src="test.js"></script>
     </head>
     <body style="background: white; color: #888888" onload="testMain()">
         <div id="errormessages" style="font-color: red">
             <!-- Print error messages here. -->
-        </div>
-        <canvas id="webglcanvas" width="400px" height="400px"
+        <h2>Input data</h2>
+        <canvas id="data1" width="0px" height="0px"
                 style="position: relative; background-color: black;">
         </canvas>
-        <canvas id="debugcanvas" width="0px" height="0px"
+        <canvas id="data2" width="0px" height="0px"
+                style="position: relative; background-color: black;">
+        </canvas>
+        </div>
+        <h2>Test CPU Movement Estimation</h2>
+        <canvas id="testCPUMovementEstimationCanvas" width="400px" height="400px"
+                style="position: relative; background-color: black;">
+        </canvas>
+        <h2>Test Movement Estimation</h2>
+        <canvas id="testMovementEstimationCanvas" width="400px" height="400px"
+                style="position: relative; background-color: black;">
+        </canvas>
+        <h2>Test Volumetric Model</h2>
+        <div>Visual test only. Should show a sphere and a box next to
+            each other.</div>
+        <canvas id="testVolumetricModelCanvas" width="400px" height="400px"
                 style="position: relative; background-color: black;">
         </canvas>
     </body>

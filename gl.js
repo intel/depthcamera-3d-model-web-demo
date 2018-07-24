@@ -218,6 +218,10 @@ function fillCubeTexture(gl, texture) {
         data[i] = GRID_UNIT;
         // This has to be bigger than 0, otherwise the shader will divide by 0.
         data[i + 1] = 0.1;
+        if (i < CUBE_SIZE*stride*2
+            || i > size - CUBE_SIZE*stride*2) {
+            data[i] = 0.0;
+        }
     }
 
     gl.texSubImage3D(

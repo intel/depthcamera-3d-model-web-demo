@@ -147,7 +147,7 @@ vec3 raymarch(vec3 position, vec3 viewDirection) {
 // points on the surface.
 vec3 estimateNormal(vec3 position) {
     vec3 normal;
-    float gridUnit = 1.0/256.0;
+    float gridUnit = 1.0/128.0;
     float unit = gridUnit/2.0;
     normal.x = signedDistance(position + vec3(unit, 0.0, 0.0))
              - signedDistance(position - vec3(unit, 0.0, 0.0));
@@ -182,12 +182,12 @@ void main() {
         vec3 viewDirection = normalize(sourcePosition-camera);
         vec3 destPosition = raymarch(sourcePosition, viewDirection);
         // outCrossProduct = vec4(normalize(destPosition), 0.0);
-        outCrossProduct = vec4(destPosition, 0.0);
+        // outCrossProduct = vec4(destPosition, 0.0);
         if (destPosition.z != 0.0) {
             vec3 normal = estimateNormal(destPosition);
             if (normal != vec3(0.0, 0.0, 0.0)) {
                 if (distance(sourcePosition, destPosition) < MAX_DISTANCE) {
-                    // outCrossProduct = vec4(cross(sourcePosition, normal), 0.0);
+                    outCrossProduct = vec4(cross(sourcePosition, normal), 0.0);
                     outNormal = vec4(normal, 0.0);
                     float dotProduct = dot(sourcePosition - destPosition, normal);
                     // outCrossProduct = vec4(sourcePosition- destPosition, 0.0);

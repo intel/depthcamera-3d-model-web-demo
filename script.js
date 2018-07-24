@@ -22,7 +22,7 @@ let lastMousePositionY = 0;
 let yaw = 0;
 let pitch = 0;
 
-const USE_FAKE_DATA = false;
+const USE_FAKE_DATA = true;
 
 // Use this for displaying errors to the user. More details should be put into
 // `console.error` messages.
@@ -107,10 +107,11 @@ async function doMain() {
     if (USE_FAKE_DATA) {
         width = 200;
         height = 200;
-        const fakeMovement = mat4.create();
-        // mat4.translate(fakeMovement, fakeMovement, vec3.fromValues(0.01, 0, 0));
-        [fakeData, cameraParams] = createFakeData(width, height, mat4.create());
-        [fakeData2, cameraParams] = createFakeData(width, height, fakeMovement);
+        let transform = getViewMatrix(0, 30, 1.0);
+        let transform2 = getViewMatrix(-5, 30, 1.0);
+        cameraParams = createFakeCameraParams(height, width);
+        [fakeData, _] = createFakeData(width, height, transform);
+        [fakeData2, __] = createFakeData(width, height, transform2);
         depthStreamReady = true;
         colorStreamReady = true;
     } else {
@@ -134,10 +135,12 @@ async function doMain() {
                 initUniforms(gl, programs, textures, cameraParams, width, height);
                 framebuffers = initFramebuffers(gl, programs, textures);
             }
+            // if (frame < 2) {
+            if (true) {
             let source = depthStreamElement;
             if (USE_FAKE_DATA) {
                 source = fakeData;
-                if (frame === 1) source = fakeData2;
+                if (frame >= 1) source = fakeData2;
             }
             uploadDepthData(gl, textures, source, width, height);
 
@@ -152,6 +155,7 @@ async function doMain() {
             console.log(movement);
             console.log("");
 
+            }
             createModel(gl, programs, framebuffers, textures, frame,
                         globalMovement);
             renderModel(gl, programs, textures, frame);
