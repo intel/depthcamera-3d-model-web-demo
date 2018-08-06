@@ -15,6 +15,7 @@
 let width = 200;
 let height = 200;
 let transform = getViewMatrix(0, 30, 1.0);
+// let transform2 = getViewMatrix(-15, 30, 1.0);
 let transform2 = getViewMatrix(-15, 30, 1.0);
 let knownMovement = getMovement(transform2, transform);
 let [destData, destNormals] = createFakeData(width, height, transform);
@@ -94,12 +95,12 @@ function testCPUMovementEstimationKnownMovement() {
 function testCPUMovementEstimation() {
     let [_, gl, programs, textures, framebuffers] = 
         setupTest('testCPUMovementEstimationCanvas');
-    let movement = estimateMovementCPU(srcData, destData, destNormals, false);
-    console.log("expected");
-    printMat4(knownMovement);
-    console.log("estimation");
-    printMat4(movement);
-    console.log("final error: ", error);
+    // let movement = estimateMovementCPU(srcData, destData, destNormals, false);
+    // console.log("expected");
+    // printMat4(knownMovement);
+    // console.log("estimation");
+    // printMat4(movement);
+    // console.log("final error: ", error);
 
     let frame = 0;
     uploadDepthData(gl, textures, destData, width, height);
@@ -133,6 +134,10 @@ function testMain() {
     }
     let res = mat4.create();
     mat4.mul(res, knownMovement, transform2);
+    printMat4(knownMovement);
     if (!matricesEqual(res, transform, 1e-8))
         throw Error("wrong transform");
+    let x = vec3.fromValues(0.0, 0, 0.0);
+    vec3.transformMat4(x, x, knownMovement);
+    console.log("x", x);
 }

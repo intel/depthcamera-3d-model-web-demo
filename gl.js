@@ -409,11 +409,24 @@ function uploadDepthData(gl, textures, data, width, height) {
 
 
 function createModel(gl, programs, framebuffers, textures, frame, movement) {
+    let transform = movement.slice();
+    // let translate = vec3.fromValues(0, 0, 0.5);
+    // vec3.transformMat4(translate, translate, transform);
+    // mat4.translate(transform, transform, translate);
+
+    // mat4.invert(transform, transform);
+    // let t1 = mat4.create();
+    // let t2 = mat4.create();
+    // mat4.translate(t1, t1, vec3.fromValues(0, 0, -1));
+    // mat4.translate(t2, t2, vec3.fromValues(0, 0, 1));
+    // mat4.mul(transform, transform, t1);
+    // mat4.mul(transform, t2, transform);
+
     let l;
     let program = programs.model;
     gl.useProgram(program);
     l = gl.getUniformLocation(program, 'movement');
-    gl.uniformMatrix4fv(l, false, movement);
+    gl.uniformMatrix4fv(l, false, transform);
     l = gl.getUniformLocation(program, 'cubeTexture');
     if (frame % 2 === 0) {
         gl.uniform1i(l, textures.cube0.glId());

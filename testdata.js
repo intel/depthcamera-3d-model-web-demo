@@ -115,9 +115,18 @@ function createFakeData(width, height, transform) {
 
             let debug = (i == width/2 && j == height/2);
             let result = raymarch(position, viewDirection);
+            if (i === 150 && j == 150) {
+                // result = 0.1;    
+                console.log(coordx, coordy);
+                console.log(position);
+                console.log("xxx", result);
+            }
             if (result) {
                 let normal = estimateNormal(position);
                 data[j*width + i] = vec3.distance(camera, result);
+                if (i === 150 && j === 150) {
+                    console.log("xx", vec3.distance(camera, result));
+                }
                 normals[(j*width + i)*3] = normal[0];
                 normals[(j*width + i)*3 + 1] = normal[1];
                 normals[(j*width + i)*3 + 2] = normal[2];

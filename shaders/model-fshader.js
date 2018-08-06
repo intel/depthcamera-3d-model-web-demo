@@ -159,8 +159,8 @@ void main() {
     vec3 position = texel - 0.5;
     // Center the cube at (0, 0, 0.5). The camera will be at the origin and the
     // projection plane at z=-1.
-    position.z += 0.5;
     position = (movement * vec4(position, 1.0)).xyz;
+    position += vec3(0.0, 0.0, 1.0);
     outTexel = calculateSdf(texel, position);
 }
 `;
