@@ -310,7 +310,7 @@ function printMat4(mat) {
     for (let i = 0; i < 4; i += 1) {
         let str = "";
         for (let j = 0; j < 4; j += 1) {
-            let tmp = mat[i*4 + j].toFixed(3);
+            let tmp = mat[j*4 + i].toFixed(3);
             if (tmp >= 0) str += " ";
             str += tmp + " ";
         }
