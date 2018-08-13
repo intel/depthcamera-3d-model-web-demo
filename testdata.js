@@ -99,6 +99,8 @@ function createFakeCameraParams(width, height) {
 function createFakeData(width, height, transform) {
     const data = new Float32Array(width*height);
     const normals = new Float32Array(width*height*3);
+    let inv_transform = mat4.create();
+    mat4.invert(inv_transform, transform);
     data.width = width;
     data.height = height;
     normals.width = width;
@@ -119,15 +121,23 @@ function createFakeData(width, height, transform) {
             let result = raymarch(position, viewDirection);
             if (i === 150 && j == 150) {
                 // result = 0.1;    
-                console.log(coordx, coordy);
-                console.log(position);
-                console.log("xxx", result);
+                console.log("camera", camera);
+                console.log("coords", coordx, coordy);
+                console.log("transformed position", position);
+                console.log("surface position", result);
             }
             if (result) {
                 let normal = estimateNormal(position);
-                data[j*width + i] = vec3.distance(camera, result);
+                let result_camera = vec3.create();
+                vec3.transformMat4(result_camera, result, inv_transform);
+                // data[j*width + i] = vec3.distance(camera, result);
+                data[j*width + i] = result_camera[2];
                 if (i === 150 && j === 150) {
-                    console.log("xx", vec3.distance(camera, result));
+                    console.log("camera space surface", result_camera);
+                    let [a, b] = project(result_camera);
+                    console.log("project", a, b);
+                    let c = deproject(data, a, b);
+                    console.log("deproject", c);
                 }
                 normals[(j*width + i)*3] = normal[0];
                 normals[(j*width + i)*3 + 1] = normal[1];
@@ -174,14 +184,14 @@ function showDepthData(canvas, data) {
 }
 
 function deproject(data, coordx, coordy) {
-    let i = Math.round(coordx*data.width + data.width/2.0);
+    let i = Math.round(-coordx*data.width + data.width/2.0);
     let j = Math.round(coordy*data.height + data.height/2.0);
     let debug = (i == data.width/2 && j == data.height/2);
     let depth = data[j*data.width + i];
     if (isNaN(depth))
         return vec3.create();
-    let resultx = coordx*depth;
-    let resulty = coordy*depth;
+    let resultx = -coordx*depth;
+    let resulty = -coordy*depth;
     if (debug) {
         // console.log("i j: ", i, j);
         // console.log("depth: ", depth);
@@ -189,11 +199,11 @@ function deproject(data, coordx, coordy) {
     return vec3.fromValues(resultx, resulty, depth);
 }
 
-function project(data, position) {
+function project(position) {
     if (position[2] === 0.0)
         throw Error("Trying to project invalid data");
-    let coordx = position[0]/position[2];
-    let coordy = position[1]/position[2];
+    let coordx = -position[0]/position[2];
+    let coordy = -position[1]/position[2];
     return [coordx, coordy];
 }
 
@@ -214,7 +224,7 @@ function correspondingPoint(srcDepth, destDepth, destNormals, movement, i, j) {
     let sourcePosition = deproject(srcDepth, coordx, coordy);
     if (sourcePosition[2] === 0.0) return [];
     vec3.transformMat4(sourcePosition, sourcePosition, movement);
-    let [destCoordx, destCoordy] = project(destDepth, sourcePosition);
+    let [destCoordx, destCoordy] = project(sourcePosition);
     let destPosition = deproject(destDepth, destCoordx, destCoordy);
     if (destPosition[2] === 0.0) return [];
     let destNormal = getNormal(destNormals, coordx, coordy);
