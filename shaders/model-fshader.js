@@ -157,10 +157,10 @@ void main() {
     // coordinates where each component is from -0.5 to 0.5, i.e. the cube
     // texture is going to be centered at the origin.
     vec3 position = texel - 0.5;
-    // Center the cube at (0, 0, 0.5). The camera will be at the origin and the
-    // projection plane at z=-1.
-    position = (movement * vec4(position, 1.0)).xyz;
+    // Center the cube at (0, 0, 1.0), so that it is in the camera space. The
+    // camera will be at the origin and the projection plane at z=-1.
     position += vec3(0.0, 0.0, 1.0);
+    position = (movement * vec4(position, 1.0)).xyz;
     outTexel = calculateSdf(texel, position);
 }
 `;

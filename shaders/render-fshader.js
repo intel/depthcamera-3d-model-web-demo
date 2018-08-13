@@ -143,8 +143,8 @@ vec4 raymarch(vec3 position, vec3 viewDirection) {
 
 void main() {
     // Each pixel/fragment gets a coordinate between (-0.5, -0.5) and (0.5,
-    // 0.5). Flip the x coordinate, because projection onto the plane at z=-1
-    // will cause it to get switched.
+    // 0.5). Flip the y coordinate, because textures are by default stored
+    // flipped around.
     float size = float(max(canvasSize.x, canvasSize.y));
     vec2 coord = vec2((float(gl_FragCoord.x) - float(canvasSize.x)/2.0)/size,
                       -(float(gl_FragCoord.y) - float(canvasSize.y)/2.0)/size);

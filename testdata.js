@@ -117,28 +117,28 @@ function createFakeData(width, height, transform) {
             vec3.scaleAndAdd(viewDirection, camera, position, -1.0);
             vec3.normalize(viewDirection, viewDirection);
 
-            let debug = (i == width/2 && j == height/2);
+            // let debug = (i == width/2 && j == height/2);
+            // let debug = (i == 139 && j == 158);
+            // let debug = (i == 150 && j == 150);
+            let debug = false;
             let result = raymarch(position, viewDirection);
-            if (i === 150 && j == 150) {
-                // result = 0.1;    
+            if (debug) {
+                console.log(i, j);
                 console.log("camera", camera);
                 console.log("coords", coordx, coordy);
                 console.log("transformed position", position);
                 console.log("surface position", result);
             }
             if (result) {
-                let normal = estimateNormal(position);
+                // Put the surface position into the camera space (where the
+                // camera is at the origin).
                 let result_camera = vec3.create();
                 vec3.transformMat4(result_camera, result, inv_transform);
-                // data[j*width + i] = vec3.distance(camera, result);
                 data[j*width + i] = result_camera[2];
-                if (i === 150 && j === 150) {
+                if (debug) {
                     console.log("camera space surface", result_camera);
-                    let [a, b] = project(result_camera);
-                    console.log("project", a, b);
-                    let c = deproject(data, a, b);
-                    console.log("deproject", c);
                 }
+                let normal = estimateNormal(result);
                 normals[(j*width + i)*3] = normal[0];
                 normals[(j*width + i)*3 + 1] = normal[1];
                 normals[(j*width + i)*3 + 2] = normal[2];
@@ -148,7 +148,6 @@ function createFakeData(width, height, transform) {
             }
         }
     }
-    console.log("");
     return [data, normals];
 }
 
@@ -353,10 +352,14 @@ function matricesEqual(mat1, mat2, epsilon) {
     return true;
 }
 
+// Assuming src and dest are the movement of the camera, the result will be the
+// movement of an object in the camera space (where the camera is at the
+// origin).
 function getMovement(src, dest) {
-    let inv = mat4.create(); 
     let movement = mat4.create();
-    mat4.invert(inv, src);
-    mat4.mul(movement, dest, inv);
+    let dest_inv = mat4.create();
+    let x = mat4.create();
+    mat4.invert(dest_inv, dest);
+    mat4.mul(movement, dest_inv, src);
     return movement;
 }

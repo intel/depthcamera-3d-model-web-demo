@@ -16,7 +16,7 @@ let width = 200;
 let height = 200;
 let transform = getViewMatrix(0, 30, 1.0);
 // let transform2 = getViewMatrix(-15, 30, 1.0);
-let transform2 = getViewMatrix(-15, 30, 1.0);
+let transform2 = getViewMatrix(-130, 30, 1.0);
 let knownMovement = getMovement(transform2, transform);
 let [destData, destNormals] = createFakeData(width, height, transform);
 let [srcData, _] = createFakeData(width, height, transform2);
@@ -132,12 +132,4 @@ function testMain() {
     } catch (e) {
         handleError(e);
     }
-    let res = mat4.create();
-    mat4.mul(res, knownMovement, transform2);
-    printMat4(knownMovement);
-    if (!matricesEqual(res, transform, 1e-8))
-        throw Error("wrong transform");
-    let x = vec3.fromValues(0.0, 0, 0.0);
-    vec3.transformMat4(x, x, knownMovement);
-    console.log("x", x);
 }
