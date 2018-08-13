@@ -410,6 +410,7 @@ function uploadDepthData(gl, textures, data, width, height) {
 
 function createModel(gl, programs, framebuffers, textures, frame, movement) {
     let transform = movement.slice();
+    // mat4.invert(transform, transform);
     // let translate = vec3.fromValues(0, 0, 0.5);
     // vec3.transformMat4(translate, translate, transform);
     // mat4.translate(transform, transform, translate);

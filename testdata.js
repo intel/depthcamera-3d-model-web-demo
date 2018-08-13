@@ -52,32 +52,34 @@ function signedDistance(position) {
 // within MAX_STEPS.
 // http://www.alanzucconi.com/2016/07/01/raymarching/
 function raymarch(position, viewDirection) {
+    let p = position.slice();
     for (let i = 0; i < MAX_STEPS; i+=1) {
-        let dist = signedDistance(position);
+        let dist = signedDistance(p);
         if (dist < EPSILON) {
-            return position;
+            return p;
         } else {
-            // position += dist * viewDirection;
-            vec3.scaleAndAdd(position, position, viewDirection, dist);
+            // p += dist * viewDirection;
+            vec3.scaleAndAdd(p, p, viewDirection, dist);
         }
     }
     return false;
 }
 
 function estimateNormal(position) {
+    let p = position.slice();
     let normal = vec3.create();
     let a = vec3.create();
     let b = vec3.create();
-    vec3.add(a, position, vec3.fromValues(EPSILON, 0, 0));
-    vec3.add(b, position, vec3.fromValues(-EPSILON, 0, 0));
+    vec3.add(a, p, vec3.fromValues(EPSILON, 0, 0));
+    vec3.add(b, p, vec3.fromValues(-EPSILON, 0, 0));
     normal[0] = signedDistance(a) - signedDistance(b);
 
-    vec3.add(a, position, vec3.fromValues(0, EPSILON, 0));
-    vec3.add(b, position, vec3.fromValues(0, -EPSILON, 0));
+    vec3.add(a, p, vec3.fromValues(0, EPSILON, 0));
+    vec3.add(b, p, vec3.fromValues(0, -EPSILON, 0));
     normal[1] = signedDistance(a) - signedDistance(b);
 
-    vec3.add(a, position, vec3.fromValues(0, 0, EPSILON));
-    vec3.add(b, position, vec3.fromValues(0, 0, -EPSILON));
+    vec3.add(a, p, vec3.fromValues(0, 0, EPSILON));
+    vec3.add(b, p, vec3.fromValues(0, 0, -EPSILON));
     normal[2] = signedDistance(a) - signedDistance(b);
     return vec3.normalize(normal, normal);
 }
@@ -136,6 +138,7 @@ function createFakeData(width, height, transform) {
             }
         }
     }
+    console.log("");
     return [data, normals];
 }
 
