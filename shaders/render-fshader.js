@@ -63,6 +63,7 @@ uniform uvec2 canvasSize;
 // there is a cube of size 1x1x1 at origin - this function will return the
 // coordinate of the texel as if the texture was positioned like that.
 vec3 getTexelCoordinate(vec3 position) {
+    position.x = -position.x;
     return position + 0.5;
 }
 

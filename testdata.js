@@ -15,7 +15,7 @@
 const EPSILON = 0.001;
 
 function signedDistanceSphere(position, center, radius) {
-    return vec3.distance(position, center) - radius; 
+    return vec3.distance(position, center) - radius;
 }
 
 function signedDistanceBox(position, center, size) {
@@ -42,8 +42,9 @@ function signedDistance(position) {
     const boxCenter =  vec3.fromValues(0.2, -0.1, -0.1);
     const boxSize = vec3.fromValues(0.08, 0.08, 0.08);
     // show a spere and a box
-    return Math.min(signedDistanceSphere(position, sphereCenter, sphereRadius),
-                    signedDistanceBox(position, boxCenter, boxSize));
+    return Math.min(Math.min(signedDistanceSphere(position, sphereCenter, sphereRadius),
+                             signedDistanceBox(position, boxCenter, boxSize)),
+                    signedDistanceBox(position, BOX2_CENTER, BOX2_SIZE));
 }
 
 // Cast a ray from 'position' in the direction of 'viewDirection' until we hit
@@ -98,18 +99,32 @@ function createFakeCameraParams(width, height) {
 
 function createFakeData(width, height, transform) {
     const data = new Float32Array(width*height);
-    const normals = new Float32Array(width*height*3);
+    const normals = new Float32Array(width*height*4);
     let inv_transform = mat4.create();
     mat4.invert(inv_transform, transform);
     data.width = width;
     data.height = height;
     normals.width = width;
     normals.height = height;
+    normals.stride = 4;
     for (let i = 0; i < width; i += 1) {
         for (let j = 0; j < height; j += 1) {
+            // let debug = (i == width/2 && j == height/2);
+            // let debug = (i == 139 && j == 158);
+            let debug = (i == 130 && j == 130);
+            // let debug = false;
+
+            // Flip both coordinates because this is a position in the
+            // projection plane at -1 and the image will get mirrored around
+            // both the x and y axis when projected onto it. Flip the
+            // y coordinate again because the i=0 j=0 is at the top left corner
+            // and we want it at the bottom left.
             let coordx = -(i - width/2.0)/width;
             let coordy = (j - height/2.0)/height;
             let position = vec3.fromValues(coordx, coordy, -1.0);
+            if (debug) {
+                console.log("position on proj.plane", position);
+            }
             vec3.transformMat4(position, position, transform);
             let camera = vec3.fromValues(0.0, 0.0, 0.0);
             vec3.transformMat4(camera, camera, transform);
@@ -117,15 +132,9 @@ function createFakeData(width, height, transform) {
             vec3.scaleAndAdd(viewDirection, camera, position, -1.0);
             vec3.normalize(viewDirection, viewDirection);
 
-            // let debug = (i == width/2 && j == height/2);
-            // let debug = (i == 139 && j == 158);
-            // let debug = (i == 150 && j == 150);
-            let debug = false;
             let result = raymarch(position, viewDirection);
             if (debug) {
-                console.log(i, j);
                 console.log("camera", camera);
-                console.log("coords", coordx, coordy);
                 console.log("transformed position", position);
                 console.log("surface position", result);
             }
@@ -135,19 +144,38 @@ function createFakeData(width, height, transform) {
                 let result_camera = vec3.create();
                 vec3.transformMat4(result_camera, result, inv_transform);
                 data[j*width + i] = result_camera[2];
-                if (debug) {
-                    console.log("camera space surface", result_camera);
-                }
                 let normal = estimateNormal(result);
-                normals[(j*width + i)*3] = normal[0];
-                normals[(j*width + i)*3 + 1] = normal[1];
-                normals[(j*width + i)*3 + 2] = normal[2];
+                if (Math.abs(result[0]) < 0.001 && Math.abs(result[1]) < 0.001) {
+                    console.log("hello");
+                    console.log("center", result);
+                    console.log("camera space center", result_camera);
+                }
                 if (debug) {
-                    // console.log("normal at generator", normal);
+                    data[j*width + i] = result_camera[2];
+                    console.log("camera space surface", result_camera);
+                    // console.log("normal", normal);
+                    let inv = mat4.create();
+                    let x = vec3.create();
+                    mat4.invert(inv, knownMovement);
+                    vec3.transformMat4(x, result_camera, knownMovement);
+                    console.log("x", x);
+                    
+                }
+                let rotation = mat3.create();
+                mat3.fromMat4(rotation, inv_transform);
+                vec3.transformMat3(normal, normal, rotation);
+                vec3.normalize(normal, normal);
+                normals[(j*width + i)*4] = normal[0];
+                normals[(j*width + i)*4 + 1] = normal[1];
+                normals[(j*width + i)*4 + 2] = normal[2];
+                if (debug) {
+                    // console.log("normal in camera space", normal);
+
                 }
             }
         }
     }
+    console.log("");
     return [data, normals];
 }
 
@@ -182,17 +210,39 @@ function showDepthData(canvas, data) {
     context.putImageData(imageData, 0, 0);
 }
 
+// 'data' should be Float32Array of size width*height*4
+function showNormals(canvas, data) {
+    // Show the raw generated depth data on the webpage (don't use this for raw
+    // camera data, those need to be scaled too).
+    canvas.width = data.width;
+    canvas.height = data.height;
+    const context = canvas.getContext('2d');
+    let imageData = context.createImageData(data.width, data.height);
+    for(let i=0; i < data.width * data.height * 4; i += 4) {
+        let normalx = data[i];
+        let normaly = data[i + 1];
+        let normalz = data[i + 2];
+        imageData.data[i+0] = Math.abs(normalx)*255;
+        imageData.data[i+1] = Math.abs(normaly)*255;
+        imageData.data[i+2] = Math.abs(normalz)*255;
+        imageData.data[i+3] = 255;
+    }
+    context.putImageData(imageData, 0, 0);
+}
+
 function deproject(data, coordx, coordy) {
     let i = Math.round(-coordx*data.width + data.width/2.0);
     let j = Math.round(coordy*data.height + data.height/2.0);
-    let debug = (i == data.width/2 && j == data.height/2);
+    // let debug = (i == data.width/2 && j == data.height/2);
+    let debug = (i == 150 && j==150);
     let depth = data[j*data.width + i];
     if (isNaN(depth))
         return vec3.create();
-    let resultx = -coordx*depth;
-    let resulty = -coordy*depth;
+    let resultx = - coordx*depth;
+    let resulty = - coordy*depth;
     if (debug) {
         // console.log("i j: ", i, j);
+        // console.log("coord: ", coordx, coordy);
         // console.log("depth: ", depth);
     }
     return vec3.fromValues(resultx, resulty, depth);
@@ -201,38 +251,52 @@ function deproject(data, coordx, coordy) {
 function project(position) {
     if (position[2] === 0.0)
         throw Error("Trying to project invalid data");
-    let coordx = -position[0]/position[2];
-    let coordy = -position[1]/position[2];
+    let coordx = - position[0]/position[2];
+    let coordy = - position[1]/position[2];
     return [coordx, coordy];
 }
 
-function getNormal(normals, coordx, coordy) {
-    let i = coordx*normals.width + normals.width/2.0;
-    let j = coordy*normals.height + normals.height/2.0;
-    let index = (j*normals.width + i)*3;
+function getNormal(normals, coordx, coordy, debug) {
+    let i = Math.round(-coordx*normals.width + normals.width/2.0);
+    let j = Math.round(coordy*normals.height + normals.height/2.0);
+    let index = (j*normals.width + i)*normals.stride;
     let nx = normals[index];
     let ny = normals[index+1];
     let nz = normals[index+2];
+    if (debug) {
+        console.log(i, j);
+        console.log("normal in ICP", nx, ny, nz);
+    }
     return vec3.fromValues(nx, ny, nz);
 }
 
 function correspondingPoint(srcDepth, destDepth, destNormals, movement, i, j) {
-    let debug = (i == srcDepth.width/2 && j == srcDepth.height/2);
-    let coordx = (i - srcDepth.width/2.0)/srcDepth.width;
+    // let debug = (i == srcDepth.width/2 && j == srcDepth.height/2);
+    let debug = (i == 150 && j == 150);
+    let coordx = -(i - srcDepth.width/2.0)/srcDepth.width;
     let coordy = (j - srcDepth.height/2.0)/srcDepth.height;
+    if (debug) {
+        // console.log(coordx, coordy);
+    }
     let sourcePosition = deproject(srcDepth, coordx, coordy);
+    if (debug) {
+        // console.log("coord: ", coordx, coordy);
+    }
     if (sourcePosition[2] === 0.0) return [];
+    if (debug) {
+        console.log("src position: ", sourcePosition);
+    }
     vec3.transformMat4(sourcePosition, sourcePosition, movement);
     let [destCoordx, destCoordy] = project(sourcePosition);
     let destPosition = deproject(destDepth, destCoordx, destCoordy);
     if (destPosition[2] === 0.0) return [];
-    let destNormal = getNormal(destNormals, coordx, coordy);
+    let destNormal = getNormal(destNormals, destCoordx, destCoordy, debug);
     if (debug) {
         // console.log("coord: ", coordx, coordy);
-        // console.log("dest coord: ", destCoordx, destCoordy);
-        // console.log("src position: ", sourcePosition);
-        // console.log("dest position: ", destPosition);
-        // console.log("dest normal: ", destNormal);
+        console.log("trans src position: ", sourcePosition);
+        console.log("dest coord: ", destCoordx, destCoordy);
+        console.log("dest position: ", destPosition);
+        console.log("dest normal: ", destNormal);
     }
     if (isNaN(sourcePosition[0]) || isNaN(destPosition[0])) {
         console.log("got NaN at index ", i, j);
@@ -267,13 +331,13 @@ function createLinearEqOnCPU(srcDepth, destDepth, destNormals, movement) {
             vec3.sub(diff, p, q);
             let dot = vec3.dot(diff, n);
             error += Math.pow(dot, 2);
-            for (let i = 0; i < 6; i += 1) {
-                for (let j = 0; j < 6; j += 1) {
-                    let first = j < 3 ? c : n;
-                    let second = i < 3 ? c : n;
-                    A[i][j] += first[i % 3]*second[j % 3];
+            for (let k = 0; k < 6; k += 1) {
+                for (let l = 0; l < 6; l += 1) {
+                    let first = l < 3 ? c : n;
+                    let second = k < 3 ? c : n;
+                    A[k][l] += first[k % 3]*second[l % 3];
                     if (debug) {
-                        // console.log(i%3, j%3);
+                        // console.log(k%3, l%3);
                     }
                 }
             }
@@ -310,17 +374,18 @@ function createLinearEqOnCPU(srcDepth, destDepth, destNormals, movement) {
 function estimateMovementCPU(srcData, destData, destNormals, initialMovement) {
     let movement = initialMovement ? initialMovement.slice() : mat4.create();
     let previousError = 0;
-    for (let step = 0; step < 3; step += 1) {
+    for (let step = 0; step < 2; step += 1) {
         [A, b, error] = createLinearEqOnCPU(srcData, destData, destNormals,
                         movement);
-        if (Math.abs(error - previousError) < ERROR_DIFF_THRESHOLD) {
-            break;
-        }
+        // if (Math.abs(error - previousError) < ERROR_DIFF_THRESHOLD) {
+        //     break;
+        // }
         let x = numeric.solve(A, b);
         if (Number.isNaN(x[0])) {
             throw Error('No corresponding points between frames found.');
         }
-        mat4.mul(movement, constructMovement(x), movement);
+        // mat4.mul(movement, constructMovement(x), movement);
+        mat4.mul(movement, movement, constructMovement(x));
         previousError = error;
         console.log("step ", step, ", error ", error);
     }

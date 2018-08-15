@@ -14,12 +14,16 @@
 
 let width = 200;
 let height = 200;
-let transform = getViewMatrix(0, 30, 1.0);
-// let transform2 = getViewMatrix(-15, 30, 1.0);
-let transform2 = getViewMatrix(-130, 30, 1.0);
+let transform = getViewMatrix(-15, 40, 1.0);
+let transform2 = getViewMatrix(15, 30, 1.0);
+mat4.translate(transform2, transform2, vec3.fromValues(0.1, 0.1, 0.1));
 let knownMovement = getMovement(transform2, transform);
+mat4.invert(knownMovement, knownMovement);
+let BOX2_CENTER = vec3.fromValues(0,-0.2,-0.2);
+let BOX2_SIZE = vec3.fromValues(0.05, 0.05, 0.05);
 let [destData, destNormals] = createFakeData(width, height, transform);
-let [srcData, _] = createFakeData(width, height, transform2);
+BOX2_CENTER = vec3.fromValues(-0.1,0.0,-0.2);
+let [srcData, srcNormals] = createFakeData(width, height, transform2);
 let cameraParams = createFakeCameraParams(height, width);
 
 function setupTest(canvas) {
@@ -39,12 +43,15 @@ function setupTest(canvas) {
 function testVolumetricModel() {
     let [_, gl, programs, textures, framebuffers] = 
         setupTest('testVolumetricModelCanvas');
+    let frame = 0;
     uploadDepthData(gl, textures, destData, width, height);
-    let x = getViewMatrix(20, 0, 0);
-    createModel(gl, programs, framebuffers, textures, 0, x);
+    createModel(gl, programs, framebuffers, textures, frame, mat4.create());
 
+    frame = 1;
+    uploadDepthData(gl, textures, srcData, width, height);
+    createModel(gl, programs, framebuffers, textures, frame, knownMovement);
     let animate = function () {
-        renderModel(gl, programs, textures, 0);
+        renderModel(gl, programs, textures, frame);
         window.requestAnimationFrame(animate);
     };
     animate();
@@ -80,14 +87,13 @@ function testCPUMovementEstimationIdentity() {
 }
 
 function testCPUMovementEstimationKnownMovement() {
-    // mat4.invert(knownMovement, knownMovement);
     let movement = 
         estimateMovementCPU(srcData, destData, destNormals, knownMovement);
     console.log("estimated");
     printMat4(movement);
     console.log("known");
     printMat4(knownMovement);
-    if (!matricesEqual(movement, knownMovement, 0.0))
+    if (!matricesEqual(movement, knownMovement, 0.001))
         throw Error("Known movement changed by estimation");
     console.log("PASS Known Movement");
 }
@@ -95,21 +101,25 @@ function testCPUMovementEstimationKnownMovement() {
 function testCPUMovementEstimation() {
     let [_, gl, programs, textures, framebuffers] = 
         setupTest('testCPUMovementEstimationCanvas');
-    // let movement = estimateMovementCPU(srcData, destData, destNormals, false);
-    // console.log("expected");
-    // printMat4(knownMovement);
-    // console.log("estimation");
-    // printMat4(movement);
-    // console.log("final error: ", error);
+    let x = mat4.create();
+    mat4.invert(x, knownMovement);
+    let movement = estimateMovementCPU(srcData, destData, destNormals,
+        // x);
+        // mat4.create());
+        knownMovement);
+    console.log("expected");
+    printMat4(knownMovement);
+    console.log("estimation");
+    printMat4(movement);
+    console.log("final error: ", error);
 
     let frame = 0;
     uploadDepthData(gl, textures, destData, width, height);
     createModel(gl, programs, framebuffers, textures, frame, mat4.create());
 
     frame = 1;
-    // mat4.invert(knownMovement, knownMovement);
     uploadDepthData(gl, textures, srcData, width, height);
-    createModel(gl, programs, framebuffers, textures, frame, knownMovement);
+    createModel(gl, programs, framebuffers, textures, frame, movement);
     let animate = function () {
         renderModel(gl, programs, textures, frame);
         window.requestAnimationFrame(animate);
@@ -121,15 +131,30 @@ function testCPUMovementEstimation() {
 function testMain() {
     let data1Canvas = document.getElementById('data1');
     let data2Canvas = document.getElementById('data2');
-    showDepthData(data1Canvas, destData, width, height);
-    showDepthData(data2Canvas, srcData, width, height);
+    let normals1Canvas = document.getElementById('normals1');
+    let normals2Canvas = document.getElementById('normals2');
+    showDepthData(data1Canvas, destData);
+    showNormals(normals1Canvas, destNormals);
+    showDepthData(data2Canvas, srcData);
+    showNormals(normals2Canvas, srcNormals);
     try {
         // testCPUMovementEstimationIdentity();
         // testCPUMovementEstimationKnownMovement();
-        testCPUMovementEstimation();
+        // testCPUMovementEstimation();
         // testMovementEstimation();
-        // testVolumetricModel();
+        testVolumetricModel();
     } catch (e) {
         handleError(e);
     }
+    printMat4(knownMovement);
+    let center = vec3.fromValues(0, 0, 1);
+    let x = vec3.create();
+    let xx = vec3.create();
+    vec3.transformMat4(xx, center, knownMovement);
+    console.log("[0,0,1]", xx);
+    // let x = mat4.create();
+    // mat4.rotateX(x, x, glMatrix.toRadian(20));
+    // mat4.invert(x,x);
+    // console.log("");
+    // printMat4(x);
 }

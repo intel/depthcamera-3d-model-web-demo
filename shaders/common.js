@@ -48,7 +48,8 @@ The 'coord' argument should be between (-0.5, -0.5) and (0.5, 0.5), i.e.
 a point on the projection plane.*/
 vec3 deproject(sampler2D tex, vec2 coord) {
     /*convert into texture coordinate*/
-    vec2 texCoord = coord + 0.5;
+    vec2 texCoord = vec2(-coord.x, coord.y);
+    texCoord += 0.5;
     float depth = float(texture(tex, texCoord).r) * depthScale;
     /*Set depth to 0 if texCoord is outside of the texture. Works only if
     texture has filtering GL_NEAREST. See
