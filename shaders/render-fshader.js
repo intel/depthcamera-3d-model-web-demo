@@ -147,7 +147,7 @@ void main() {
     // 0.5). Flip the y coordinate, because textures are by default stored
     // flipped around.
     float size = float(max(canvasSize.x, canvasSize.y));
-    vec2 coord = vec2((float(gl_FragCoord.x) - float(canvasSize.x)/2.0)/size,
+    vec2 coord = vec2(-(float(gl_FragCoord.x) - float(canvasSize.x)/2.0)/size,
                       -(float(gl_FragCoord.y) - float(canvasSize.y)/2.0)/size);
     // The projection plane is at z=-1 and the camera at origin.
     vec4 position = viewMatrix * vec4(coord, -1.0, 1.0);

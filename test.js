@@ -14,15 +14,12 @@
 
 let width = 200;
 let height = 200;
-let transform = getViewMatrix(-15, 40, 1.0);
-let transform2 = getViewMatrix(15, 30, 1.0);
+let transform = getViewMatrix(0, 0, 1.0);
+let transform2 = getViewMatrix(0, 60, 1.0);
 mat4.translate(transform2, transform2, vec3.fromValues(0.1, 0.1, 0.1));
 let knownMovement = getMovement(transform2, transform);
 mat4.invert(knownMovement, knownMovement);
-let BOX2_CENTER = vec3.fromValues(0,-0.2,-0.2);
-let BOX2_SIZE = vec3.fromValues(0.05, 0.05, 0.05);
 let [destData, destNormals] = createFakeData(width, height, transform);
-BOX2_CENTER = vec3.fromValues(-0.1,0.0,-0.2);
 let [srcData, srcNormals] = createFakeData(width, height, transform2);
 let cameraParams = createFakeCameraParams(height, width);
 

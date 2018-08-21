@@ -42,9 +42,8 @@ function signedDistance(position) {
     const boxCenter =  vec3.fromValues(0.2, -0.1, -0.1);
     const boxSize = vec3.fromValues(0.08, 0.08, 0.08);
     // show a spere and a box
-    return Math.min(Math.min(signedDistanceSphere(position, sphereCenter, sphereRadius),
-                             signedDistanceBox(position, boxCenter, boxSize)),
-                    signedDistanceBox(position, BOX2_CENTER, BOX2_SIZE));
+    return Math.min(signedDistanceSphere(position, sphereCenter, sphereRadius),
+        signedDistanceBox(position, boxCenter, boxSize));
 }
 
 // Cast a ray from 'position' in the direction of 'viewDirection' until we hit

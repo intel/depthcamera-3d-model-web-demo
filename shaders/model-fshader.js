@@ -163,14 +163,6 @@ void main() {
     position += vec3(0.0, 0.0, 1.0);
     position = (movement * vec4(position, 1.0)).xyz;
     outTexel = calculateSdf(texel, position);
-    // if (movement != mat4(1.0) && abs(position.x - (-0.1)) < 0.01) {
-    //     outTexel = vec2(0.0, 0.0);
-    // } else {
-    //     outTexel = calculateSdf(texel, position);
-    // }
-    // if (int(gl_FragCoord.y) == 0  && int(zslice) ==0) {
-    //     outTexel = vec2(0.0, 0.0);
-    // }
 }
 `;
 // vim: set filetype=glsl:
