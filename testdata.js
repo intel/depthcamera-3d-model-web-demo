@@ -108,9 +108,9 @@ function createFakeData(width, height, transform) {
     normals.stride = 4;
     for (let i = 0; i < width; i += 1) {
         for (let j = 0; j < height; j += 1) {
-            // let debug = (i == width/2 && j == height/2);
+            let debug = (i == width/2 && j == height/2);
             // let debug = (i == 139 && j == 158);
-            let debug = (i == 130 && j == 130);
+            // let debug = (i == 130 && j == 130);
             // let debug = false;
 
             // Flip both coordinates because this is a position in the
@@ -144,21 +144,10 @@ function createFakeData(width, height, transform) {
                 vec3.transformMat4(result_camera, result, inv_transform);
                 data[j*width + i] = result_camera[2];
                 let normal = estimateNormal(result);
-                if (Math.abs(result[0]) < 0.001 && Math.abs(result[1]) < 0.001) {
-                    console.log("hello");
-                    console.log("center", result);
-                    console.log("camera space center", result_camera);
-                }
                 if (debug) {
                     data[j*width + i] = result_camera[2];
                     console.log("camera space surface", result_camera);
                     // console.log("normal", normal);
-                    let inv = mat4.create();
-                    let x = vec3.create();
-                    mat4.invert(inv, knownMovement);
-                    vec3.transformMat4(x, result_camera, knownMovement);
-                    console.log("x", x);
-                    
                 }
                 let rotation = mat3.create();
                 mat3.fromMat4(rotation, inv_transform);
@@ -168,7 +157,7 @@ function createFakeData(width, height, transform) {
                 normals[(j*width + i)*4 + 1] = normal[1];
                 normals[(j*width + i)*4 + 2] = normal[2];
                 if (debug) {
-                    // console.log("normal in camera space", normal);
+                    console.log("normal in camera space", normal);
 
                 }
             }
@@ -232,8 +221,8 @@ function showNormals(canvas, data) {
 function deproject(data, coordx, coordy) {
     let i = Math.round(-coordx*data.width + data.width/2.0);
     let j = Math.round(coordy*data.height + data.height/2.0);
-    // let debug = (i == data.width/2 && j == data.height/2);
-    let debug = (i == 150 && j==150);
+    let debug = (i == data.width/2 && j == data.height/2);
+    // let debug = (i == 150 && j==150);
     let depth = data[j*data.width + i];
     if (isNaN(depth))
         return vec3.create();
@@ -263,15 +252,16 @@ function getNormal(normals, coordx, coordy, debug) {
     let ny = normals[index+1];
     let nz = normals[index+2];
     if (debug) {
-        console.log(i, j);
-        console.log("normal in ICP", nx, ny, nz);
+        // console.log(i, j);
+        // console.log(coordx, coordy);
+        // console.log("normal in ICP", nx, ny, nz);
     }
     return vec3.fromValues(nx, ny, nz);
 }
 
 function correspondingPoint(srcDepth, destDepth, destNormals, movement, i, j) {
-    // let debug = (i == srcDepth.width/2 && j == srcDepth.height/2);
-    let debug = (i == 150 && j == 150);
+    let debug = (i == srcDepth.width/2 && j == srcDepth.height/2);
+    // let debug = (i == 150 && j == 150);
     let coordx = -(i - srcDepth.width/2.0)/srcDepth.width;
     let coordy = (j - srcDepth.height/2.0)/srcDepth.height;
     if (debug) {
@@ -279,7 +269,7 @@ function correspondingPoint(srcDepth, destDepth, destNormals, movement, i, j) {
     }
     let sourcePosition = deproject(srcDepth, coordx, coordy);
     if (debug) {
-        // console.log("coord: ", coordx, coordy);
+        console.log("coord: ", coordx, coordy);
     }
     if (sourcePosition[2] === 0.0) return [];
     if (debug) {
@@ -355,6 +345,7 @@ function createLinearEqOnCPU(srcDepth, destDepth, destNormals, movement) {
         }
     }
     console.log("points used: ", pointsUsed);
+    console.log("relative error: ", error/pointsUsed);
     const det = numeric.det(A);
     if (Number.isNaN(det) || Math.abs(1.0 - det) < 1e-15) {
         throw Error("Invalid determinant of A");
@@ -373,8 +364,8 @@ function createLinearEqOnCPU(srcDepth, destDepth, destNormals, movement) {
 function estimateMovementCPU(srcData, destData, destNormals, initialMovement) {
     let movement = initialMovement ? initialMovement.slice() : mat4.create();
     let previousError = 0;
-    for (let step = 0; step < 2; step += 1) {
-        [A, b, error] = createLinearEqOnCPU(srcData, destData, destNormals,
+    for (let step = 0; step < 1; step += 1) {
+        let [A, b, error] = createLinearEqOnCPU(srcData, destData, destNormals,
                         movement);
         // if (Math.abs(error - previousError) < ERROR_DIFF_THRESHOLD) {
         //     break;
@@ -383,10 +374,29 @@ function estimateMovementCPU(srcData, destData, destNormals, initialMovement) {
         if (Number.isNaN(x[0])) {
             throw Error('No corresponding points between frames found.');
         }
-        // mat4.mul(movement, constructMovement(x), movement);
-        mat4.mul(movement, movement, constructMovement(x));
+        mat4.mul(movement, constructMovement(x), movement);
+        // mat4.mul(movement, movement, constructMovement(x));
         previousError = error;
         console.log("step ", step, ", error ", error);
+
+        if (true) {
+            // Verify that Ax = b, at least approximately.
+            // This seems to freeze the browser, so let's multiply manually
+            // const Ax = numeric.mul(A, x);
+            const Ax = new Float32Array(6);
+            for (i = 0; i < b.length; i += 1) {
+                Ax[i] = 0.0;
+                for (j = 0; j < b.length; j += 1) {
+                    Ax[i] += A[i][j]*x[j];
+                }
+            }
+            for (i = 0; i < Ax.length; i += 1) {
+                if (Math.abs(b[i] - Ax[i]) > 0.00001) {
+                    const diff = b[i] - Ax[i];
+                    console.warn("b and Ax are not the same, diff ", diff);
+                }
+            }
+        }
     }
     return movement;
 }

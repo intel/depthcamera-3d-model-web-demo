@@ -15,8 +15,8 @@
 let width = 200;
 let height = 200;
 let transform = getViewMatrix(0, 0, 1.0);
-let transform2 = getViewMatrix(0, 60, 1.0);
-mat4.translate(transform2, transform2, vec3.fromValues(0.1, 0.1, 0.1));
+let transform2 = getViewMatrix(0, 30, 1.0);
+// mat4.translate(transform2, transform2, vec3.fromValues(0.1, 0.1, 0.1));
 let knownMovement = getMovement(transform2, transform);
 mat4.invert(knownMovement, knownMovement);
 let [destData, destNormals] = createFakeData(width, height, transform);
@@ -101,14 +101,14 @@ function testCPUMovementEstimation() {
     let x = mat4.create();
     mat4.invert(x, knownMovement);
     let movement = estimateMovementCPU(srcData, destData, destNormals,
-        // x);
+        x);
         // mat4.create());
-        knownMovement);
+        // knownMovement);
+    mat4.invert(movement, movement);
     console.log("expected");
     printMat4(knownMovement);
     console.log("estimation");
     printMat4(movement);
-    console.log("final error: ", error);
 
     let frame = 0;
     uploadDepthData(gl, textures, destData, width, height);
@@ -137,21 +137,10 @@ function testMain() {
     try {
         // testCPUMovementEstimationIdentity();
         // testCPUMovementEstimationKnownMovement();
-        // testCPUMovementEstimation();
+        testCPUMovementEstimation();
         // testMovementEstimation();
         testVolumetricModel();
     } catch (e) {
         handleError(e);
     }
-    printMat4(knownMovement);
-    let center = vec3.fromValues(0, 0, 1);
-    let x = vec3.create();
-    let xx = vec3.create();
-    vec3.transformMat4(xx, center, knownMovement);
-    console.log("[0,0,1]", xx);
-    // let x = mat4.create();
-    // mat4.rotateX(x, x, glMatrix.toRadian(20));
-    // mat4.invert(x,x);
-    // console.log("");
-    // printMat4(x);
 }
