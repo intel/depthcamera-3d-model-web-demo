@@ -55,6 +55,20 @@ function testVolumetricModel() {
     animate();
 }
 
+function testMovementEstimationIdentity() {
+    let [_, gl, programs, textures, framebuffers] = 
+        setupTest('testMovementEstimationIdentityCanvas');
+    let frame = 0;
+    uploadDepthData(gl, textures, destData, width, height);
+    createModel(gl, programs, framebuffers, textures, frame, mat4.create());
+
+    frame = 1;
+    uploadDepthData(gl, textures, destData, width, height);
+    let movement =
+        estimateMovement(gl, programs, textures, framebuffers, frame);
+    console.log("movement: ", movement);
+}
+
 function testMovementEstimation() {
     let [_, gl, programs, textures, framebuffers] = 
         setupTest('testMovementEstimationCanvas');
@@ -137,9 +151,10 @@ function testMain() {
     try {
         // testCPUMovementEstimationIdentity();
         // testCPUMovementEstimationKnownMovement();
-        testCPUMovementEstimation();
+        // testCPUMovementEstimation();
+        testMovementEstimationIdentity();
         // testMovementEstimation();
-        testVolumetricModel();
+        // testVolumetricModel();
     } catch (e) {
         handleError(e);
     }

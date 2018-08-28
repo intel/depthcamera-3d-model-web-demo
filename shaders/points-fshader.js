@@ -167,13 +167,15 @@ void main() {
 
     // TODO use aTexCoord
     ivec2 texSize = textureSize(depthTexture, 0);
-    vec2 coord = vec2((gl_FragCoord.x)/float(texSize.x),
-            (gl_FragCoord.y)/float(texSize.y));
+    vec2 coord = vec2((round(gl_FragCoord.x))/float(texSize.x),
+            (round(gl_FragCoord.y))/float(texSize.y));
     // TODO most of these if conditions could be removed or replaced by
     // something that doesn't use branching, but this should be done only after
     // I test that it works properly.
     vec2 imageCoord = coord - 0.5;
+    // outCrossProduct.xy = imageCoord;
     vec3 sourcePosition = deproject(depthTexture, imageCoord);
+    // outCrossProduct.xyz = sourcePosition;
     if (sourcePosition.z != 0.0) {
         sourcePosition = (movement * vec4(sourcePosition, 1.0)).xyz;
         // outCrossProduct = vec4(sourcePosition, 0.0);
@@ -183,6 +185,7 @@ void main() {
         vec3 destPosition = raymarch(sourcePosition, viewDirection);
         // outCrossProduct = vec4(normalize(destPosition), 0.0);
         // outCrossProduct = vec4(destPosition, 0.0);
+        // outCrossProduct.xyz = viewDirection;
         if (destPosition.z != 0.0) {
             vec3 normal = estimateNormal(destPosition);
             if (normal != vec3(0.0, 0.0, 0.0)) {
