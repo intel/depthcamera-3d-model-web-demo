@@ -147,33 +147,28 @@ function testPointsShaderNormals() {
         setupTest('testPointsShaderNormalsCanvas');
     let canvas1 = document.getElementById('testPointsShaderNormalsCanvas1');
     let canvas2 = document.getElementById('testPointsShaderNormalsCanvas2');
+
     let frame = 0;
     uploadDepthData(gl, textures, destData, width, height);
     createModel(gl, programs, framebuffers, textures, frame, mat4.create());
 
     frame = 1;
     uploadDepthData(gl, textures, destData, width, height);
+
     program = programs.points;
     gl.useProgram(program);
     let l = gl.getUniformLocation(program, 'cubeTexture');
-    if (frame % 2 === 0) {
-        gl.uniform1i(l, textures.cube0.glId());
-    } else {
-        gl.uniform1i(l, textures.cube1.glId());
-    }
-    let movement = mat4.create();
-    l = gl.getUniformLocation(program, 'movement');
-    gl.uniformMatrix4fv(l, false, movement);
+    gl.uniform1i(l, textures.cube1.glId());
     gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.points);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
     const d = new Float32Array(4*width*height);
     gl.readBuffer(gl.COLOR_ATTACHMENT1);
     gl.readPixels(0, 0, width, height, gl.RGBA, gl.FLOAT, d);
-    let i = 150;
-    let j = 130;
-    let flat = (j*height+i)*4;
-    console.log("data from points shader", i, j, ": ",
-        d[flat], d[flat+1], d[flat+2]);
+    // let i = 150;
+    // let j = 130;
+    // let flat = (j*height+i)*4;
+    // console.log("data from points shader", i, j, ": ",
+    //     d[flat], d[flat+1], d[flat+2]);
     d.width = width;
     d.height = height;
     showNormals(canvas1, destNormals);

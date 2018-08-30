@@ -210,9 +210,6 @@ function showNormals(canvas, data) {
         let normalx = data[i];
         let normaly = data[i + 1];
         let normalz = data[i + 2];
-        if (i==0) {
-            console.log(normalx, normaly, normalz);
-        }
         imageData.data[i+0] = Math.abs(normalx)*255;
         imageData.data[i+1] = Math.abs(normaly)*255;
         imageData.data[i+2] = Math.abs(normalz)*255;
@@ -316,7 +313,7 @@ function createLinearEqOnCPU(srcDepth, destDepth, destNormals, movement) {
             if (result.length != 3) continue;
             let [p, q, n] = result;
             let c = vec3.create();
-            // let debug = (i == srcDepth.width/2 && j == srcDepth.height/2);
+            let debug = (i == srcDepth.width/2 && j == srcDepth.height/2);
             // console.log("x", p, q, n);
             pointsUsed += 1;
             vec3.cross(c, p, n);
