@@ -156,7 +156,9 @@ function initUniforms(gl, programs, textures, parameters, width, height) {
     l = gl.getUniformLocation(program, 'cubeTexture');
     gl.uniform1i(l, textures.cube0.glId());
     l = gl.getUniformLocation(program, 'depthTexture');
-    gl.uniform1i(l, textures.depth.glId());
+    gl.uniform1i(l, textures.depth[0].glId());
+    l = gl.getUniformLocation(program, 'previousDepthTexture');
+    gl.uniform1i(l, textures.depth[1].glId());
     l = gl.getUniformLocation(program, 'movement');
     gl.uniformMatrix4fv(l, false, mat4.create());
     l = gl.getUniformLocation(program, 'depthScale');
@@ -180,7 +182,7 @@ function initUniforms(gl, programs, textures, parameters, width, height) {
     l = gl.getUniformLocation(program, 'cubeTexture');
     gl.uniform1i(l, textures.cube0.glId());
     l = gl.getUniformLocation(program, 'depthTexture');
-    gl.uniform1i(l, textures.depth.glId());
+    gl.uniform1i(l, textures.depth[0].glId());
     l = gl.getUniformLocation(program, 'cubeSize');
     gl.uniform1i(l, CUBE_SIZE);
     l = gl.getUniformLocation(program, 'sdfTruncation');
@@ -293,7 +295,8 @@ function setupTextures(gl, programs, width, height) {
     const cube0 = createTexture3D();
     const cube1 = createTexture3D();
     fillCubeTexture(gl, cube0);
-    const depth = createTexture2D(gl.R32F, width, height);
+    const depth0 = createTexture2D(gl.R32F, width, height);
+    const depth1 = createTexture2D(gl.R32F, width, height);
     const matrices = createTexture2D(gl.RGBA32F, 5*width, 3*height);
     const crossProduct = createTexture2D(gl.RGBA32F, width, height);
     const normal = createTexture2D(gl.RGBA32F, width, height);
@@ -308,7 +311,7 @@ function setupTextures(gl, programs, width, height) {
     return {
         cube0,
         cube1,
-        depth,
+        depth: [depth0, depth1],
         sum,
         matrices,
         points: {
@@ -385,10 +388,11 @@ function initFramebuffers(gl, programs, textures) {
     };
 }
 
-function uploadDepthData(gl, textures, data, width, height) {
+function uploadDepthData(gl, textures, data, width, height, frame) {
     try {
-        gl.activeTexture(gl[`TEXTURE${textures.depth.glId()}`]);
-        gl.bindTexture(gl.TEXTURE_2D, textures.depth);
+        let texture = textures.depth[frame % 2];
+        gl.activeTexture(gl[`TEXTURE${texture.glId()}`]);
+        gl.bindTexture(gl.TEXTURE_2D, texture);
         gl.texSubImage2D(
             gl.TEXTURE_2D,
             0, // mip-map level
@@ -434,6 +438,8 @@ function createModel(gl, programs, framebuffers, textures, frame, movement) {
     } else {
         gl.uniform1i(l, textures.cube1.glId());
     }
+    l = gl.getUniformLocation(program, 'depthTexture');
+    gl.uniform1i(l, textures.depth[frame % 2].glId());
     l = gl.getUniformLocation(program, 'zslice');
     for (let zslice = 0; zslice < CUBE_SIZE; zslice += 1) {
         gl.uniform1ui(l, zslice);

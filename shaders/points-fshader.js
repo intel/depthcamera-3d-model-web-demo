@@ -66,6 +66,7 @@ in vec2 aTexCoord;
 
 // Depth data from the camera.
 uniform highp sampler2D depthTexture;
+uniform highp sampler2D previousDepthTexture;
 // Representation of the volumetric model.
 uniform highp sampler3D cubeTexture;
 

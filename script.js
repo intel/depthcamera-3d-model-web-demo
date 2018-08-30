@@ -142,7 +142,7 @@ async function doMain() {
                 source = fakeData;
                 if (frame >= 1) source = fakeData2;
             }
-            uploadDepthData(gl, textures, source, width, height);
+            uploadDepthData(gl, textures, source, width, height, frame);
 
             const movement = estimateMovement(
                 gl,

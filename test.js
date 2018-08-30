@@ -42,11 +42,11 @@ function testVolumetricModel() {
     let [_, gl, programs, textures, framebuffers] = 
         setupTest('testVolumetricModelCanvas');
     let frame = 0;
-    uploadDepthData(gl, textures, destData, width, height);
+    uploadDepthData(gl, textures, destData, width, height, frame);
     createModel(gl, programs, framebuffers, textures, frame, mat4.create());
 
     frame = 1;
-    uploadDepthData(gl, textures, srcData, width, height);
+    uploadDepthData(gl, textures, srcData, width, height, frame);
     createModel(gl, programs, framebuffers, textures, frame, knownMovementInv);
     let animate = function () {
         renderModel(gl, programs, textures, frame);
@@ -59,11 +59,11 @@ function testMovementEstimationIdentity() {
     let [_, gl, programs, textures, framebuffers] = 
         setupTest('testMovementEstimationIdentityCanvas');
     let frame = 0;
-    uploadDepthData(gl, textures, destData, width, height);
+    uploadDepthData(gl, textures, destData, width, height, frame);
     createModel(gl, programs, framebuffers, textures, frame, mat4.create());
 
     frame = 1;
-    uploadDepthData(gl, textures, destData, width, height);
+    uploadDepthData(gl, textures, destData, width, height, frame);
     let movement =
         estimateMovement(gl, programs, textures, framebuffers, frame);
     console.log("movement: ", movement);
@@ -73,11 +73,11 @@ function testMovementEstimation() {
     let [_, gl, programs, textures, framebuffers] = 
         setupTest('testMovementEstimationCanvas');
     let frame = 0;
-    uploadDepthData(gl, textures, destData, width, height);
+    uploadDepthData(gl, textures, destData, width, height, frame);
     createModel(gl, programs, framebuffers, textures, frame, mat4.create());
 
     frame = 1;
-    uploadDepthData(gl, textures, srcData, width, height);
+    uploadDepthData(gl, textures, srcData, width, height, frame);
     let movement =
         estimateMovement(gl, programs, textures, framebuffers, frame);
     console.log(movement);
@@ -123,13 +123,13 @@ function testCPUMovementEstimation() {
     printMat4(movement);
 
     let frame = 0;
-    uploadDepthData(gl, textures, destData, width, height);
+    uploadDepthData(gl, textures, destData, width, height, frame);
     createModel(gl, programs, framebuffers, textures, frame, mat4.create());
 
     frame = 1;
     let movementInv = mat4.create();
     mat4.invert(movementInv, movement);
-    uploadDepthData(gl, textures, srcData, width, height);
+    uploadDepthData(gl, textures, srcData, width, height, frame);
     createModel(gl, programs, framebuffers, textures, frame, movementInv);
     let animate = function () {
         renderModel(gl, programs, textures, frame);
@@ -149,11 +149,11 @@ function testPointsShaderNormals() {
     let canvas2 = document.getElementById('testPointsShaderNormalsCanvas2');
 
     let frame = 0;
-    uploadDepthData(gl, textures, srcData, width, height);
+    uploadDepthData(gl, textures, srcData, width, height, frame);
     createModel(gl, programs, framebuffers, textures, frame, mat4.create());
 
     frame = 1;
-    uploadDepthData(gl, textures, srcData, width, height);
+    uploadDepthData(gl, textures, srcData, width, height, frame);
 
     program = programs.points;
     gl.useProgram(program);
