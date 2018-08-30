@@ -152,6 +152,27 @@ vec3 estimateNormal(vec3 position) {
     return normalize(normal);
 }
 
+vec3 estimateNormal2(sampler2D tex, vec2 coord) {
+    vec3 position = deproject(tex, coord);
+
+    ivec2 texSize = textureSize(tex, 0);
+    vec2 texStep = vec2(1.0/float(texSize.x), 1.0/float(texSize.y));
+    // TODO remove this
+    if (coord.x + texStep.x >= 0.5 ||
+        coord.y + texStep.y >= 0.5)
+            return vec3(0.0, 0.0, 0.0);
+
+    vec3 positionRight = deproject(tex, coord + vec2(texStep.x, 0.0));
+    vec3 positionTop   = deproject(tex, coord + vec2(0.0, texStep.y));
+    // TODO remove this
+    if (positionTop == vec3(0.0, 0.0, 0.0) || positionRight == vec3(0.0, 0.0, 0.0)) {
+        return vec3(0.0, 0.0, 0.0);
+    }
+
+    vec3 normal = cross(positionTop - position, positionRight - position);
+    return normalize(normal);
+}
+
 
 void main() {
     vec4 zero = vec4(0.0, 0.0, 0.0, 0.0);
@@ -174,16 +195,21 @@ void main() {
         // To find the point corresponding to the transformed position, cast
         // a ray into the cube texture which contains data from previous frames.
         vec2 rayCoord = project(sourcePosition);
-        vec3 rayPosition = vec3(rayCoord, -2.0);
-        vec3 camera = vec3(0.0, 0.0, -1.0);
-        vec3 viewDirection = normalize(camera-rayPosition);
-        vec3 destPosition = raymarch(rayPosition, viewDirection);
+        // vec3 rayPosition = vec3(rayCoord, -2.0);
+        // vec3 camera = vec3(0.0, 0.0, -1.0);
+        // vec3 viewDirection = normalize(camera-rayPosition);
+        // vec3 destPosition = raymarch(rayPosition, viewDirection);
+        vec3 destPosition = deproject(previousDepthTexture, rayCoord);
+        // outNormal.xyz = normalize(destPosition);
+
+
 
         if (destPosition != vec3(0.0, 0.0, 0.0)) {
-            vec3 normal = estimateNormal(destPosition);
+            // vec3 normal = estimateNormal(destPosition);
             // move destPosition into camera space (sourcePosition is already in
             // camera space)
-            destPosition.z += 1.0;
+            // destPosition.z += 1.0;
+            vec3 normal = estimateNormal2(previousDepthTexture, rayCoord);
             if (normal != vec3(0.0, 0.0, 0.0)) {
                 if (distance(sourcePosition, destPosition) < MAX_DISTANCE) {
                     outCrossProduct = vec4(cross(sourcePosition, normal), 0.0);
