@@ -149,11 +149,11 @@ function testPointsShaderNormals() {
     let canvas2 = document.getElementById('testPointsShaderNormalsCanvas2');
 
     let frame = 0;
-    uploadDepthData(gl, textures, destData, width, height);
+    uploadDepthData(gl, textures, srcData, width, height);
     createModel(gl, programs, framebuffers, textures, frame, mat4.create());
 
     frame = 1;
-    uploadDepthData(gl, textures, destData, width, height);
+    uploadDepthData(gl, textures, srcData, width, height);
 
     program = programs.points;
     gl.useProgram(program);
@@ -171,7 +171,7 @@ function testPointsShaderNormals() {
     //     d[flat], d[flat+1], d[flat+2]);
     d.width = width;
     d.height = height;
-    showNormals(canvas1, destNormals);
+    showNormals(canvas1, srcNormals);
     showNormals(canvas2, d);
 }
 
