@@ -55,7 +55,7 @@ precision highp float;
 // Throw out points whose distance is higher than this.
 #define MAX_DISTANCE 0.2
 // How many steps the raymarcher will take at most.
-#define MAX_STEPS 1024
+#define MAX_STEPS 512
 // Floats with a difference smaller than this are considered equal.
 #define EPSILON 0.000001
 
@@ -76,18 +76,18 @@ ${PROJECT_DEPROJECT_SHADER_FUNCTIONS}
 
 // Guess what the normal of a point is by looking at two neighboring points.
 // Will return the zero vector if the neighboring points are undefined.
-vec3 estimateNormal(sampler2D tex, vec2 imageCoord) {
-    vec3 position = deproject(tex, imageCoord);
+vec3 estimateNormal(sampler2D tex, vec2 coord) {
+    vec3 position = deproject(tex, coord);
 
     ivec2 texSize = textureSize(tex, 0);
     vec2 texStep = vec2(1.0/float(texSize.x), 1.0/float(texSize.y));
     // TODO remove this
-    if (imageCoord.x + texStep.x >= 0.5 ||
-        imageCoord.y + texStep.y >= 0.5)
+    if (coord.x + texStep.x >= 0.5 ||
+        coord.y + texStep.y >= 0.5)
             return vec3(0.0, 0.0, 0.0);
 
-    vec3 positionRight = deproject(tex, imageCoord + vec2(texStep.x, 0.0));
-    vec3 positionTop   = deproject(tex, imageCoord + vec2(0.0, texStep.y));
+    vec3 positionRight = deproject(tex, coord + vec2(texStep.x, 0.0));
+    vec3 positionTop   = deproject(tex, coord + vec2(0.0, texStep.y));
     // TODO remove this
     if (positionTop == vec3(0.0, 0.0, 0.0) || positionRight == vec3(0.0, 0.0, 0.0)) {
         return vec3(0.0, 0.0, 0.0);
@@ -100,6 +100,7 @@ vec3 estimateNormal(sampler2D tex, vec2 imageCoord) {
 // there is a cube of size 1x1x1 at origin - this function will return the
 // coordinate of the texel as if the texture was positioned like that.
 vec3 getTexelCoordinate(vec3 position) {
+    position.x = -position.x;
     return position + 0.5;
 }
 
@@ -113,13 +114,13 @@ float signedDistanceBox(vec3 position) {
 // object, positive when outside, zero on the boundary.
 float signedDistance(vec3 position) {
     // Move the cube to the front of the camera so that it is all visible.
-    position -= vec3(0.0, 0.0, 1.0);
+    // position -= vec3(0.0, 0.0, 1.0);
     // Since the values outside of the texture are 0, we need to draw a box at
     // the same position as the texture cube, which will show us the distance
     // towards it.
-    // return max(signedDistanceBox(position),
-    //            texture(cubeTexture, getTexelCoordinate(position)).r);
-    return texture(cubeTexture, getTexelCoordinate(position)).r;
+    return max(signedDistanceBox(position),
+               texture(cubeTexture, getTexelCoordinate(position)).r);
+    // return texture(cubeTexture, getTexelCoordinate(position)).r;
     // return signedDistanceBox(position);
     // return texture(cubeTexture, vec3(0.6, 0.5, 0.5)).r;
 }
@@ -134,8 +135,11 @@ vec3 raymarch(vec3 position, vec3 viewDirection) {
     // return vec3(dist1, dist2, dist3);
     for (int i = 0; i < MAX_STEPS; i++) {
         float dist = signedDistance(position);
-        if (abs(dist) < 0.00001) {
+        if (dist < EPSILON) {
             return position;
+        } else if (length(position) > 10.0) {
+            // we are way outside of the cube texture, don't bother anymore
+            break;
         } else {
             position += dist * viewDirection;
         }
@@ -167,31 +171,48 @@ void main() {
 
     // TODO use aTexCoord
     ivec2 texSize = textureSize(depthTexture, 0);
-    vec2 coord = vec2((round(gl_FragCoord.x))/float(texSize.x),
-            (round(gl_FragCoord.y))/float(texSize.y));
+    vec2 coord = vec2((round(gl_FragCoord.x))/float(texSize.x) - 0.5,
+                      (round(gl_FragCoord.y))/float(texSize.y) - 0.5);
     // TODO most of these if conditions could be removed or replaced by
     // something that doesn't use branching, but this should be done only after
     // I test that it works properly.
-    vec2 imageCoord = coord - 0.5;
-    // outCrossProduct.xy = imageCoord;
-    vec3 sourcePosition = deproject(depthTexture, imageCoord);
+    coord.x = -coord.x;
+    // outCrossProduct.xy = coord;
+    // outCrossProduct = gl_FragCoord;
+    // outCrossProduct.xy = coord;
+    vec3 sourcePosition = deproject(depthTexture, coord);
     // outCrossProduct.xyz = sourcePosition;
+    // outCrossProduct.x = depth;
+            // if (abs(coord.x + 0.25) < 0.01 && abs(coord.y - 0.15) < 0.01) {
+            //     outCrossProduct = vec4(0.0, 1.0, 0.0, 0.0);
+            // } else {
+            //     outCrossProduct = vec4(sourcePosition, 0.0);
+            // }
     if (sourcePosition.z != 0.0) {
-        sourcePosition = (movement * vec4(sourcePosition, 1.0)).xyz;
-        // outCrossProduct = vec4(sourcePosition, 0.0);
+        sourcePosition = (inverse(movement) * vec4(sourcePosition, 1.0)).xyz;
+        // outCrossProduct.xyz = sourcePosition;
+        // outCrossProduct.xyz = normalize(sourcePosition - vec3(0.0, 0.0, 1.0));
+        vec2 coord2 = project(sourcePosition);
+        // outCrossProduct.xy = coord2;
+        vec3 projPlane = vec3(coord2, -2.0);
 
-        vec3 camera = vec3(0.0, 0.0, 0.0);
-        vec3 viewDirection = normalize(sourcePosition-camera);
-        vec3 destPosition = raymarch(sourcePosition, viewDirection);
+        vec3 camera = vec3(0.0, 0.0, -1.0);
+        vec3 viewDirection = normalize(camera-projPlane);
+        vec3 destPosition = raymarch(projPlane, viewDirection);
         // outCrossProduct = vec4(normalize(destPosition), 0.0);
-        // outCrossProduct = vec4(destPosition, 0.0);
         // outCrossProduct.xyz = viewDirection;
-        if (destPosition.z != 0.0) {
+        if (destPosition != vec3(0.0, 0.0, 0.0)) {
             vec3 normal = estimateNormal(destPosition);
+            // move it into camera space
+            destPosition.z += 1.0;
+            // outCrossProduct = vec4(destPosition, 0.0);
+            // outCrossProduct.xyz = normalize(destPosition);
             if (normal != vec3(0.0, 0.0, 0.0)) {
+                // outCrossProduct.xyz = normal;
                 if (distance(sourcePosition, destPosition) < MAX_DISTANCE) {
                     outCrossProduct = vec4(cross(sourcePosition, normal), 0.0);
                     outNormal = vec4(normal, 0.0);
+                    // outCrossProduct.xyz = normal;
                     float dotProduct = dot(sourcePosition - destPosition, normal);
                     // outCrossProduct = vec4(sourcePosition- destPosition, 0.0);
                     // outCrossProduct = vec4(destPosition, 0.0);

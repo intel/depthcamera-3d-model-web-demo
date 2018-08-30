@@ -108,9 +108,9 @@ function createFakeData(width, height, transform) {
     normals.stride = 4;
     for (let i = 0; i < width; i += 1) {
         for (let j = 0; j < height; j += 1) {
-            let debug = (i == width/2 && j == height/2);
-            // let debug = (i == 139 && j == 158);
-            // let debug = (i == 130 && j == 130);
+            // let debug = (i == width/2 && j == height/2);
+            // let debug = (i == 150 && j == 150);
+            let debug = (i == 150 && j == 130);
             // let debug = false;
 
             // Flip both coordinates because this is a position in the
@@ -210,6 +210,9 @@ function showNormals(canvas, data) {
         let normalx = data[i];
         let normaly = data[i + 1];
         let normalz = data[i + 2];
+        if (i==0) {
+            console.log(normalx, normaly, normalz);
+        }
         imageData.data[i+0] = Math.abs(normalx)*255;
         imageData.data[i+1] = Math.abs(normaly)*255;
         imageData.data[i+2] = Math.abs(normalz)*255;
@@ -260,8 +263,9 @@ function getNormal(normals, coordx, coordy, debug) {
 }
 
 function correspondingPoint(srcDepth, destDepth, destNormals, movement, i, j) {
-    let debug = (i == srcDepth.width/2 && j == srcDepth.height/2);
+    // let debug = (i == srcDepth.width/2 && j == srcDepth.height/2);
     // let debug = (i == 150 && j == 150);
+    let debug = (i == 150 && j == 130);
     let coordx = -(i - srcDepth.width/2.0)/srcDepth.width;
     let coordy = (j - srcDepth.height/2.0)/srcDepth.height;
     if (debug) {
@@ -312,7 +316,7 @@ function createLinearEqOnCPU(srcDepth, destDepth, destNormals, movement) {
             if (result.length != 3) continue;
             let [p, q, n] = result;
             let c = vec3.create();
-            let debug = (i == srcDepth.width/2 && j == srcDepth.height/2);
+            // let debug = (i == srcDepth.width/2 && j == srcDepth.height/2);
             // console.log("x", p, q, n);
             pointsUsed += 1;
             vec3.cross(c, p, n);

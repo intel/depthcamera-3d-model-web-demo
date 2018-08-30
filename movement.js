@@ -155,7 +155,7 @@ function estimateMovement(gl, programs, textures, framebuffers, frame) {
         gl.drawArrays(gl.TRIANGLES, 0, 6);
         // throw Error("test");
         const d = new Float32Array(stride)
-        gl.readPixels(100, 100, 1, 1, gl.RGBA, gl.FLOAT, d);
+        gl.readPixels(150, 150, 1, 1, gl.RGBA, gl.FLOAT, d);
         console.log("data from points shader", d);
 
         // Use the textures created by the points shader to construct a 6x6
