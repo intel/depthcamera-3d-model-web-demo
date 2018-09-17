@@ -178,7 +178,7 @@ void main() {
     vec4 zero = vec4(0.0, 0.0, 0.0, 0.0);
     outCrossProduct = vec4(0.0, 0.0, 0.0, 0.0);
     outNormal = zero;
-    outDotAndError = vec4(0.0, 0.0, 0.0, 0.0);
+    outDotAndError = vec4(0.0, 0.0, 1.0, 0.0);
 
     // TODO use aTexCoord
     ivec2 texSize = textureSize(depthTexture, 0);

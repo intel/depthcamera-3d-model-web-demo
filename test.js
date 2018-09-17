@@ -161,12 +161,13 @@ function testPointsShaderNormals() {
     gl.uniform1i(l, textures.cube1.glId());
     gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.points);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
-    const d = new Float32Array(4*width*height);
+    let stride = 4;
+    const d = new Float32Array(width*height*stride);
     gl.readBuffer(gl.COLOR_ATTACHMENT1);
     gl.readPixels(0, 0, width, height, gl.RGBA, gl.FLOAT, d);
     // let i = 150;
     // let j = 130;
-    // let flat = (j*height+i)*4;
+    // let flat = (j*height+i)*stride;
     // console.log("data from points shader", i, j, ": ",
     //     d[flat], d[flat+1], d[flat+2]);
     d.width = width;
@@ -175,6 +176,94 @@ function testPointsShaderNormals() {
     showNormals(canvas2, d);
 }
 
+function testSumShaderSinglePass() {
+    let [_, gl, programs, textures, framebuffers] = 
+        setupTest('testSumShaderSinglePassCanvas');
+
+    // upload texture to be summed up
+    let width = 2;
+    let height = 2;
+    let stride = 4;
+    let sumTextureLevel = framebuffers.sum.length - 2;
+    let size = (5*width)*(3*height)*stride;
+    let fakeData = new Float32Array(size);
+    for (let i = 0; i < size; i++) {
+        fakeData[i] = 1.0;
+    }
+    // console.log(fakeData);
+    let texture = textures.sum[sumTextureLevel];
+    gl.activeTexture(gl[`TEXTURE${texture.glId()}`]);
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texSubImage2D(
+        gl.TEXTURE_2D,
+        0, // mip-map level
+        0, // x-offset
+        0, // y-offset
+        5*width,
+        3*height,
+        gl.RGBA,
+        gl.FLOAT,
+        fakeData,
+    );
+
+    // run sum shader
+    sumTextureLevel = framebuffers.sum.length - 1;
+    let program = programs.sum;
+    gl.useProgram(program);
+    l = gl.getUniformLocation(program, 'inputTexture');
+    gl.uniform1i(l, texture.glId());
+    gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.sum[sumTextureLevel]);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    gl.finish();
+    const data = new Float32Array(5 * 3 * stride);
+    gl.readPixels(0, 0, 5, 3, gl.RGBA, gl.FLOAT, data);
+    console.log(data);
+}
+
+function testSumShader() {
+    let [_, gl, programs, textures, framebuffers] = 
+        setupTest('testSumShaderCanvas');
+
+    // upload texture to be summed up
+    let stride = 4;
+    let size = (5*width)*(3*height)*stride;
+    let fakeData = new Float32Array(size);
+    for (let i = 0; i < size; i++) {
+        fakeData[i] = 1.0;
+    }
+    let texture = textures.matrices;
+    gl.activeTexture(gl[`TEXTURE${texture.glId()}`]);
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texSubImage2D(
+        gl.TEXTURE_2D,
+        0, // mip-map level
+        0, // x-offset
+        0, // y-offset
+        5*width,
+        3*height,
+        gl.RGBA,
+        gl.FLOAT,
+        fakeData,
+    );
+
+    // run sum shader
+    let program = programs.sum;
+    gl.useProgram(program);
+    l = gl.getUniformLocation(program, 'inputTexture');
+    gl.uniform1i(l, textures.matrices.glId());
+    for (let i = 0; i < framebuffers.sum.length; i += 1) {
+        gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.sum[i]);
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+        gl.finish();
+        l = gl.getUniformLocation(program, 'inputTexture');
+        gl.uniform1i(l, textures.sum[i].glId());
+    }
+    // The last result of the summing will be a single block of data
+    // containing the matrix A, the vector b and the error
+    const data = new Float32Array(5 * 3 * stride);
+    gl.readPixels(0, 0, 5, 3, gl.RGBA, gl.FLOAT, data);
+    console.log(data);
+}
 
 function testMain() {
     let data1Canvas = document.getElementById('data1');
@@ -186,13 +275,16 @@ function testMain() {
     showDepthData(data2Canvas, srcData);
     showNormals(normals2Canvas, srcNormals);
     try {
+        console.log("TESTS\n");
         // testCPUMovementEstimationIdentity();
         // testCPUMovementEstimationKnownMovement();
         // testCPUMovementEstimation();
         // testMovementEstimationIdentity();
         // testMovementEstimation();
-        testVolumetricModel();
-        testPointsShaderNormals();
+        // testVolumetricModel();
+        // testPointsShaderNormals();
+        testSumShaderSinglePass();
+        testSumShader();
     } catch (e) {
         handleError(e);
     }

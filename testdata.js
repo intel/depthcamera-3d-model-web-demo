@@ -106,6 +106,7 @@ function createFakeData(width, height, transform) {
     normals.width = width;
     normals.height = height;
     normals.stride = 4;
+    let points = 0;
     for (let i = 0; i < width; i += 1) {
         for (let j = 0; j < height; j += 1) {
             // let debug = (i == width/2 && j == height/2);
@@ -138,6 +139,7 @@ function createFakeData(width, height, transform) {
                 console.log("surface position", result);
             }
             if (result) {
+                points += 1;
                 // Put the surface position into the camera space (where the
                 // camera is at the origin).
                 let result_camera = vec3.create();
@@ -163,6 +165,7 @@ function createFakeData(width, height, transform) {
             }
         }
     }
+    console.log("generated ", points, " points");
     console.log("");
     return [data, normals];
 }
