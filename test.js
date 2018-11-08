@@ -24,23 +24,63 @@ let [destData, destNormals] = createFakeData(width, height, transform);
 let [srcData, srcNormals] = createFakeData(width, height, transform2);
 let cameraParams = createFakeCameraParams(height, width);
 
-function setupTest(canvas) {
-    let webglCanvas = document.getElementById(canvas);
-    webglCanvas.onmousedown = handleMouseDown;
-    document.onmouseup = handleMouseUp;
-    document.onmousemove = handleMouseMove;
-    let gl = setupGL(webglCanvas);
+class Test {
+    constructor(testName) {
+        let allTestsDiv = document.getElementById('tests');
+        this.div = document.createElement('div');
+        allTestsDiv.appendChild(this.div);
+
+        let header = document.createElement('h3');
+        let headerText = document.createTextNode(testName);
+        header.appendChild(headerText);
+        this.div.appendChild(header);
+
+        this.message = document.createElement('div');
+        this.div.appendChild(this.message);
+
+        this.error = document.createElement('div');
+        this.div.appendChild(this.error);
+
+        this.canvas = document.createElement('canvas');
+        this.canvas.width = 400;
+        this.canvas.height = 400;
+        this.canvas.style.display = "none";
+        this.div.appendChild(this.canvas);
+    }
+    info(message) {
+        this.message.innerHTML += `${message}</br>`;
+    }
+    error(message) {
+        this.error.innerHTML += `${message}</br>`;
+    }
+    showCanvas() {
+        this.canvas.style.display = "block";
+    }
+    bindMouseToCanvas() {
+        this.canvas.onmousedown = handleMouseDown;
+        this.canvas.onmouseup = handleMouseUp;
+        this.canvas.onmousemove = handleMouseMove;
+    }
+}
+
+function setupGraphics(canvas) {
+    let gl = setupGL(canvas);
     let programs = setupPrograms(gl);
     initAttributes(gl, programs);
     let textures = setupTextures(gl, programs, width, height);
     initUniforms(gl, programs, textures, cameraParams, width, height);
     let framebuffers = initFramebuffers(gl, programs, textures);
-    return [webglCanvas, gl, programs, textures, framebuffers];
+    return [gl, programs, textures, framebuffers];
 }
 
 function testVolumetricModel() {
-    let [_, gl, programs, textures, framebuffers] = 
-        setupTest('testVolumetricModelCanvas');
+    let test = new Test("Test volumetric model (visual test only)");
+    test.showCanvas();
+    test.bindMouseToCanvas();
+    test.info(`Visual test only. Should show a sphere and a box next to each
+               other. It should be a combination of the two input frames shown
+               above.`);
+    let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
     let frame = 0;
     uploadDepthData(gl, textures, destData, width, height, frame);
     createModel(gl, programs, framebuffers, textures, frame, mat4.create());
@@ -56,8 +96,8 @@ function testVolumetricModel() {
 }
 
 function testMovementEstimationIdentity() {
-    let [_, gl, programs, textures, framebuffers] = 
-        setupTest('testMovementEstimationIdentityCanvas');
+    let test = new Test("Test movement estimation with no movement");
+    let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
     let frame = 0;
     uploadDepthData(gl, textures, destData, width, height, frame);
     createModel(gl, programs, framebuffers, textures, frame, mat4.create());
@@ -70,8 +110,10 @@ function testMovementEstimationIdentity() {
 }
 
 function testMovementEstimation() {
-    let [_, gl, programs, textures, framebuffers] = 
-        setupTest('testMovementEstimationCanvas');
+    let test = new Test("Test movement estimation");
+    test.showCanvas();
+    test.bindMouseToCanvas();
+    let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
     let frame = 0;
     uploadDepthData(gl, textures, destData, width, height, frame);
     createModel(gl, programs, framebuffers, textures, frame, mat4.create());
@@ -91,14 +133,15 @@ function testMovementEstimation() {
 }
 
 function testCPUMovementEstimationIdentity() {
+    let test = new Test("Test movement estimation on CPU with no movement");
     let movement = estimateMovementCPU(destData, destData, destNormals, false);
     let identity = mat4.create();
     if (!matricesEqual(movement, identity, 0.0))
         throw Error("Same data don't produce an estimation of I");
-    console.log("PASS Identity");
 }
 
 function testCPUMovementEstimationKnownMovement() {
+    let test = new Test("Test Movement Estimation on CPU with known movement");
     // let movement = 
     //     estimateMovementCPU(srcData, destData, destNormals, knownMovement);
     // console.log("estimated");
@@ -111,8 +154,11 @@ function testCPUMovementEstimationKnownMovement() {
 }
 
 function testCPUMovementEstimation() {
-    let [_, gl, programs, textures, framebuffers] = 
-        setupTest('testCPUMovementEstimationCanvas');
+    let test = new Test("Test Movement Estimation on CPU");
+    test.showCanvas();
+    test.bindMouseToCanvas();
+    console.log(test.canvas);
+    let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
     let x = mat4.create();
     let movement = estimateMovementCPU(srcData, destData, destNormals,
         // mat4.create());
@@ -143,10 +189,15 @@ function testPointsShaderNormals() {
     // movement between the frames, because the fragment shader can't move the
     // pixel to another position. This doesn't matter for the actual purpose of
     // the shader, it just can't be visually checked.
-    let [_, gl, programs, textures, framebuffers] = 
-        setupTest('testPointsShaderNormalsCanvas');
-    let canvas1 = document.getElementById('testPointsShaderNormalsCanvas1');
-    let canvas2 = document.getElementById('testPointsShaderNormalsCanvas2');
+    let test = new Test("Test normals in points shader (visual test only)");
+    let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
+    let canvas1 = document.createElement('canvas');
+    let canvas2 = document.createElement('canvas');
+    test.div.appendChild(canvas1);
+    test.div.appendChild(canvas2);
+    test.info(`Visual test only. Should show 2 similar images. The left one is \
+            precisely generated while the right one is estimated in the points \
+            shader - it will be a lot more grainy.`);
 
     let frame = 0;
     uploadDepthData(gl, textures, srcData, width, height, frame);
@@ -177,8 +228,8 @@ function testPointsShaderNormals() {
 }
 
 function testSumShaderSinglePass() {
-    let [_, gl, programs, textures, framebuffers] = 
-        setupTest('testSumShaderSinglePassCanvas');
+    let test = new Test("Test sum shader single pass");
+    let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
 
     // upload texture to be summed up
     let width = 2;
@@ -221,8 +272,8 @@ function testSumShaderSinglePass() {
 }
 
 function testSumShader() {
-    let [_, gl, programs, textures, framebuffers] = 
-        setupTest('testSumShaderCanvas');
+    let test = new Test("Test sum shader");
+    let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
 
     // upload texture to be summed up
     let stride = 4;
@@ -276,13 +327,13 @@ function testMain() {
     showNormals(normals2Canvas, srcNormals);
     try {
         console.log("TESTS\n");
-        // testCPUMovementEstimationIdentity();
-        // testCPUMovementEstimationKnownMovement();
-        // testCPUMovementEstimation();
-        // testMovementEstimationIdentity();
-        // testMovementEstimation();
-        // testVolumetricModel();
-        // testPointsShaderNormals();
+        testVolumetricModel();
+        testPointsShaderNormals();
+        testCPUMovementEstimationIdentity();
+        testCPUMovementEstimationKnownMovement();
+        testCPUMovementEstimation();
+        testMovementEstimationIdentity();
+        testMovementEstimation();
         testSumShaderSinglePass();
         testSumShader();
     } catch (e) {
