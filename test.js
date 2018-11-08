@@ -327,13 +327,13 @@ function testMain() {
     showNormals(normals2Canvas, srcNormals);
     try {
         console.log("TESTS\n");
-        testVolumetricModel();
-        testPointsShaderNormals();
-        testCPUMovementEstimationIdentity();
-        testCPUMovementEstimationKnownMovement();
-        testCPUMovementEstimation();
-        testMovementEstimationIdentity();
-        testMovementEstimation();
+        // testVolumetricModel();
+        // testPointsShaderNormals();
+        // testCPUMovementEstimationIdentity();
+        // testCPUMovementEstimationKnownMovement();
+        // testCPUMovementEstimation();
+        // testMovementEstimationIdentity();
+        // testMovementEstimation();
         testSumShaderSinglePass();
         testSumShader();
     } catch (e) {
