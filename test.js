@@ -35,11 +35,11 @@ class Test {
         header.appendChild(headerText);
         this.div.appendChild(header);
 
-        this.message = document.createElement('div');
-        this.div.appendChild(this.message);
+        this.infoDiv = document.createElement('div');
+        this.div.appendChild(this.infoDiv);
 
-        this.error = document.createElement('div');
-        this.div.appendChild(this.error);
+        this.errorDiv = document.createElement('div');
+        this.div.appendChild(this.errorDiv);
 
         this.canvas = document.createElement('canvas');
         this.canvas.width = 400;
@@ -47,11 +47,11 @@ class Test {
         this.canvas.style.display = "none";
         this.div.appendChild(this.canvas);
     }
-    info(message) {
-        this.message.innerHTML += `${message}</br>`;
-    }
     error(message) {
-        this.error.innerHTML += `${message}</br>`;
+        this.errorDiv.innerHTML += `${message}</br>`;
+    }
+    info(message) {
+        this.infoDiv.innerHTML += `${message}</br>`;
     }
     showCanvas() {
         this.canvas.style.display = "block";
@@ -72,6 +72,19 @@ function setupGraphics(canvas) {
     let framebuffers = initFramebuffers(gl, programs, textures);
     return [gl, programs, textures, framebuffers];
 }
+
+function arraysEqual(array1, array2) {
+    if (array1.length !== array2.length) {
+        return false;
+    }
+    for (let i = 0; i < array1.length; i++) {
+        if (array1[i] !== array2[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
 
 function testVolumetricModel() {
     let test = new Test("Test volumetric model (visual test only)");
@@ -228,20 +241,37 @@ function testPointsShaderNormals() {
 }
 
 function testSumShaderSinglePass() {
+    // Sum 2x2 blocks of data, where each block is a 5x3 array of vectors. Get
+    // a single block of data as a result.
     let test = new Test("Test sum shader single pass");
     let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
 
-    // upload texture to be summed up
     let width = 2;
     let height = 2;
+    // size of each block
+    let blockWidth = 5;
+    let blockHeight = 3;
+    // length of each vector
     let stride = 4;
+    // The sum shader starts with some power of two number of blocks and then
+    // reduces is to 1/4 of that original size, until only a single block is
+    // left. This tests the last stage where 4 blocks are reduced to a single
+    // block.
     let sumTextureLevel = framebuffers.sum.length - 2;
-    let size = (5*width)*(3*height)*stride;
+    let size = (blockWidth*width)*(blockHeight*height)*stride;
     let fakeData = new Float32Array(size);
-    for (let i = 0; i < size; i++) {
-        fakeData[i] = 1.0;
+    for (let i = 0; i < size; i+=stride) {
+        fakeData[i+0] = 1.0;
+        fakeData[i+1] = 2.0;
+        fakeData[i+2] = 3.0;
     }
-    // console.log(fakeData);
+    let expectedData = new Float32Array(blockWidth*blockHeight*stride);
+    for (let i = 0; i < blockWidth*blockHeight*stride; i+=stride) {
+        expectedData[i+0] = 1.0*width*height;
+        expectedData[i+1] = 2.0*width*height;
+        expectedData[i+2] = 3.0*width*height;
+    }
+    // upload input data
     let texture = textures.sum[sumTextureLevel];
     gl.activeTexture(gl[`TEXTURE${texture.glId()}`]);
     gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -250,8 +280,8 @@ function testSumShaderSinglePass() {
         0, // mip-map level
         0, // x-offset
         0, // y-offset
-        5*width,
-        3*height,
+        blockWidth*width,
+        blockHeight*height,
         gl.RGBA,
         gl.FLOAT,
         fakeData,
@@ -266,9 +296,16 @@ function testSumShaderSinglePass() {
     gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.sum[sumTextureLevel]);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
     gl.finish();
-    const data = new Float32Array(5 * 3 * stride);
-    gl.readPixels(0, 0, 5, 3, gl.RGBA, gl.FLOAT, data);
-    console.log(data);
+    // read back data from shader
+    const data = new Float32Array(blockWidth * blockHeight * stride);
+    gl.readPixels(0, 0, blockWidth, blockHeight, gl.RGBA, gl.FLOAT, data);
+    if (!arraysEqual(data, expectedData)) {
+        test.error("FAIL, summed data don't match expected data");
+        test.error("Actual sum: " + data);
+        test.error("Expected sum: " + expectedData);
+        return;
+    }
+    test.info("PASS");
 }
 
 function testSumShader() {
@@ -279,7 +316,7 @@ function testSumShader() {
     let stride = 4;
     let size = (5*width)*(3*height)*stride;
     let fakeData = new Float32Array(size);
-    for (let i = 0; i < size; i++) {
+    for (let i = 0; i < size; i+=4) {
         fakeData[i] = 1.0;
     }
     let texture = textures.matrices;
@@ -335,7 +372,7 @@ function testMain() {
         // testMovementEstimationIdentity();
         // testMovementEstimation();
         testSumShaderSinglePass();
-        testSumShader();
+        // testSumShader();
     } catch (e) {
         handleError(e);
     }
