@@ -52,25 +52,25 @@ vec3 getTexture(vec2 texCoord) {
 
 void main() {
     outSum = vec4(1.0, 0.0, 0.0, 0.0);
-    // The built-in gl_FragCoord goes from [0.5, 0.5] to [width - 0.5, height
-    // -0.5] where width and height are the size of the output texture. Make it
-    // into an integer by removing the 0.5.
-    vec2 inputIndex = floor(gl_FragCoord.xy);
-    // Offset from the top-left corner of the 5x3 block inside the texture.
-    vec2 offsetIndex = vec2(mod(inputIndex.x, 5.0), mod(inputIndex.y, 3.0));
-    // Each block in the texture is 5x3. Get the index of the top-left texel in
-    // each block, i.e. [0, 0], [5, 0], [10, 0], ..., [0, 3], [5, 3], [10, 3]...
-    vec2 blockIndex = inputIndex - offsetIndex;
-    // The gl_FragCoord contains indices for the output texture, but the input
-    // texture is double the size. Therefore, this will contain the index of the
-    // top-left texel in 4 blocks of data.
-    blockIndex *= 2.0;
-    vec2 size = vec2(textureSize(inputTexture, 0));
-    vec3 sum = getTexture((blockIndex + offsetIndex + vec2(0.5, 0.5))/size)
-             + getTexture((blockIndex + offsetIndex + vec2(5.5, 0.5))/size)
-             + getTexture((blockIndex + offsetIndex + vec2(0.5, 3.5))/size)
-             + getTexture((blockIndex + offsetIndex + vec2(5.5, 3.5))/size);
-    // outSum = vec4(sum, 0.0);
+    // // The built-in gl_FragCoord goes from [0.5, 0.5] to [width - 0.5, height
+    // // -0.5] where width and height are the size of the output texture. Make it
+    // // into an integer by removing the 0.5.
+    // vec2 inputIndex = floor(gl_FragCoord.xy);
+    // // Offset from the top-left corner of the 5x3 block inside the texture.
+    // vec2 offsetIndex = vec2(mod(inputIndex.x, 5.0), mod(inputIndex.y, 3.0));
+    // // Each block in the texture is 5x3. Get the index of the top-left texel in
+    // // each block, i.e. [0, 0], [5, 0], [10, 0], ..., [0, 3], [5, 3], [10, 3]...
+    // vec2 blockIndex = inputIndex - offsetIndex;
+    // // The gl_FragCoord contains indices for the output texture, but the input
+    // // texture is double the size. Therefore, this will contain the index of the
+    // // top-left texel in 4 blocks of data.
+    // blockIndex *= 2.0;
+    // vec2 size = vec2(textureSize(inputTexture, 0));
+    // vec3 sum = getTexture((blockIndex + offsetIndex + vec2(0.5, 0.5))/size)
+    //          + getTexture((blockIndex + offsetIndex + vec2(5.5, 0.5))/size)
+    //          + getTexture((blockIndex + offsetIndex + vec2(0.5, 3.5))/size)
+    //          + getTexture((blockIndex + offsetIndex + vec2(5.5, 3.5))/size);
+    // // outSum = vec4(sum, 0.0);
 }
 `;
 // vim: set filetype=glsl:

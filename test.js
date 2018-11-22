@@ -253,8 +253,8 @@ function testSumShaderSinglePass() {
     let width = 2;
     let height = 2;
     // size of each block
-    let blockWidth = 5;
-    let blockHeight = 3;
+    let blockWidth = 4;
+    let blockHeight = 4;
     // length of each vector
     let stride = 4;
     // The sum shader starts with some power of two number of blocks and then
@@ -306,8 +306,8 @@ function testSumShader() {
     let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
 
     // size of each block
-    let blockWidth = 5;
-    let blockHeight = 3;
+    let blockWidth = 4;
+    let blockHeight = 4;
     // length of each vector
     let stride = 4;
     let size = (blockWidth*width)*(blockHeight*height)*stride;
@@ -324,42 +324,62 @@ function testSumShader() {
         // expectedData[i+2] = 3.0*width*height;
     }
     // upload input data
-    let texture = textures.matrices;
-    texture.upload(gl, fakeData);
+    let texture = textures.sum[0];
+    // texture.upload(gl, fakeData);
 
     // run sum shader
     let program = programs.sum;
     gl.useProgram(program);
     l = gl.getUniformLocation(program, 'inputTexture');
-    gl.uniform1i(l, textures.matrices.glId);
+    gl.uniform1i(l, textures.sum[0].glId);
+    console.log(textures.matrices);
+    console.log(textures.sum[0]);
     for (let i = 0; i < framebuffers.sum.length; i += 1) {
         gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.sum[i]);
+        gl.viewport(0, 0, textures.sum[i].width, textures.sum[i].height);
         gl.drawArrays(gl.TRIANGLES, 0, 6);
         gl.finish();
         l = gl.getUniformLocation(program, 'inputTexture');
         gl.uniform1i(l, textures.sum[i].glId);
-        if (i == 0) break;
+        // if (i == 0) break;
+        break;
     }
     // read back data from shader
-    const data = new Float32Array(128*128*blockWidth * blockHeight * stride);
-    gl.readPixels(0, 0, blockWidth*128, blockHeight*128, gl.RGBA, gl.FLOAT, data);
+    let tmpSize = 128; // how many blocks to read per side
+    const data = new Float32Array(tmpSize*tmpSize*blockWidth * blockHeight * stride);
+    gl.readPixels(0, 0, tmpSize*blockWidth, tmpSize*blockHeight, gl.RGBA, gl.FLOAT, data);
     if (!arraysEqual(data, expectedData)) {
         test.error("FAIL, summed data don't match expected data");
         // test.error("Actual sum: " + data);
         test.error("Expected sum: " + expectedData);
         let sum = 0;
-        for (let i = 0; i < data.length; i+=5*3*4) {
+        for (let i = 0; i < data.length; i+=1) {
             sum += data[i];
         }
-        let row = ""
-        for (let i = 0; i < data.length; i+=5*3*4) {
-            row += data[i] + "";
-            if (i === 5*3*4*128) {
-                console.log(row);
-                break;
-            }
-        }
         console.log("sum", sum);
+        let canvas = document.createElement('canvas');
+        test.div.appendChild(canvas);
+        canvas.width = tmpSize*blockWidth;
+        canvas.height = tmpSize*blockHeight;
+        const context = canvas.getContext('2d');
+        let imageData = context.createImageData(tmpSize*blockWidth, tmpSize*blockHeight);
+        for(let i = 0; i < tmpSize*tmpSize*blockWidth*blockHeight*4; i += 4) {
+            imageData.data[i+0] = data[i]*100;
+            imageData.data[i+1] = data[i+1]*100;
+            imageData.data[i+2] = data[i+2]*100;
+            imageData.data[i+3] = 255;
+        }
+        console.log(imageData);
+        context.putImageData(imageData, 0, 0);
+        // let row = ""
+        // for (let i = 0; i < data.length; i+=5*3*4) {
+        //     row += data[i] + "";
+        //     if (i === 5*3*4*128) {
+        //         console.log(row);
+        //         break;
+        //     }
+        // }
+        // console.log(data);
         return;
     }
     test.info("PASS");
@@ -383,7 +403,7 @@ function testMain() {
         // testCPUMovementEstimation();
         // testMovementEstimationIdentity();
         // testMovementEstimation();
-        testSumShaderSinglePass();
+        // testSumShaderSinglePass();
         testSumShader();
     } catch (e) {
         handleError(e);
