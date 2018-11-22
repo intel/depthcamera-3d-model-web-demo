@@ -222,7 +222,11 @@ function testPointsShaderNormals() {
     program = programs.points;
     gl.useProgram(program);
     let l = gl.getUniformLocation(program, 'cubeTexture');
-    gl.uniform1i(l, textures.cube1.glId);
+    gl.uniform1i(l, textures.cube0.glId);
+    l = gl.getUniformLocation(program, 'depthTexture');
+    gl.uniform1i(l, textures.depth[frame%2].glId);
+    l = gl.getUniformLocation(program, 'previousDepthTexture');
+    gl.uniform1i(l, textures.depth[(frame+1)%2].glId);
     gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.points);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
     let stride = 4;
