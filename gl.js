@@ -34,67 +34,6 @@ const vertices = new Float32Array([
 /* eslint-enable */
 
 
-class Texture2D {
-    constructor(gl, width, height, format) {
-        this.width = width;
-        this.height = height;
-        this.glId = gl.lastCreatedTextureId;
-        gl.activeTexture(gl[`TEXTURE${this.glId}`]);
-        gl.lastCreatedTextureId += 1;
-        const texture = gl.createTexture();
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-        gl.texStorage2D(
-            gl.TEXTURE_2D,
-            1, // number of mip-map levels
-            format, // internal format
-            width,
-            height,
-        );
-        this.texture = texture;
-        switch (format) {
-            case gl.R32F:
-                this.elements = 1;
-                this.format = gl.RED;
-                this.type = gl.FLOAT;
-                break;
-            case gl.RGBA32F:
-                this.elements = 4;
-                this.format = gl.RGBA;
-                this.type = gl.FLOAT;
-                break;
-            default:
-                throw Error("Unknown texture format " + format);
-        }
-
-    }
-    upload(gl, data) {
-        // TODO check data size
-        try {
-            gl.activeTexture(gl[`TEXTURE${this.glId}`]);
-            gl.bindTexture(gl.TEXTURE_2D, this.texture);
-            gl.texSubImage2D(
-                gl.TEXTURE_2D,
-                0, // mip-map level
-                0, // x-offset
-                0, // y-offset
-                this.width,
-                this.height,
-                this.format,
-                this.type,
-                data,
-            );
-        } catch (e) {
-            console.error(`Error uploading texture data:
-                    ${e.name}, ${e.message}`);
-            throw e;
-        }
-    }
-}
-
 // Find smallest power of two that is bigger than `number`. For example, if
 // `number` is 100, the result will be 128.
 function smallestPowerOfTwo(number) {
