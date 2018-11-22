@@ -156,6 +156,7 @@ function estimateMovement(gl, programs, textures, framebuffers, frame) {
         gl.uniformMatrix4fv(l, false, movement);
         gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.points);
         // gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        gl.viewport(0, 0, textures.points.width, textures.points.height);
         gl.drawArrays(gl.TRIANGLES, 0, 6);
         // throw Error("test");
         const d = new Float32Array(stride)
@@ -167,6 +168,7 @@ function estimateMovement(gl, programs, textures, framebuffers, frame) {
         program = programs.matrices;
         gl.useProgram(program);
         gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.matrices);
+        gl.viewport(0, 0, textures.matrices.width, textures.matrices.height);
         gl.drawArrays(gl.TRIANGLES, 0, 6);
 
         // Sum up the matrices and vectors from the 'matrices' shader to create
@@ -180,6 +182,7 @@ function estimateMovement(gl, programs, textures, framebuffers, frame) {
         gl.uniform1i(l, textures.matrices.glId);
         for (let i = 0; i < framebuffers.sum.length; i += 1) {
             gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.sum[i]);
+            gl.viewport(0, 0, textures.sum[i].width, textures.sum[i].height);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
             gl.finish();
             l = gl.getUniformLocation(program, 'inputTexture');

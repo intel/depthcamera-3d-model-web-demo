@@ -363,6 +363,7 @@ function createModel(gl, programs, framebuffers, textures, frame, movement) {
     l = gl.getUniformLocation(program, 'depthTexture');
     gl.uniform1i(l, textures.depth[frame % 2].glId);
     l = gl.getUniformLocation(program, 'zslice');
+    gl.viewport(0, 0, textures.cube0.size, textures.cube0.size);
     for (let zslice = 0; zslice < CUBE_SIZE; zslice += 1) {
         gl.uniform1ui(l, zslice);
         gl.bindFramebuffer(
@@ -373,7 +374,7 @@ function createModel(gl, programs, framebuffers, textures, frame, movement) {
     }
 }
 
-function renderModel(gl, programs, textures, frame) {
+function renderModel(gl, programs, textures, frame, canvas) {
     let l;
     let program = programs.render;
     gl.useProgram(program);
@@ -387,5 +388,6 @@ function renderModel(gl, programs, textures, frame) {
     l = gl.getUniformLocation(program, 'viewMatrix');
     gl.uniformMatrix4fv(l, false, getViewMatrix(yaw, pitch, 1.8));
     gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.viewport(0, 0, canvas.width, canvas.height);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
 }

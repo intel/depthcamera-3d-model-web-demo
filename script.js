@@ -158,7 +158,7 @@ async function doMain() {
             }
             createModel(gl, programs, framebuffers, textures, frame,
                         globalMovement);
-            renderModel(gl, programs, textures, frame);
+            renderModel(gl, programs, textures, frame, canvasElement);
             frame += 1;
         }
         window.requestAnimationFrame(animate);
