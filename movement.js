@@ -156,7 +156,8 @@ function estimateMovement(gl, programs, textures, framebuffers, frame) {
         gl.uniformMatrix4fv(l, false, movement);
         gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.points);
         // gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-        gl.viewport(0, 0, textures.points.width, textures.points.height);
+        // TODO why does this break stuff
+        // gl.viewport(0, 0, textures.points.width, textures.points.height);
         gl.drawArrays(gl.TRIANGLES, 0, 6);
         // throw Error("test");
         const d = new Float32Array(stride)

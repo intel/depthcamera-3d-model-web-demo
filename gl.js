@@ -231,13 +231,14 @@ function fillCubeTexture(gl, texture) {
 // Create textures into which the camera output will be stored.
 function setupTextures(gl, programs, width, height) {
     // how big the side of each block in the sum shader is
-    let blockSize = 4;
+    let blockWidth = 5;
+    let blockHeight = 3;
     const cube0 = new Texture3D(gl, CUBE_SIZE, gl.RG32F);
     const cube1 = new Texture3D(gl, CUBE_SIZE, gl.RG32F);
     fillCubeTexture(gl, cube0);
     const depth0 = new Texture2D(gl, width, height, gl.R32F);
     const depth1 = new Texture2D(gl, width, height, gl.R32F);
-    const matrices = new Texture2D(gl, blockSize*width, blockSize*height, gl.RGBA32F);
+    const matrices = new Texture2D(gl, blockWidth*width, blockHeight*height, gl.RGBA32F);
     const crossProduct = new Texture2D(gl, width, height, gl.RGBA32F);
     const normal = new Texture2D(gl, width, height, gl.RGBA32F);
     const dotAndError = new Texture2D(gl, width, height, gl.RGBA32F);
@@ -245,7 +246,7 @@ function setupTextures(gl, programs, width, height) {
     const biggestSize = smallestPowerOfTwo(Math.max(width, height)) >> 1;
     const sum = [];
     for (let size = biggestSize; size > 0; size >>= 1) {
-        sum.push(new Texture2D(gl, blockSize*size, blockSize*size, gl.RGBA32F));
+        sum.push(new Texture2D(gl, blockWidth*size, blockHeight*size, gl.RGBA32F));
     }
 
     return {

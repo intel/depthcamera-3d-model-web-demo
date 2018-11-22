@@ -177,8 +177,8 @@ vec3 estimateNormal2(sampler2D tex, vec2 coord) {
 void main() {
     vec4 zero = vec4(0.0, 0.0, 0.0, 0.0);
     outCrossProduct = vec4(0.0, 0.0, 0.0, 0.0);
-    outNormal = zero;
-    outDotAndError = vec4(0.0, 0.0, 1.0, 0.0);
+    outNormal = vec4(0.0, 0.0, 0.0, 0.0);
+    outDotAndError = vec4(0.0, 0.0, 0.0, 0.0);
 
     // TODO use aTexCoord
     ivec2 texSize = textureSize(depthTexture, 0);
@@ -190,6 +190,7 @@ void main() {
     // I test that it works properly.
     vec3 sourcePosition = deproject(depthTexture, coord);
     if (sourcePosition.z != 0.0) {
+        outDotAndError = vec4(0.0, 0.0, 1.0, 0.0);
         sourcePosition = (movement * vec4(sourcePosition, 1.0)).xyz;
 
         // To find the point corresponding to the transformed position, cast

@@ -57,7 +57,7 @@ void main() {
     // into an integer by removing the 0.5.
     vec2 inputIndex = floor(gl_FragCoord.xy);
     // Offset from the top-left corner of the 5x3 block inside the texture.
-    vec2 offsetIndex = vec2(mod(inputIndex.x, 4.0), mod(inputIndex.y, 4.0));
+    vec2 offsetIndex = vec2(mod(inputIndex.x, 5.0), mod(inputIndex.y, 3.0));
     // Each block in the texture is 5x3. Get the index of the top-left texel in
     // each block, i.e. [0, 0], [5, 0], [10, 0], ..., [0, 3], [5, 3], [10, 3]...
     vec2 blockIndex = inputIndex - offsetIndex;
@@ -67,9 +67,9 @@ void main() {
     blockIndex *= 2.0;
     vec2 size = vec2(textureSize(inputTexture, 0));
     vec3 sum = getTexture((blockIndex + offsetIndex + vec2(0.5, 0.5))/size)
-             + getTexture((blockIndex + offsetIndex + vec2(4.5, 0.5))/size)
-             + getTexture((blockIndex + offsetIndex + vec2(0.5, 4.5))/size)
-             + getTexture((blockIndex + offsetIndex + vec2(4.5, 4.5))/size);
+             + getTexture((blockIndex + offsetIndex + vec2(5.5, 0.5))/size)
+             + getTexture((blockIndex + offsetIndex + vec2(0.5, 3.5))/size)
+             + getTexture((blockIndex + offsetIndex + vec2(5.5, 3.5))/size);
     outSum = vec4(sum, 0.0);
 }
 `;

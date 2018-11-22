@@ -229,7 +229,7 @@ function testPointsShaderNormals() {
     gl.uniform1i(l, textures.depth[(frame+1)%2].glId);
     gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.points);
     // TODO not sure why this breaks things
-    // gl.viewport(0, 0, textures.points.width, textures.points.height);
+    gl.viewport(0, 0, textures.points.width, textures.points.height);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
     let stride = 4;
     const d = new Float32Array(width*height*stride);
@@ -255,8 +255,8 @@ function testSumShaderSinglePass() {
     let width = 2;
     let height = 2;
     // size of each block
-    let blockWidth = 4;
-    let blockHeight = 4;
+    let blockWidth = 5;
+    let blockHeight = 3;
     // length of each vector
     let stride = 4;
     // The sum shader starts with some power of two number of blocks and then
@@ -309,8 +309,8 @@ function testSumShader() {
     let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
 
     // size of each block
-    let blockWidth = 4;
-    let blockHeight = 4;
+    let blockWidth = 5;
+    let blockHeight = 3;
     // length of each vector
     let stride = 4;
     let size = (blockWidth*width)*(blockHeight*height)*stride;
@@ -367,11 +367,11 @@ function testMain() {
     try {
         console.log("TESTS\n");
         // testVolumetricModel();
-        // testPointsShaderNormals();
+        testPointsShaderNormals();
         // testCPUMovementEstimationIdentity();
         // testCPUMovementEstimationKnownMovement();
         // testCPUMovementEstimation();
-        // testMovementEstimationIdentity();
+        testMovementEstimationIdentity();
         // testMovementEstimation();
         testSumShaderSinglePass();
         testSumShader();
