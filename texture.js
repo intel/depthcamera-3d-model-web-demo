@@ -20,8 +20,8 @@ class Texture2D {
         this.glId = gl.lastCreatedTextureId;
         gl.activeTexture(gl[`TEXTURE${this.glId}`]);
         gl.lastCreatedTextureId += 1;
-        const texture = gl.createTexture();
-        gl.bindTexture(gl.TEXTURE_2D, texture);
+        this.texture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, this.texture);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
@@ -33,21 +33,9 @@ class Texture2D {
             width,
             height,
         );
-        this.texture = texture;
-        switch (format) {
-            case gl.R32F:
-                this.elements = 1;
-                this.format = gl.RED;
-                this.type = gl.FLOAT;
-                break;
-            case gl.RGBA32F:
-                this.elements = 4;
-                this.format = gl.RGBA;
-                this.type = gl.FLOAT;
-                break;
-            default:
-                throw Error("Unknown texture format " + format);
-        }
+        let tmp = parseFormat(gl, format);
+        this.format = tmp[0];
+        this.type = tmp[1];
 
     }
     upload(gl, data) {
@@ -74,3 +62,75 @@ class Texture2D {
     }
 }
 
+
+class Texture3D {
+    constructor(gl, size, format) {
+        this.size = size;
+        this.glId = gl.lastCreatedTextureId;
+        gl.activeTexture(gl[`TEXTURE${this.glId}`]);
+        gl.lastCreatedTextureId += 1;
+        this.texture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_3D, this.texture);
+        gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_R, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texStorage3D(
+            gl.TEXTURE_3D,
+            1, // number of mip-map levels
+            format, // internal format
+            size,
+            size,
+            size,
+        );
+        let tmp = parseFormat(gl, format);
+        this.format = tmp[0];
+        this.type = tmp[1];
+
+    }
+    upload(gl, data) {
+        // TODO check data size
+        try {
+            gl.activeTexture(gl[`TEXTURE${this.glId}`]);
+            gl.bindTexture(gl.TEXTURE_3D, this.texture);
+            gl.texSubImage3D(
+                gl.TEXTURE_3D,
+                0, // mip-map level
+                0, // x-offset
+                0, // y-offset
+                0, // z-offset
+                this.size,
+                this.size,
+                this.size,
+                this.format,
+                this.type,
+                data,
+            );
+        } catch (e) {
+            console.error(`Error uploading texture data:
+                    ${e.name}, ${e.message}`);
+            throw e;
+        }
+    }
+}
+
+function parseFormat(gl, format) {
+    switch (format) {
+        case gl.R32F:
+            format = gl.RED;
+            type = gl.FLOAT;
+            break;
+        case gl.RG32F:
+            format = gl.RG;
+            type = gl.FLOAT;
+            break;
+        case gl.RGBA32F:
+            format = gl.RGBA;
+            type = gl.FLOAT;
+            break;
+        default:
+            throw Error("Unknown texture format " + format);
+    }
+    return [format, type];
+}

@@ -132,9 +132,9 @@ function estimateMovement(gl, programs, textures, framebuffers, frame) {
     gl.useProgram(program);
     let l = gl.getUniformLocation(program, 'cubeTexture');
     if (frame % 2 === 0) {
-        gl.uniform1i(l, textures.cube0.glId());
+        gl.uniform1i(l, textures.cube0.glId);
     } else {
-        gl.uniform1i(l, textures.cube1.glId());
+        gl.uniform1i(l, textures.cube1.glId);
     }
     l = gl.getUniformLocation(program, 'depthTexture');
     gl.uniform1i(l, textures.depth[frame%2].glId);
