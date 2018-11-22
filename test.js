@@ -307,18 +307,31 @@ function testSumShaderSinglePass() {
     }
     test.info("PASS");
 }
-
 function testSumShader() {
+    // Sum width x height blocks of data, where each block is a 5x3 array of
+    // vectors. Get a single block of data as a result.
     let test = new Test("Test sum shader");
     let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
 
-    // upload texture to be summed up
+    // size of each block
+    let blockWidth = 5;
+    let blockHeight = 3;
+    // length of each vector
     let stride = 4;
-    let size = (5*width)*(3*height)*stride;
+    let size = (blockWidth*width)*(blockHeight*height)*stride;
     let fakeData = new Float32Array(size);
-    for (let i = 0; i < size; i+=4) {
-        fakeData[i] = 1.0;
+    for (let i = 0; i < size; i+=stride) {
+        fakeData[i+0] = 1.0;
+        // fakeData[i+1] = 2.0;
+        // fakeData[i+2] = 3.0;
     }
+    let expectedData = new Float32Array(blockWidth*blockHeight*stride);
+    for (let i = 0; i < blockWidth*blockHeight*stride; i+=stride) {
+        expectedData[i+0] = 1.0*width*height;
+        // expectedData[i+1] = 2.0*width*height;
+        // expectedData[i+2] = 3.0*width*height;
+    }
+    // upload input data
     let texture = textures.matrices;
     gl.activeTexture(gl[`TEXTURE${texture.glId()}`]);
     gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -327,8 +340,8 @@ function testSumShader() {
         0, // mip-map level
         0, // x-offset
         0, // y-offset
-        5*width,
-        3*height,
+        blockWidth*width,
+        blockHeight*height,
         gl.RGBA,
         gl.FLOAT,
         fakeData,
@@ -345,12 +358,31 @@ function testSumShader() {
         gl.finish();
         l = gl.getUniformLocation(program, 'inputTexture');
         gl.uniform1i(l, textures.sum[i].glId());
+        if (i == 0) break;
     }
-    // The last result of the summing will be a single block of data
-    // containing the matrix A, the vector b and the error
-    const data = new Float32Array(5 * 3 * stride);
-    gl.readPixels(0, 0, 5, 3, gl.RGBA, gl.FLOAT, data);
-    console.log(data);
+    // read back data from shader
+    const data = new Float32Array(128*128*blockWidth * blockHeight * stride);
+    gl.readPixels(0, 0, blockWidth*128, blockHeight*128, gl.RGBA, gl.FLOAT, data);
+    if (!arraysEqual(data, expectedData)) {
+        test.error("FAIL, summed data don't match expected data");
+        // test.error("Actual sum: " + data);
+        test.error("Expected sum: " + expectedData);
+        let sum = 0;
+        for (let i = 0; i < data.length; i+=5*3*4) {
+            sum += data[i];
+        }
+        let row = ""
+        for (let i = 0; i < data.length; i+=5*3*4) {
+            row += data[i] + "";
+            if (i === 5*3*4*128) {
+                console.log(row);
+                break;
+            }
+        }
+        console.log("sum", sum);
+        return;
+    }
+    test.info("PASS");
 }
 
 function testMain() {
@@ -372,7 +404,7 @@ function testMain() {
         // testMovementEstimationIdentity();
         // testMovementEstimation();
         testSumShaderSinglePass();
-        // testSumShader();
+        testSumShader();
     } catch (e) {
         handleError(e);
     }

@@ -306,6 +306,7 @@ function setupTextures(gl, programs, width, height) {
     const sum = [];
     for (let size = biggestSize; size > 0; size >>= 1) {
         sum.push(createTexture2D(gl.RGBA32F, 5*size, 3*size));
+        console.log(size);
     }
 
     return {

@@ -51,6 +51,7 @@ vec3 getTexture(vec2 texCoord) {
 }
 
 void main() {
+    outSum = vec4(1.0, 0.0, 0.0, 0.0);
     // The built-in gl_FragCoord goes from [0.5, 0.5] to [width - 0.5, height
     // -0.5] where width and height are the size of the output texture. Make it
     // into an integer by removing the 0.5.
@@ -69,7 +70,7 @@ void main() {
              + getTexture((blockIndex + offsetIndex + vec2(5.5, 0.5))/size)
              + getTexture((blockIndex + offsetIndex + vec2(0.5, 3.5))/size)
              + getTexture((blockIndex + offsetIndex + vec2(5.5, 3.5))/size);
-    outSum = vec4(sum, 0.0);
+    // outSum = vec4(sum, 0.0);
 }
 `;
 // vim: set filetype=glsl:
