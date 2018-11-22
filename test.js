@@ -273,26 +273,14 @@ function testSumShaderSinglePass() {
     }
     // upload input data
     let texture = textures.sum[sumTextureLevel];
-    gl.activeTexture(gl[`TEXTURE${texture.glId()}`]);
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.texSubImage2D(
-        gl.TEXTURE_2D,
-        0, // mip-map level
-        0, // x-offset
-        0, // y-offset
-        blockWidth*width,
-        blockHeight*height,
-        gl.RGBA,
-        gl.FLOAT,
-        fakeData,
-    );
+    texture.upload(gl, fakeData);
 
     // run sum shader
     sumTextureLevel = framebuffers.sum.length - 1;
     let program = programs.sum;
     gl.useProgram(program);
     l = gl.getUniformLocation(program, 'inputTexture');
-    gl.uniform1i(l, texture.glId());
+    gl.uniform1i(l, texture.glId);
     gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.sum[sumTextureLevel]);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
     gl.finish();
@@ -333,31 +321,19 @@ function testSumShader() {
     }
     // upload input data
     let texture = textures.matrices;
-    gl.activeTexture(gl[`TEXTURE${texture.glId()}`]);
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.texSubImage2D(
-        gl.TEXTURE_2D,
-        0, // mip-map level
-        0, // x-offset
-        0, // y-offset
-        blockWidth*width,
-        blockHeight*height,
-        gl.RGBA,
-        gl.FLOAT,
-        fakeData,
-    );
+    texture.upload(gl, fakeData);
 
     // run sum shader
     let program = programs.sum;
     gl.useProgram(program);
     l = gl.getUniformLocation(program, 'inputTexture');
-    gl.uniform1i(l, textures.matrices.glId());
+    gl.uniform1i(l, textures.matrices.glId);
     for (let i = 0; i < framebuffers.sum.length; i += 1) {
         gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.sum[i]);
         gl.drawArrays(gl.TRIANGLES, 0, 6);
         gl.finish();
         l = gl.getUniformLocation(program, 'inputTexture');
-        gl.uniform1i(l, textures.sum[i].glId());
+        gl.uniform1i(l, textures.sum[i].glId);
         if (i == 0) break;
     }
     // read back data from shader

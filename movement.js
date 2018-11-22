@@ -137,9 +137,9 @@ function estimateMovement(gl, programs, textures, framebuffers, frame) {
         gl.uniform1i(l, textures.cube1.glId());
     }
     l = gl.getUniformLocation(program, 'depthTexture');
-    gl.uniform1i(l, textures.depth[frame%2].glId());
+    gl.uniform1i(l, textures.depth[frame%2].glId);
     l = gl.getUniformLocation(program, 'previousDepthTexture');
-    gl.uniform1i(l, textures.depth[(frame+1)%2].glId());
+    gl.uniform1i(l, textures.depth[(frame+1)%2].glId);
     // Number of items in each texel, 4 means RGBA, 3 means RGB.
     const stride = 4;
 
@@ -177,13 +177,13 @@ function estimateMovement(gl, programs, textures, framebuffers, frame) {
         program = programs.sum;
         gl.useProgram(program);
         l = gl.getUniformLocation(program, 'inputTexture');
-        gl.uniform1i(l, textures.matrices.glId());
+        gl.uniform1i(l, textures.matrices.glId);
         for (let i = 0; i < framebuffers.sum.length; i += 1) {
             gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.sum[i]);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
             gl.finish();
             l = gl.getUniformLocation(program, 'inputTexture');
-            gl.uniform1i(l, textures.sum[i].glId());
+            gl.uniform1i(l, textures.sum[i].glId);
         }
         // The last result of the summing will be a single block of data
         // containing the matrix A, the vector b and the error

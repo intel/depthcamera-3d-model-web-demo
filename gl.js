@@ -33,6 +33,68 @@ const vertices = new Float32Array([
 ]);
 /* eslint-enable */
 
+
+class Texture2D {
+    constructor(gl, width, height, format) {
+        this.width = width;
+        this.height = height;
+        this.glId = gl.lastCreatedTextureId;
+        gl.activeTexture(gl[`TEXTURE${this.glId}`]);
+        gl.lastCreatedTextureId += 1;
+        const texture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texStorage2D(
+            gl.TEXTURE_2D,
+            1, // number of mip-map levels
+            format, // internal format
+            width,
+            height,
+        );
+        this.texture = texture;
+        switch (format) {
+            case gl.R32F:
+                this.elements = 1;
+                this.format = gl.RED;
+                this.type = gl.FLOAT;
+                break;
+            case gl.RGBA32F:
+                this.elements = 4;
+                this.format = gl.RGBA;
+                this.type = gl.FLOAT;
+                break;
+            default:
+                throw Error("Unknown texture format " + format);
+        }
+
+    }
+    upload(gl, data) {
+        // TODO check data size
+        try {
+            gl.activeTexture(gl[`TEXTURE${this.glId}`]);
+            gl.bindTexture(gl.TEXTURE_2D, this.texture);
+            gl.texSubImage2D(
+                gl.TEXTURE_2D,
+                0, // mip-map level
+                0, // x-offset
+                0, // y-offset
+                this.width,
+                this.height,
+                this.format,
+                this.type,
+                data,
+            );
+        } catch (e) {
+            console.error(`Error uploading texture data:
+                    ${e.name}, ${e.message}`);
+            throw e;
+        }
+    }
+}
+
 // Find smallest power of two that is bigger than `number`. For example, if
 // `number` is 100, the result will be 128.
 function smallestPowerOfTwo(number) {
@@ -95,6 +157,7 @@ function setupGL(canvasElement) {
     }
     gl.getExtension('EXT_color_buffer_float');
     gl.getExtension('OES_texture_float_linear');
+    gl.lastCreatedTextureId = 0;
     return gl;
 }
 
@@ -156,9 +219,9 @@ function initUniforms(gl, programs, textures, parameters, width, height) {
     l = gl.getUniformLocation(program, 'cubeTexture');
     gl.uniform1i(l, textures.cube0.glId());
     l = gl.getUniformLocation(program, 'depthTexture');
-    gl.uniform1i(l, textures.depth[0].glId());
+    gl.uniform1i(l, textures.depth[0].glId);
     l = gl.getUniformLocation(program, 'previousDepthTexture');
-    gl.uniform1i(l, textures.depth[1].glId());
+    gl.uniform1i(l, textures.depth[1].glID);
     l = gl.getUniformLocation(program, 'movement');
     gl.uniformMatrix4fv(l, false, mat4.create());
     l = gl.getUniformLocation(program, 'depthScale');
@@ -171,18 +234,18 @@ function initUniforms(gl, programs, textures, parameters, width, height) {
     program = programs.matrices;
     gl.useProgram(program);
     l = gl.getUniformLocation(program, 'crossProductTexture');
-    gl.uniform1i(l, textures.points.crossProduct.glId());
+    gl.uniform1i(l, textures.points.crossProduct.glId);
     l = gl.getUniformLocation(program, 'normalTexture');
-    gl.uniform1i(l, textures.points.normal.glId());
+    gl.uniform1i(l, textures.points.normal.glId);
     l = gl.getUniformLocation(program, 'dotAndErrorTexture');
-    gl.uniform1i(l, textures.points.dotAndError.glId());
+    gl.uniform1i(l, textures.points.dotAndError.glId);
 
     program = programs.model;
     gl.useProgram(program);
     l = gl.getUniformLocation(program, 'cubeTexture');
     gl.uniform1i(l, textures.cube0.glId());
     l = gl.getUniformLocation(program, 'depthTexture');
-    gl.uniform1i(l, textures.depth[0].glId());
+    gl.uniform1i(l, textures.depth[0].glId);
     l = gl.getUniformLocation(program, 'cubeSize');
     gl.uniform1i(l, CUBE_SIZE);
     l = gl.getUniformLocation(program, 'sdfTruncation');
@@ -243,9 +306,8 @@ function fillCubeTexture(gl, texture) {
 
 // Create textures into which the camera output will be stored.
 function setupTextures(gl, programs, width, height) {
-    let lastTextureId = 0;
     function createTexture3D() {
-        gl.activeTexture(gl[`TEXTURE${lastTextureId}`]);
+        gl.activeTexture(gl[`TEXTURE${gl.lastCreatedTextureId}`]);
         const texture = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_3D, texture);
         gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -261,52 +323,28 @@ function setupTextures(gl, programs, width, height) {
             CUBE_SIZE,
             CUBE_SIZE,
         );
-        const texId = lastTextureId;
+        const texId = gl.lastCreatedTextureId;
         texture.glId = function () {
             return texId;
         };
-        lastTextureId += 1;
-        return texture;
-    }
-
-    function createTexture2D(format, w, h) {
-        gl.activeTexture(gl[`TEXTURE${lastTextureId}`]);
-        const texture = gl.createTexture();
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-        gl.texStorage2D(
-            gl.TEXTURE_2D,
-            1, // number of mip-map levels
-            format, // internal format
-            w,
-            h,
-        );
-        const texId = lastTextureId;
-        texture.glId = function () {
-            return texId;
-        };
-        lastTextureId += 1;
+        gl.lastCreatedTextureId += 1;
         return texture;
     }
 
     const cube0 = createTexture3D();
     const cube1 = createTexture3D();
     fillCubeTexture(gl, cube0);
-    const depth0 = createTexture2D(gl.R32F, width, height);
-    const depth1 = createTexture2D(gl.R32F, width, height);
-    const matrices = createTexture2D(gl.RGBA32F, 5*width, 3*height);
-    const crossProduct = createTexture2D(gl.RGBA32F, width, height);
-    const normal = createTexture2D(gl.RGBA32F, width, height);
-    const dotAndError = createTexture2D(gl.RGBA32F, width, height);
+    const depth0 = new Texture2D(gl, width, height, gl.R32F);
+    const depth1 = new Texture2D(gl, width, height, gl.R32F);
+    const matrices = new Texture2D(gl, 5*width, 3*height, gl.RGBA32F);
+    const crossProduct = new Texture2D(gl, width, height, gl.RGBA32F);
+    const normal = new Texture2D(gl, width, height, gl.RGBA32F);
+    const dotAndError = new Texture2D(gl, width, height, gl.RGBA32F);
 
     const biggestSize = smallestPowerOfTwo(Math.max(width, height)) >> 1;
     const sum = [];
     for (let size = biggestSize; size > 0; size >>= 1) {
-        sum.push(createTexture2D(gl.RGBA32F, 5*size, 3*size));
-        console.log(size);
+        sum.push(new Texture2D(gl, 5*size, 3*size, gl.RGBA32F));
     }
 
     return {
@@ -335,7 +373,7 @@ function initFramebuffers(gl, programs, textures) {
                 gl.FRAMEBUFFER,
                 gl[`COLOR_ATTACHMENT${i}`],
                 gl.TEXTURE_2D,
-                texture,
+                texture.texture,
                 0, // mip-map level
             );
         }
@@ -390,26 +428,8 @@ function initFramebuffers(gl, programs, textures) {
 }
 
 function uploadDepthData(gl, textures, data, width, height, frame) {
-    try {
-        let texture = textures.depth[frame % 2];
-        gl.activeTexture(gl[`TEXTURE${texture.glId()}`]);
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.texSubImage2D(
-            gl.TEXTURE_2D,
-            0, // mip-map level
-            0, // x-offset
-            0, // y-offset
-            width,
-            height,
-            gl.RED,
-            gl.FLOAT,
-            data,
-        );
-    } catch (e) {
-        console.error(`Error uploading video to WebGL:
-                    ${e.name}, ${e.message}`);
-        throw e;
-    }
+    let texture = textures.depth[frame % 2];
+    texture.upload(gl, data);
 }
 
 
@@ -440,7 +460,7 @@ function createModel(gl, programs, framebuffers, textures, frame, movement) {
         gl.uniform1i(l, textures.cube1.glId());
     }
     l = gl.getUniformLocation(program, 'depthTexture');
-    gl.uniform1i(l, textures.depth[frame % 2].glId());
+    gl.uniform1i(l, textures.depth[frame % 2].glId);
     l = gl.getUniformLocation(program, 'zslice');
     for (let zslice = 0; zslice < CUBE_SIZE; zslice += 1) {
         gl.uniform1ui(l, zslice);
