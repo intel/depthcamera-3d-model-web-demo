@@ -241,16 +241,17 @@ function testPointsShaderNormals() {
     // console.log("data from points shader", i, j, ": ",
     //     d[flat], d[flat+1], d[flat+2]);
     // let sum = 0;
-    // for (let i = 0; i < width*height*stride; i++) {
-    //     if (d[i] !== 0.0) {
-    //         console.log("element ", d[i]);
-    //     }
-    // }
+    for (let i = 0; i < width*height*stride; i++) {
+        if (d[i] !== srcData[i/stride]) {
+            console.log("element ", d[i]);
+        }
+    }
     // console.log("sum of elements ", sum);
     d.width = width;
     d.height = height;
     showNormals(canvas1, srcNormals);
-    showNormals(canvas2, d);
+    // showNormals(canvas2, d);
+    showDepthData2(canvas2, d);
 }
 
 function testSumShaderSinglePass() {
