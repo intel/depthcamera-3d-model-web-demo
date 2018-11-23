@@ -229,7 +229,7 @@ function testPointsShaderNormals() {
     gl.uniform1i(l, textures.depth[(frame+1)%2].glId);
     gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.points);
     // TODO not sure why this breaks things
-    gl.viewport(0, 0, textures.points.width, textures.points.height);
+    // gl.viewport(0, 0, textures.points.width, textures.points.height);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
     let stride = 4;
     const d = new Float32Array(width*height*stride);
@@ -240,6 +240,13 @@ function testPointsShaderNormals() {
     // let flat = (j*height+i)*stride;
     // console.log("data from points shader", i, j, ": ",
     //     d[flat], d[flat+1], d[flat+2]);
+    // let sum = 0;
+    // for (let i = 0; i < width*height*stride; i++) {
+    //     if (d[i] !== 0.0) {
+    //         console.log("element ", d[i]);
+    //     }
+    // }
+    // console.log("sum of elements ", sum);
     d.width = width;
     d.height = height;
     showNormals(canvas1, srcNormals);

@@ -182,14 +182,14 @@ void main() {
 
     // TODO use aTexCoord
     ivec2 texSize = textureSize(depthTexture, 0);
-    vec2 coord = vec2((round(gl_FragCoord.x))/float(texSize.x) - 0.5,
-                      (round(gl_FragCoord.y))/float(texSize.y) - 0.5);
+    vec2 coord = vec2((floor(gl_FragCoord.x))/float(texSize.x) - 0.5,
+                      (floor(gl_FragCoord.y))/float(texSize.y) - 0.5);
     coord.x = -coord.x;
     // TODO most of these if conditions could be removed or replaced by
     // something that doesn't use branching, but this should be done only after
     // I test that it works properly.
     vec3 sourcePosition = deproject(depthTexture, coord);
-    if (sourcePosition.z != 0.0) {
+    if (sourcePosition != vec3(0.0, 0.0, 0.0)) {
         outDotAndError = vec4(0.0, 0.0, 1.0, 0.0);
         sourcePosition = (movement * vec4(sourcePosition, 1.0)).xyz;
 
