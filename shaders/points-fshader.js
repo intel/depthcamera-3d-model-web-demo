@@ -188,45 +188,36 @@ void main() {
     // TODO most of these if conditions could be removed or replaced by
     // something that doesn't use branching, but this should be done only after
     // I test that it works properly.
-    vec2 texCoord = vec2(-coord.x, coord.y);
-    texCoord += 0.5;
-    float depth = float(texture(depthTexture, texCoord).r);
-    outNormal = vec4(depth, 0.0, 0.0, 0.0);
+    vec3 sourcePosition = deproject(depthTexture, coord);
+    if (sourcePosition != vec3(0.0, 0.0, 0.0)) {
+        sourcePosition = (movement * vec4(sourcePosition, 1.0)).xyz;
 
-    // vec3 sourcePosition = deproject(depthTexture, coord);
-    // if (sourcePosition != vec3(0.0, 0.0, 0.0)) {
-    //     outDotAndError = vec4(0.0, 0.0, 1.0, 0.0);
-    //     sourcePosition = (movement * vec4(sourcePosition, 1.0)).xyz;
-
-    //     // To find the point corresponding to the transformed position, cast
-    //     // a ray into the cube texture which contains data from previous frames.
-    //     vec2 rayCoord = project(sourcePosition);
-    //     // vec3 rayPosition = vec3(rayCoord, -2.0);
-    //     // vec3 camera = vec3(0.0, 0.0, -1.0);
-    //     // vec3 viewDirection = normalize(camera-rayPosition);
-    //     // vec3 destPosition = raymarch(rayPosition, viewDirection);
-    //     vec3 destPosition = deproject(previousDepthTexture, rayCoord);
-    //     // outNormal.xyz = normalize(destPosition);
-
-
-
-    //     if (destPosition != vec3(0.0, 0.0, 0.0)) {
-    //         // vec3 normal = estimateNormal(destPosition);
-    //         // move destPosition into camera space (sourcePosition is already in
-    //         // camera space)
-    //         // destPosition.z += 1.0;
-    //         vec3 normal = estimateNormal2(previousDepthTexture, rayCoord);
-    //         if (normal != vec3(0.0, 0.0, 0.0)) {
-    //             if (distance(sourcePosition, destPosition) < MAX_DISTANCE) {
-    //                 outCrossProduct = vec4(cross(sourcePosition, normal), 0.0);
-    //                 outNormal = vec4(normal, 0.0);
-    //                 float dotProduct = dot(sourcePosition - destPosition, normal);
-    //                 float error = pow(dotProduct, 2.0);
-    //                 outDotAndError = vec4(dotProduct, error, 1.0, 0.0);
-    //             }
-    //         }
-    //     }
-    // }
+        // To find the point corresponding to the transformed position, cast
+        // a ray into the cube texture which contains data from previous frames.
+        vec2 rayCoord = project(sourcePosition);
+        // vec3 rayPosition = vec3(rayCoord, -2.0);
+        // vec3 camera = vec3(0.0, 0.0, -1.0);
+        // vec3 viewDirection = normalize(camera-rayPosition);
+        // vec3 destPosition = raymarch(rayPosition, viewDirection);
+        vec3 destPosition = deproject(previousDepthTexture, rayCoord);
+        // outNormal.xyz = normalize(destPosition);
+        if (destPosition != vec3(0.0, 0.0, 0.0)) {
+            // vec3 normal = estimateNormal(destPosition);
+            // move destPosition into camera space (sourcePosition is already in
+            // camera space)
+            // destPosition.z += 1.0;
+            vec3 normal = estimateNormal2(previousDepthTexture, rayCoord);
+            if (normal != vec3(0.0, 0.0, 0.0)) {
+                if (distance(sourcePosition, destPosition) < MAX_DISTANCE) {
+                    outCrossProduct = vec4(cross(sourcePosition, normal), 0.0);
+                    outNormal = vec4(normal, 0.0);
+                    float dotProduct = dot(sourcePosition - destPosition, normal);
+                    float error = pow(dotProduct, 2.0);
+                    outDotAndError = vec4(dotProduct, error, 1.0, 0.0);
+                }
+            }
+        }
+    }
 }
 `;
 // vim: set filetype=glsl:
