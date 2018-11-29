@@ -362,12 +362,12 @@ function testMain() {
     try {
         console.log("TESTS\n");
         // testVolumetricModel();
-        testPointsShaderNormals();
+        // testPointsShaderNormals();
         // testCPUMovementEstimationIdentity();
         // testCPUMovementEstimationKnownMovement();
         // testCPUMovementEstimation();
-        testMovementEstimationIdentity();
-        // testMovementEstimation();
+        // testMovementEstimationIdentity();
+        testMovementEstimation();
         testSumShaderSinglePass();
         testSumShader();
     } catch (e) {

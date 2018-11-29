@@ -147,7 +147,7 @@ function estimateMovement(gl, programs, textures, framebuffers, frame) {
     let previousError = 0;
     // Run the ICP algorithm until the
     // error stops changing (which usually means it converged).
-    for (let step = 0; step < MAX_STEPS; step += 1) {
+    for (let step = 0; step < 1; step += 1) {
         // Find corresponding points and output information about them into
         // textures (i.e. the cross product, dot product, normal, error).
         program = programs.points;
