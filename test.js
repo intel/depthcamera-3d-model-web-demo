@@ -130,7 +130,6 @@ function testMovementEstimation() {
     uploadDepthData(gl, textures, srcData, width, height, frame);
     let movement, info;
     [movement, info] = estimateMovement(gl, programs, textures, framebuffers, frame);
-    console.log(movement);
     createModel(gl, programs, framebuffers, textures, frame, movement);
 
     let animate = function () {
@@ -371,9 +370,9 @@ function testMain() {
     try {
         console.log("TESTS\n");
         // testCPUMovementEstimationIdentity();
-        // testCPUMovementEstimation();
+        testCPUMovementEstimation();
         // testMovementEstimationIdentity();
-        testNumberOfUsedPoints();
+        // testNumberOfUsedPoints();
         // testMovementEstimation();
         // testSumShaderSinglePass();
         // testSumShader();

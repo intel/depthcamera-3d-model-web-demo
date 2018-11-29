@@ -12,6 +12,65 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// True if the mouse is currently pressed down.
+let mouseDown = false;
+// Last position of the mouse when it was pressed down.
+let lastMousePositionX = 0;
+let lastMousePositionY = 0;
+// Rotation of the model in degrees.
+// https://en.wikipedia.org/wiki/Yaw_%28rotation%29
+let yaw = 0;
+let pitch = 0;
+
+// Use this for displaying errors to the user. More details should be put into
+// `console.error` messages.
+function showErrorToUser(message) {
+    const div = document.getElementById('errormessages');
+    div.innerHTML += `${message} </br>`;
+}
+
+function handleError(error) {
+    console.error(error);
+    showErrorToUser(error.name ? `${error.name}: ${error.message}` : error);
+}
+
+function handleMouseDown(event) {
+    mouseDown = true;
+    lastMousePositionX = event.clientX;
+    lastMousePositionY = event.clientY;
+}
+
+function handleMouseUp(event) {
+    mouseDown = false;
+    lastMousePositionX = event.clientX;
+    lastMousePositionY = event.clientY;
+}
+
+// Limit the `value` to be between `min` and `max`.
+function clamp(value, min, max) {
+    return Math.min(Math.max(value, min), max);
+}
+
+function handleMouseMove(event) {
+    if (!mouseDown) {
+        return;
+    }
+    yaw = clamp(yaw - (event.clientX - lastMousePositionX), -120, 120);
+    pitch = clamp(pitch + (event.clientY - lastMousePositionY), -80, 80);
+    lastMousePositionX = event.clientX;
+    lastMousePositionY = event.clientY;
+}
+
+// zcenter is the displacement of the camera from the center, a reasonable value
+// would be 1.0.
+function getViewMatrix(yaw_degrees, pitch_degrees, zcenter) {
+    const view = mat4.create();
+    mat4.rotateY(view, view, glMatrix.toRadian(yaw_degrees));
+    mat4.rotateX(view, view, glMatrix.toRadian(pitch_degrees));
+    mat4.translate(view, view, vec3.fromValues(0, 0, -zcenter));
+    return view;
+}
+
 function mat4ToStr(mat) {
     let str = "";
     for (let i = 0; i < 4; i += 1) {
