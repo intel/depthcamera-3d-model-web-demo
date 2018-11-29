@@ -35,11 +35,10 @@ class Test {
         header.appendChild(headerText);
         this.div.appendChild(header);
 
-        this.infoDiv = document.createElement('div');
-        this.div.appendChild(this.infoDiv);
-
-        this.errorDiv = document.createElement('div');
-        this.div.appendChild(this.errorDiv);
+        this.msgDiv = document.createElement('div');
+        // show newlines
+        this.msgDiv.style.whiteSpace = "pre-wrap";
+        this.div.appendChild(this.msgDiv);
 
         this.canvas = document.createElement('canvas');
         this.canvas.width = 400;
@@ -47,11 +46,8 @@ class Test {
         this.canvas.style.display = "none";
         this.div.appendChild(this.canvas);
     }
-    error(message) {
-        this.errorDiv.innerHTML += `${message}</br>`;
-    }
-    info(message) {
-        this.infoDiv.innerHTML += `${message}</br>`;
+    print(message) {
+        this.msgDiv.innerHTML += `${message}<br>`;
     }
     showCanvas() {
         this.canvas.style.display = "block";
@@ -60,6 +56,17 @@ class Test {
         this.canvas.onmousedown = handleMouseDown;
         this.canvas.onmouseup = handleMouseUp;
         this.canvas.onmousemove = handleMouseMove;
+    }
+    check(condition, errorMessage) {
+        if (condition === true) {
+            this.print("<font color='green'>PASS</font>");
+        } else {
+            let msg = "<font color='red'>FAIL</font>";
+            if (errorMessage !== undefined) {
+                msg += ", " + errorMessage;
+            }
+            this.print(msg);
+        }
     }
 }
 
@@ -73,26 +80,13 @@ function setupGraphics(canvas) {
     return [gl, programs, textures, framebuffers];
 }
 
-function arraysEqual(array1, array2) {
-    if (array1.length !== array2.length) {
-        return false;
-    }
-    for (let i = 0; i < array1.length; i++) {
-        if (array1[i] !== array2[i]) {
-            return false;
-        }
-    }
-    return true;
-}
-
-
 function testVolumetricModel() {
     let test = new Test("Test volumetric model (visual test only)");
     test.showCanvas();
     test.bindMouseToCanvas();
-    test.info(`Visual test only. Should show a sphere and a box next to each
-               other. It should be a combination of the two input frames shown
-               above.`);
+    test.print("Visual test only. Should show a sphere and a box next to each"
+               + " other. It should be a combination of the two input frames"
+               + " shown above.");
     let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
     let frame = 0;
     uploadDepthData(gl, textures, destData, width, height, frame);
@@ -119,7 +113,8 @@ function testMovementEstimationIdentity() {
     uploadDepthData(gl, textures, destData, width, height, frame);
     let movement =
         estimateMovement(gl, programs, textures, framebuffers, frame);
-    console.log("movement: ", movement);
+    test.check(arraysEqual(movement, mat4.create()),
+        "estimated movement is not identity: " + movement);
 }
 
 function testMovementEstimation() {
@@ -148,38 +143,37 @@ function testMovementEstimation() {
 function testCPUMovementEstimationIdentity() {
     let test = new Test("Test movement estimation on CPU with no movement");
     let movement = estimateMovementCPU(destData, destData, destNormals, false);
-    let identity = mat4.create();
-    if (!matricesEqual(movement, identity, 0.0))
-        throw Error("Same data don't produce an estimation of I");
+    test.check(arraysEqual(movement, mat4.create()),
+        "estimated movement is not identity: " + movement);
 }
 
 function testCPUMovementEstimationKnownMovement() {
     let test = new Test("Test Movement Estimation on CPU with known movement");
-    // let movement = 
+    // let movement =
     //     estimateMovementCPU(srcData, destData, destNormals, knownMovement);
     // console.log("estimated");
     // printMat4(movement);
     // console.log("known");
     // printMat4(knownMovement);
-    // if (!matricesEqual(movement, knownMovement, 0.001))
+    // if (!arraysEqual(movement, knownMovement, 0.001))
     //     throw Error("Known movement changed by estimation");
-    // console.log("PASS Known Movement");
 }
 
 function testCPUMovementEstimation() {
     let test = new Test("Test Movement Estimation on CPU");
     test.showCanvas();
     test.bindMouseToCanvas();
-    console.log(test.canvas);
     let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
     let x = mat4.create();
     let movement = estimateMovementCPU(srcData, destData, destNormals,
         // mat4.create());
         knownMovement);
-    console.log("expected");
-    printMat4(knownMovement);
-    console.log("estimation");
-    printMat4(movement);
+    test.check(arraysEqual(movement, knownMovement, 0.001),
+        "Estimated movement is not close enough to actual movement.\n"
+        + "Expected:\n"
+        + mat4ToStr(knownMovement)
+        + "Actual:\n"
+        + mat4ToStr(movement));
 
     let frame = 0;
     uploadDepthData(gl, textures, destData, width, height, frame);
@@ -208,9 +202,9 @@ function testPointsShaderNormals() {
     let canvas2 = document.createElement('canvas');
     test.div.appendChild(canvas1);
     test.div.appendChild(canvas2);
-    test.info(`Visual test only. Should show 2 similar images. The left one is \
-            precisely generated while the right one is estimated in the points \
-            shader - it will be a lot more grainy.`);
+    test.print("Visual test only. Should show 2 similar images. The left one is"
+               + " precisely generated while the right one is estimated in the"
+               + " points shader - it will be a lot more grainy.");
 
     let frame = 0;
     uploadDepthData(gl, textures, srcData, width, height, frame);
@@ -289,13 +283,12 @@ function testSumShaderSinglePass() {
     // read back data from shader
     const data = new Float32Array(blockWidth * blockHeight * stride);
     gl.readPixels(0, 0, blockWidth, blockHeight, gl.RGBA, gl.FLOAT, data);
-    if (!arraysEqual(data, expectedData)) {
-        test.error("FAIL, summed data don't match expected data");
-        test.error("Actual sum: " + data);
-        test.error("Expected sum: " + expectedData);
-        return;
-    }
-    test.info("PASS");
+    test.check(arraysEqual(data, expectedData),
+        "Summed data from shader don't match expected sum\n"
+        + "\nExpected:\n"
+        + expectedData
+        + "\nActual:\n"
+        + data);
 }
 function testSumShader() {
     // Sum width x height blocks of data, where each block is a 5x3 array of
@@ -341,13 +334,12 @@ function testSumShader() {
     // read back data from shader
     const data = new Float32Array(blockWidth * blockHeight * stride);
     gl.readPixels(0, 0, blockWidth, blockHeight, gl.RGBA, gl.FLOAT, data);
-    if (!arraysEqual(data, expectedData)) {
-        test.error("FAIL, summed data don't match expected data");
-        test.error("Actual sum: " + data);
-        test.error("Expected sum: " + expectedData);
-        return;
-    }
-    test.info("PASS");
+    test.check(arraysEqual(data, expectedData),
+        "Summed data from shader don't match expected sum\n"
+        + "\nExpected:\n"
+        + expectedData
+        + "\nActual:\n"
+        + data);
 }
 
 function testMain() {
@@ -361,13 +353,13 @@ function testMain() {
     showNormals(normals2Canvas, srcNormals);
     try {
         console.log("TESTS\n");
-        // testCPUMovementEstimationIdentity();
+        testCPUMovementEstimationIdentity();
         // testCPUMovementEstimationKnownMovement();
         // testCPUMovementEstimation();
-        // testMovementEstimationIdentity();
+        testMovementEstimationIdentity();
         // testMovementEstimation();
-        // testSumShaderSinglePass();
-        // testSumShader();
+        testSumShaderSinglePass();
+        testSumShader();
         testPointsShaderNormals();
         // This test needs to be last, otherwise there might not be enough GPU
         // memory to create all the resources for all tests (the other tests

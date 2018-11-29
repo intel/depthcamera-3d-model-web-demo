@@ -436,25 +436,27 @@ function estimateMovementCPU(srcData, destData, destNormals, initialMovement) {
     return movement;
 }
 
-function printMat4(mat) {
+function mat4ToStr(mat) {
+    let str = "";
     for (let i = 0; i < 4; i += 1) {
-        let str = "";
         for (let j = 0; j < 4; j += 1) {
             let tmp = mat[j*4 + i].toFixed(3);
             if (tmp >= 0) str += " ";
             str += tmp + " ";
         }
-        console.log(str);
+        str += "\n";
     }
+    return str;
 }
 
 
-function matricesEqual(mat1, mat2, epsilon) {
-    if (mat1.length !== mat2.length)
+function arraysEqual(array1, array2, epsilon) {
+    if (array1.length !== array2.length)
         return false;
-    for (let i = 0; i < mat1.length; i++) {
-        if (Math.abs(mat1[i] - mat2[i]) > epsilon) {
-            console.log("Diff in matrices, index ", i, mat1[i], mat2[i]);
+    if (epsilon === undefined) epsilon = 0.0;
+    for (let i = 0; i < array1.length; i++) {
+        if (Math.abs(array1[i] - array2[i]) > epsilon) {
+            console.log("Diff in arrays, index ", i, array1[i], array2[i]);
             return false;
         }
     }
