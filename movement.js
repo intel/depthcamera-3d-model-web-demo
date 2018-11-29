@@ -20,26 +20,6 @@ const MAX_STEPS = 20;
 // current error is smaller than this (the algorithm has converged).
 const ERROR_DIFF_THRESHOLD = 0.0001;
 
-function matrixIsSymmetric(A, epsilon) {
-    if (epsilon === undefined) epsilon = 0.001;
-    const AA = numeric.transpose(A);
-    return arraysEqual(A, AA, epsilon);
-}
-
-// Verify that Ax = b, at least approximately.
-function equationSolutionIsValid(A, x, b, epsilon) {
-    // This seems to freeze the browser, so let's multiply manually
-    // const Ax = numeric.mul(A, x);
-    const Ax = new Float32Array(6);
-    for (i = 0; i < b.length; i += 1) {
-        Ax[i] = 0.0;
-        for (j = 0; j < b.length; j += 1) {
-            Ax[i] += A[i][j]*x[j];
-        }
-    }
-    return arraysEqual(Ax, b, epsilon);
-}
-
 // Re-construct the 6x6 matrix A, 6x1 vector b and the scalar error from the raw
 // data that we got from the GPU.
 function constructEquation(data) {
