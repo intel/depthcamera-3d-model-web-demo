@@ -393,15 +393,25 @@ function createLinearEqOnCPU(srcDepth, destDepth, destNormals, movement) {
             }
         }
     }
-    return [A, b, error];
+    // TODO the 4th argument will be pointsFound which includes points for which
+    // it couldn't find the normal, but right now the normals are given so they
+    // are equal
+    return [A, b, error, pointsUsed, pointsUsed];
 }
 
 function estimateMovementCPU(srcData, destData, destNormals, initialMovement) {
+    let info = {
+        "steps": 0,
+        "success": true,
+        "error": 0.0,
+        "pointsFound": 0,
+        "pointsUsed": 0,
+    };
     let movement = initialMovement ? initialMovement.slice() : mat4.create();
     let previousError = 0;
     for (let step = 0; step < 1; step += 1) {
-        let [A, b, error] = createLinearEqOnCPU(srcData, destData, destNormals,
-                        movement);
+        let [A, b, error, pointsFound, pointsUsed] = 
+                createLinearEqOnCPU(srcData, destData, destNormals, movement);
         // if (Math.abs(error - previousError) < ERROR_DIFF_THRESHOLD) {
         //     break;
         // }
@@ -413,6 +423,10 @@ function estimateMovementCPU(srcData, destData, destNormals, initialMovement) {
         // mat4.mul(movement, movement, constructMovement(x));
         previousError = error;
         console.log("step ", step, ", error ", error);
+        info["error"] = error;
+        info["steps"] = step+1;
+        info["pointsFound"] = pointsFound;
+        info["pointsUsed"] = pointsUsed;
 
         if (true) {
             // Verify that Ax = b, at least approximately.
@@ -433,7 +447,7 @@ function estimateMovementCPU(srcData, destData, destNormals, initialMovement) {
             }
         }
     }
-    return movement;
+    return [movement, info];
 }
 
 function mat4ToStr(mat) {

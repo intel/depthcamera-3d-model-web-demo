@@ -25,7 +25,8 @@ const ERROR_DIFF_THRESHOLD = 0.0001;
 function constructEquation(data) {
     const stride = 4;
     const error = data[14*stride];
-    const pointsUsed = data[14*stride + 1]
+    const pointsFound = data[14*stride + 1]
+    const pointsUsed = data[14*stride + 2]
     const A = Array(6);
     const b = new Float32Array(6);
     for (let i = 0; i < 6; i += 1) {
@@ -60,7 +61,7 @@ function constructEquation(data) {
             }
         }
     }
-    return [A, b, error, pointsUsed];
+    return [A, b, error, pointsFound, pointsUsed];
 }
 
 // The parameter 'x' should contain a vector with 6 items, which holds the
@@ -127,7 +128,14 @@ function constructMovement(x) {
 // * Efficient Variants of the ICP Algorithm by Rusinkiewicz and Levoy:
 //      http://graphics.stanford.edu/papers/fasticp/fasticp_paper.pdf
 function estimateMovement(gl, programs, textures, framebuffers, frame) {
-    if (frame === 0) return mat4.create();
+    let info = {
+        "steps": 0,
+        "success": true,
+        "error": 0.0,
+        "pointsFound": 0,
+        "pointsUsed": 0,
+    };
+    if (frame === 0) return [mat4.create(), info];
     program = programs.points;
     gl.useProgram(program);
     let l = gl.getUniformLocation(program, 'cubeTexture');
@@ -193,14 +201,19 @@ function estimateMovement(gl, programs, textures, framebuffers, frame) {
         // containing the matrix A, the vector b and the error
         const data = new Float32Array(5 * 3 * stride);
         gl.readPixels(0, 0, 5, 3, gl.RGBA, gl.FLOAT, data);
-        let A, b, error, pointsUsed;
+        let A, b, error, pointsFound, pointsUsed;
+        info["steps"] = step+1;
         try {
-            [A, b, error, pointsUsed] = constructEquation(data);
+            [A, b, error, pointsFound, pointsUsed] = constructEquation(data);
         } catch (e) {
             console.error("Ignoring frame ", frame,
                           " for movement estimation: ", e);
-            return mat4.create();
+            info["success"] = false;
+            return [undefined, info];
         }
+        info["error"] = error;
+        info["pointsFound"] = pointsFound;
+        info["pointsUsed"] = pointsUsed;
 
         // The algorithm has converged, because the error didn't change much
         // from the last loop. Note that the error might actually get higher
@@ -235,5 +248,5 @@ function estimateMovement(gl, programs, textures, framebuffers, frame) {
         mat4.mul(movement, constructMovement(x), movement);
         previousError = error;
     }
-    return movement;
+    return [movement, info];
 }

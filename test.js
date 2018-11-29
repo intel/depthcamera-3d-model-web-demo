@@ -111,8 +111,8 @@ function testMovementEstimationIdentity() {
 
     frame = 1;
     uploadDepthData(gl, textures, destData, width, height, frame);
-    let movement =
-        estimateMovement(gl, programs, textures, framebuffers, frame);
+    let movement, info;
+    [movement, info] = estimateMovement(gl, programs, textures, framebuffers, frame);
     test.check(arraysEqual(movement, mat4.create()),
         "estimated movement is not identity: " + movement);
 }
@@ -128,8 +128,8 @@ function testMovementEstimation() {
 
     frame = 1;
     uploadDepthData(gl, textures, srcData, width, height, frame);
-    let movement =
-        estimateMovement(gl, programs, textures, framebuffers, frame);
+    let movement, info;
+    [movement, info] = estimateMovement(gl, programs, textures, framebuffers, frame);
     console.log(movement);
     createModel(gl, programs, framebuffers, textures, frame, movement);
 
@@ -140,23 +140,39 @@ function testMovementEstimation() {
     animate();
 }
 
-function testCPUMovementEstimationIdentity() {
-    let test = new Test("Test movement estimation on CPU with no movement");
-    let movement = estimateMovementCPU(destData, destData, destNormals, false);
-    test.check(arraysEqual(movement, mat4.create()),
-        "estimated movement is not identity: " + movement);
+function testNumberOfUsedPoints() {
+    // Give identical frames to the motion estimation, first to the CPU version
+    // and then the GPU version. Check that the number of corresponding points
+    // they found and used is the same.
+    let test = new Test("Test number of used points");
+    let infoCPU;
+    [_, infoCPU] = estimateMovementCPU(destData, destData, destNormals, false);
+
+    let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
+    let frame = 0;
+    uploadDepthData(gl, textures, destData, width, height, frame);
+    createModel(gl, programs, framebuffers, textures, frame, mat4.create());
+
+    frame = 1;
+    uploadDepthData(gl, textures, destData, width, height, frame);
+    let infoGPU;
+    [_, infoGPU] = estimateMovement(gl, programs, textures, framebuffers, frame);
+    test.check(infoGPU["pointsFound"] === infoCPU["pointsFound"],
+        "Number of points found in GPU version is different than in CPU"
+        + " version.\nGPU version found " + infoGPU["pointsFound"]
+        + " non-zero points, while the CPU version found "
+        + infoCPU["pointsFound"] + " points.");
+    // TODO once the CPU version uses the same algorithm for calculating
+    // normals, compare the number of actually used points too
+    // TODO do this for non-identical frames and compare A, b, error, etc
 }
 
-function testCPUMovementEstimationKnownMovement() {
-    let test = new Test("Test Movement Estimation on CPU with known movement");
-    // let movement =
-    //     estimateMovementCPU(srcData, destData, destNormals, knownMovement);
-    // console.log("estimated");
-    // printMat4(movement);
-    // console.log("known");
-    // printMat4(knownMovement);
-    // if (!arraysEqual(movement, knownMovement, 0.001))
-    //     throw Error("Known movement changed by estimation");
+function testCPUMovementEstimationIdentity() {
+    let test = new Test("Test movement estimation on CPU with no movement");
+    let movement;
+    [movement, _] = estimateMovementCPU(destData, destData, destNormals, false);
+    test.check(arraysEqual(movement, mat4.create()),
+        "estimated movement is not identity: " + movement);
 }
 
 function testCPUMovementEstimation() {
@@ -165,7 +181,8 @@ function testCPUMovementEstimation() {
     test.bindMouseToCanvas();
     let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
     let x = mat4.create();
-    let movement = estimateMovementCPU(srcData, destData, destNormals,
+    let movement;
+    [movement, _] = estimateMovementCPU(srcData, destData, destNormals,
         // mat4.create());
         knownMovement);
     test.check(arraysEqual(movement, knownMovement, 0.001),
@@ -353,19 +370,19 @@ function testMain() {
     showNormals(normals2Canvas, srcNormals);
     try {
         console.log("TESTS\n");
-        testCPUMovementEstimationIdentity();
-        // testCPUMovementEstimationKnownMovement();
+        // testCPUMovementEstimationIdentity();
         // testCPUMovementEstimation();
-        testMovementEstimationIdentity();
+        // testMovementEstimationIdentity();
+        testNumberOfUsedPoints();
         // testMovementEstimation();
-        testSumShaderSinglePass();
-        testSumShader();
-        testPointsShaderNormals();
+        // testSumShaderSinglePass();
+        // testSumShader();
+        // testPointsShaderNormals();
         // This test needs to be last, otherwise there might not be enough GPU
         // memory to create all the resources for all tests (the other tests
         // have their GL context deallocated once they are done, but this one
         // keeps running).
-        testVolumetricModel();
+        // testVolumetricModel();
     } catch (e) {
         handleError(e);
     }

@@ -59,8 +59,21 @@ precision highp float;
 // Floats with a difference smaller than this are considered equal.
 #define EPSILON 0.000001
 
+// The product (p x n), where p is a point from the previousDepthTexture point
+// cloud and n is an estimation of the normal vector at that position. The
+// fourth element is unused (rendering into RGB32F is not guaranteed to be
+// supported, so I have to use RBBA32F).
 layout(location = 0) out vec4 outCrossProduct;
+// Estimated normal vector of the point in the point cloud made from
+// previousDepthTexture, for which we found a corresponding point.
 layout(location = 1) out vec4 outNormal;
+// The first element is the dot product (p - q)*n, where p and q are the
+// corresponding points and n is the estimated normal. The second element is
+// the error of this correspondence. The third and fourth elements are used for
+// debugging purposes. The third will be 1.0 if a pair of points (p,q) was
+// found and 0.0 otherwise. The fouth will be 1.0 if this pair of points was
+// actually used, i.e. the normal could be estimated and they fullfulled the
+// conditions (weren't far away from each other and such).
 layout(location = 2) out vec4 outDotAndError;
 in vec2 aTexCoord;
 
@@ -202,6 +215,9 @@ void main() {
         vec3 destPosition = deproject(previousDepthTexture, rayCoord);
         // outNormal.xyz = normalize(destPosition);
         if (destPosition != vec3(0.0, 0.0, 0.0)) {
+            // Used for debugging, set to 1 if a pair of points was found,
+            // though they might not actually get used.
+            outDotAndError = vec4(0.0, 0.0, 1.0, 0.0);
             // vec3 normal = estimateNormal(destPosition);
             // move destPosition into camera space (sourcePosition is already in
             // camera space)
@@ -213,7 +229,7 @@ void main() {
                     outNormal = vec4(normal, 0.0);
                     float dotProduct = dot(sourcePosition - destPosition, normal);
                     float error = pow(dotProduct, 2.0);
-                    outDotAndError = vec4(dotProduct, error, 1.0, 0.0);
+                    outDotAndError = vec4(dotProduct, error, 1.0, 1.0);
                 }
             }
         }

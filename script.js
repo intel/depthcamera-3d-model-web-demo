@@ -144,7 +144,8 @@ async function doMain() {
             }
             uploadDepthData(gl, textures, source, width, height, frame);
 
-            const movement = estimateMovement(
+            let movement, info;
+            [movement, info] = estimateMovement(
                 gl,
                 programs,
                 textures,
