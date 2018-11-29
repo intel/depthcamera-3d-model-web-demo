@@ -361,15 +361,19 @@ function testMain() {
     showNormals(normals2Canvas, srcNormals);
     try {
         console.log("TESTS\n");
-        // testVolumetricModel();
-        // testPointsShaderNormals();
         // testCPUMovementEstimationIdentity();
         // testCPUMovementEstimationKnownMovement();
         // testCPUMovementEstimation();
         // testMovementEstimationIdentity();
-        testMovementEstimation();
-        testSumShaderSinglePass();
-        testSumShader();
+        // testMovementEstimation();
+        // testSumShaderSinglePass();
+        // testSumShader();
+        testPointsShaderNormals();
+        // This test needs to be last, otherwise there might not be enough GPU
+        // memory to create all the resources for all tests (the other tests
+        // have their GL context deallocated once they are done, but this one
+        // keeps running).
+        testVolumetricModel();
     } catch (e) {
         handleError(e);
     }
