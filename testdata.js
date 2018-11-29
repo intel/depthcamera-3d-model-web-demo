@@ -171,38 +171,6 @@ function createFakeData(width, height, transform) {
 }
 
 // 'data' should be Float32Array of size width*height
-function showDepthData2(canvas, data) {
-    // Show the raw generated depth data on the webpage (don't use this for raw
-    // camera data, those need to be scaled too).
-    canvas.width = data.width;
-    canvas.height = data.height;
-    console.log("test", data.width*data.height*4 === data.length);
-    const context = canvas.getContext('2d');
-    let imageData = context.createImageData(data.width, data.height);
-    for(let i=0; i < data.width * data.height * 4; i += 4) {
-        let depth = data[i];
-        if (depth) {
-            // Make the data more visible - it assumes that the camera is 1.0
-            // away from the center of the object and the object is about 0.1 to
-            // 0.3 in diameter, so the range will be about 0.7-1.3. This should
-            // put it approximately in the 0.0-1.0 range so it can be displayed
-            // in red.
-            depth = (depth - 0.7)*2.0;
-            depth = Math.max(depth, 0.0);
-            depth = Math.min(depth, 1.0);
-            imageData.data[i] = 255 - ((depth*256) % 256);
-        } else {
-            imageData.data[i] = 0;
-        }
-        imageData.data[i+1] = 0;
-        imageData.data[i+2] = 0;
-        imageData.data[i+3] = 255;
-    }
-    context.putImageData(imageData, 0, 0);
-}
-
-
-// 'data' should be Float32Array of size width*height
 function showDepthData(canvas, data) {
     // Show the raw generated depth data on the webpage (don't use this for raw
     // camera data, those need to be scaled too).
