@@ -20,6 +20,26 @@ const MAX_STEPS = 20;
 // current error is smaller than this (the algorithm has converged).
 const ERROR_DIFF_THRESHOLD = 0.0001;
 
+function matrixIsSymmetric(A, epsilon) {
+    if (epsilon === undefined) epsilon = 0.001;
+    const AA = numeric.transpose(A);
+    return arraysEqual(A, AA, epsilon);
+}
+
+// Verify that Ax = b, at least approximately.
+function equationSolutionIsValid(A, x, b, epsilon) {
+    // This seems to freeze the browser, so let's multiply manually
+    // const Ax = numeric.mul(A, x);
+    const Ax = new Float32Array(6);
+    for (i = 0; i < b.length; i += 1) {
+        Ax[i] = 0.0;
+        for (j = 0; j < b.length; j += 1) {
+            Ax[i] += A[i][j]*x[j];
+        }
+    }
+    return arraysEqual(Ax, b, epsilon);
+}
+
 // Re-construct the 6x6 matrix A, 6x1 vector b and the scalar error from the raw
 // data that we got from the GPU.
 function constructEquation(data) {
@@ -53,13 +73,8 @@ function constructEquation(data) {
     if (Number.isNaN(det) || Math.abs(det) < 1e-15) {
         throw Error("Invalid determinant of A");
     }
-    const AA = numeric.transpose(A);
-    for (let i = 0; i < A.length; i += 1) {
-        for (let j = 0; j < A[i].length; j += 1) {
-            if (A[i][j] !== AA[i][j]) {
-                console.warn("A not symmetric, diff is ", A[i][j] - AA[i][j]);
-            }
-        }
+    if (!matrixIsSymmetric(A, 0.001)) {
+        throw Error("A is not symmetric");
     }
     return [A, b, error, pointsFound, pointsUsed];
 }
@@ -229,21 +244,8 @@ function estimateMovement(gl, programs, textures, framebuffers, frame) {
         if (Number.isNaN(x[0])) {
             throw Error('No corresponding points between frames found.');
         }
-        // Verify that Ax = b, at least approximately.
-        // This seems to freeze the browser, so let's multiply manually
-        // const Ax = numeric.mul(A, x);
-        const Ax = new Float32Array(6);
-        for (i = 0; i < b.length; i += 1) {
-            Ax[i] = 0.0;
-            for (j = 0; j < b.length; j += 1) {
-                Ax[i] += A[i][j]*x[j];
-            }
-        }
-        for (i = 0; i < Ax.length; i += 1) {
-            if (Math.abs(b[i] - Ax[i]) > 0.00001) {
-                const diff = b[i] - Ax[i];
-                console.warn("b and Ax are not the same, diff ", diff);
-            }
+        if (!equationSolutionIsValid(A, x, b, 0.0001)) {
+            throw Error("Ax = b is too imprecise")
         }
         mat4.mul(movement, constructMovement(x), movement);
         previousError = error;
