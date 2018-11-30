@@ -156,7 +156,7 @@ function initUniforms(gl, programs, textures, parameters, width, height) {
     program = programs.points;
     gl.useProgram(program);
     l = gl.getUniformLocation(program, 'cubeTexture');
-    gl.uniform1i(l, textures.cube0.glId);
+    gl.uniform1i(l, textures.cube[0].glId);
     l = gl.getUniformLocation(program, 'depthTexture');
     gl.uniform1i(l, textures.depth[0].glId);
     l = gl.getUniformLocation(program, 'previousDepthTexture');
@@ -182,7 +182,7 @@ function initUniforms(gl, programs, textures, parameters, width, height) {
     program = programs.model;
     gl.useProgram(program);
     l = gl.getUniformLocation(program, 'cubeTexture');
-    gl.uniform1i(l, textures.cube0.glId);
+    gl.uniform1i(l, textures.cube[0].glId);
     l = gl.getUniformLocation(program, 'depthTexture');
     gl.uniform1i(l, textures.depth[0].glId);
     l = gl.getUniformLocation(program, 'cubeSize');
@@ -202,7 +202,7 @@ function initUniforms(gl, programs, textures, parameters, width, height) {
     program = programs.render;
     gl.useProgram(program);
     l = gl.getUniformLocation(program, 'cubeTexture');
-    gl.uniform1i(l, textures.cube1.glId);
+    gl.uniform1i(l, textures.cube[1].glId);
     l = gl.getUniformLocation(program, 'canvasSize');
     gl.uniform2ui(l, gl.canvas.width, gl.canvas.height);
     l = gl.getUniformLocation(program, 'viewMatrix');
@@ -250,8 +250,7 @@ function setupTextures(gl, programs, width, height) {
     }
 
     return {
-        cube0,
-        cube1,
+        cube: [cube0, cube1],
         depth: [depth0, depth1],
         sum,
         matrices,
@@ -315,11 +314,11 @@ function initFramebuffers(gl, programs, textures) {
     gl.useProgram(programs.model);
     const cube0 = Array.from(
         Array(CUBE_SIZE).keys(),
-        i => createFramebuffer3D(textures.cube0, i),
+        i => createFramebuffer3D(textures.cube[0], i),
     );
     const cube1 = Array.from(
         Array(CUBE_SIZE).keys(),
-        i => createFramebuffer3D(textures.cube1, i),
+        i => createFramebuffer3D(textures.cube[1], i),
     );
     return {
         points,
@@ -356,15 +355,11 @@ function createModel(gl, programs, framebuffers, textures, frame, movement) {
     l = gl.getUniformLocation(program, 'movement');
     gl.uniformMatrix4fv(l, false, transform);
     l = gl.getUniformLocation(program, 'cubeTexture');
-    if (frame % 2 === 0) {
-        gl.uniform1i(l, textures.cube0.glId);
-    } else {
-        gl.uniform1i(l, textures.cube1.glId);
-    }
+    gl.uniform1i(l, textures.cube[frame % 2].glId);
     l = gl.getUniformLocation(program, 'depthTexture');
     gl.uniform1i(l, textures.depth[frame % 2].glId);
     l = gl.getUniformLocation(program, 'zslice');
-    gl.viewport(0, 0, textures.cube0.size, textures.cube0.size);
+    gl.viewport(0, 0, textures.cube[0].size, textures.cube[0].size);
     for (let zslice = 0; zslice < CUBE_SIZE; zslice += 1) {
         gl.uniform1ui(l, zslice);
         gl.bindFramebuffer(
@@ -381,11 +376,7 @@ function renderModel(gl, programs, textures, frame, canvas) {
     gl.useProgram(program);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     l = gl.getUniformLocation(program, 'cubeTexture');
-    if (frame % 2 === 0) {
-        gl.uniform1i(l, textures.cube1.glId);
-    } else {
-        gl.uniform1i(l, textures.cube0.glId);
-    }
+    gl.uniform1i(l, textures.cube[(frame + 1) % 2].glId);
     l = gl.getUniformLocation(program, 'viewMatrix');
     gl.uniformMatrix4fv(l, false, getViewMatrix(yaw, pitch, 1.8));
     gl.clear(gl.COLOR_BUFFER_BIT);

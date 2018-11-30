@@ -232,7 +232,7 @@ function testPointsShaderNormals() {
     program = programs.points;
     gl.useProgram(program);
     let l = gl.getUniformLocation(program, 'cubeTexture');
-    gl.uniform1i(l, textures.cube0.glId);
+    gl.uniform1i(l, textures.cube[frame%2].glId);
     l = gl.getUniformLocation(program, 'depthTexture');
     gl.uniform1i(l, textures.depth[frame%2].glId);
     l = gl.getUniformLocation(program, 'previousDepthTexture');

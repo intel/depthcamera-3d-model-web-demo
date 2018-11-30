@@ -134,15 +134,11 @@ function estimateMovement(gl, programs, textures, framebuffers, frame) {
     program = programs.points;
     gl.useProgram(program);
     let l = gl.getUniformLocation(program, 'cubeTexture');
-    if (frame % 2 === 0) {
-        gl.uniform1i(l, textures.cube0.glId);
-    } else {
-        gl.uniform1i(l, textures.cube1.glId);
-    }
+    gl.uniform1i(l, textures.cube[frame % 2].glId);
     l = gl.getUniformLocation(program, 'depthTexture');
-    gl.uniform1i(l, textures.depth[frame%2].glId);
+    gl.uniform1i(l, textures.depth[frame % 2].glId);
     l = gl.getUniformLocation(program, 'previousDepthTexture');
-    gl.uniform1i(l, textures.depth[(frame+1)%2].glId);
+    gl.uniform1i(l, textures.depth[(frame + 1) % 2].glId);
     // Number of items in each texel, 4 means RGBA, 3 means RGB.
     const stride = 4;
 
