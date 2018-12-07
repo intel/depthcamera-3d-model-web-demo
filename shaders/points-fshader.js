@@ -88,28 +88,6 @@ uniform mat4 movement;
 
 ${PROJECT_DEPROJECT_SHADER_FUNCTIONS}
 
-// Guess what the normal of a point is by looking at two neighboring points.
-// Will return the zero vector if the neighboring points are undefined.
-vec3 estimateNormal(sampler2D tex, vec2 coord) {
-    vec3 position = deproject(tex, coord);
-
-    ivec2 texSize = textureSize(tex, 0);
-    vec2 texStep = vec2(1.0/float(texSize.x), 1.0/float(texSize.y));
-    // TODO remove this
-    if (coord.x + texStep.x >= 0.5 ||
-        coord.y + texStep.y >= 0.5)
-            return vec3(0.0, 0.0, 0.0);
-
-    vec3 positionRight = deproject(tex, coord + vec2(texStep.x, 0.0));
-    vec3 positionTop   = deproject(tex, coord + vec2(0.0, texStep.y));
-    // TODO remove this
-    if (positionTop == vec3(0.0, 0.0, 0.0) || positionRight == vec3(0.0, 0.0, 0.0)) {
-        return vec3(0.0, 0.0, 0.0);
-    }
-
-    vec3 normal = cross(positionTop - position, positionRight - position);
-    return normalize(normal);
-}
 // Convert world coordinates of the cube into uvw texture coordinates. Imagine
 // there is a cube of size 1x1x1 at origin - this function will return the
 // coordinate of the texel as if the texture was positioned like that.
@@ -152,7 +130,7 @@ vec3 raymarch(vec3 position, vec3 viewDirection) {
 
 // Guess what the normal of the surface is at this position by looking at nearby
 // points on the surface.
-vec3 estimateNormal(vec3 position) {
+vec3 estimateNormalSignedDistance(vec3 position) {
     vec3 normal;
     float gridUnit = 1.0/128.0;
     float unit = gridUnit/2.0;
@@ -165,7 +143,9 @@ vec3 estimateNormal(vec3 position) {
     return normalize(normal);
 }
 
-vec3 estimateNormal2(sampler2D tex, vec2 coord) {
+// Guess what the normal of a point is by looking at two neighboring points.
+// Will return the zero vector if the neighboring points are undefined.
+vec3 estimateNormalPointCloud(sampler2D tex, vec2 coord) {
     vec3 position = deproject(tex, coord);
 
     ivec2 texSize = textureSize(tex, 0);
@@ -185,7 +165,6 @@ vec3 estimateNormal2(sampler2D tex, vec2 coord) {
     vec3 normal = cross(positionTop - position, positionRight - position);
     return normalize(normal);
 }
-
 
 void main() {
     vec4 zero = vec4(0.0, 0.0, 0.0, 0.0);
@@ -218,11 +197,11 @@ void main() {
             // Used for debugging, set to 1 if a pair of points was found,
             // though they might not actually get used.
             outDotAndError = vec4(0.0, 0.0, 1.0, 0.0);
-            // vec3 normal = estimateNormal(destPosition);
+            // vec3 normal = estimateNormalSignedDistance(destPosition);
             // move destPosition into camera space (sourcePosition is already in
             // camera space)
             // destPosition.z += 1.0;
-            vec3 normal = estimateNormal2(previousDepthTexture, rayCoord);
+            vec3 normal = estimateNormalPointCloud(previousDepthTexture, rayCoord);
             if (normal != vec3(0.0, 0.0, 0.0)) {
                 if (distance(sourcePosition, destPosition) < MAX_DISTANCE) {
                     outCrossProduct = vec4(cross(sourcePosition, normal), 0.0);

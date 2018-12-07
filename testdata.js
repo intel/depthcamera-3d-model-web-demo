@@ -65,7 +65,7 @@ function raymarch(position, viewDirection) {
     return false;
 }
 
-function estimateNormal(position) {
+function estimateNormalSignedDistance(position) {
     let p = position.slice();
     let normal = vec3.create();
     let a = vec3.create();
@@ -81,7 +81,8 @@ function estimateNormal(position) {
     vec3.add(a, p, vec3.fromValues(0, 0, EPSILON));
     vec3.add(b, p, vec3.fromValues(0, 0, -EPSILON));
     normal[2] = signedDistance(a) - signedDistance(b);
-    return vec3.normalize(normal, normal);
+    vec3.normalize(normal, normal);
+    return normal;
 }
 
 function createFakeCameraParams(width, height) {
@@ -145,7 +146,7 @@ function createFakeData(width, height, transform) {
                 let result_camera = vec3.create();
                 vec3.transformMat4(result_camera, result, inv_transform);
                 data[j*width + i] = result_camera[2];
-                let normal = estimateNormal(result);
+                let normal = estimateNormalSignedDistance(result);
                 if (debug) {
                     data[j*width + i] = result_camera[2];
                     console.log("camera space surface", result_camera);

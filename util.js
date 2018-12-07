@@ -91,7 +91,7 @@ function arraysEqual(array1, array2, epsilon) {
     if (epsilon === undefined) epsilon = 0.0;
     for (let i = 0; i < array1.length; i++) {
         if (Math.abs(array1[i] - array2[i]) > epsilon) {
-            console.log("Diff in arrays, index ", i, array1[i], array2[i]);
+            // console.log("Diff in arrays, index ", i, array1[i], array2[i]);
             return false;
         }
     }

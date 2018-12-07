@@ -42,7 +42,33 @@ function project(position) {
     return [coordx, coordy];
 }
 
-function getNormal(normals, coordx, coordy, debug) {
+function estimateNormalPointCloud(data, coordx, coordy, debug) {
+    let zero = vec3.fromValues(0,0,0);
+    let position = deproject(data, coordx, coordy);
+    let texStepx = 1.0/data.width;
+    let texStepy = 1.0/data.height;
+    if (coordx + texStepx >= 0.5 || coordy + texStepy >= 0.5) {
+        return zero;
+    }
+    let positionRight = deproject(data, coordx + texStepx, coordy);
+    let positionTop = deproject(data, coordx, coordy + texStepy);
+    if (arraysEqual(positionRight, zero) || arraysEqual(positionTop, zero)) {
+        return zero;
+    }
+    let normal = vec3.create();
+    let tmp1 = vec3.create();
+    let tmp2 = vec3.create();
+    vec3.sub(tmp1, positionTop, position);
+    vec3.sub(tmp2, positionRight, position);
+    vec3.cross(normal, tmp1, tmp2);
+    vec3.normalize(normal, normal);
+    if (debug) {
+        console.log(positionRight);
+    }
+    return normal;
+}
+
+function getPrecomputedNormal(normals, coordx, coordy, debug) {
     let i = Math.round(-coordx*normals.width + normals.width/2.0);
     let j = Math.round(coordy*normals.height + normals.height/2.0);
     let index = (j*normals.width + i)*normals.stride;
@@ -78,7 +104,13 @@ function correspondingPoint(srcDepth, destDepth, destNormals, movement, i, j) {
     let [destCoordx, destCoordy] = project(sourcePosition);
     let destPosition = deproject(destDepth, destCoordx, destCoordy);
     if (destPosition[2] === 0.0) return [];
-    let destNormal = getNormal(destNormals, destCoordx, destCoordy, debug);
+    let destNormal;
+    if (destNormals === undefined) {
+        destNormal = estimateNormalPointCloud(destDepth, coordx, coordy, debug);
+    } else {
+        destNormal = getPrecomputedNormal(
+            destNormals, destCoordx, destCoordy, debug);
+    }
     if (debug) {
         // console.log("coord: ", coordx, coordy);
         console.log("trans src position: ", sourcePosition);

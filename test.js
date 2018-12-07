@@ -370,9 +370,9 @@ function testMain() {
     try {
         console.log("TESTS\n");
         // testCPUMovementEstimationIdentity();
-        testCPUMovementEstimation();
+        // testCPUMovementEstimation();
         // testMovementEstimationIdentity();
-        // testNumberOfUsedPoints();
+        testNumberOfUsedPoints();
         // testMovementEstimation();
         // testSumShaderSinglePass();
         // testSumShader();
