@@ -83,6 +83,9 @@ function getPrecomputedNormal(normals, coordx, coordy, debug) {
     return vec3.fromValues(nx, ny, nz);
 }
 
+// Return [srcPoint, destPoint, normal], where the points will be reasonably
+// close to each other. The normal will be zero if it couldn't be calculated for
+// these points of is some other condition didn't pass.
 function correspondingPoint(srcDepth, destDepth, destNormals, movement, i, j) {
     // let debug = (i == srcDepth.width/2 && j == srcDepth.height/2);
     // let debug = (i == 150 && j == 150);
@@ -113,10 +116,10 @@ function correspondingPoint(srcDepth, destDepth, destNormals, movement, i, j) {
     }
     if (debug) {
         // console.log("coord: ", coordx, coordy);
-        console.log("trans src position: ", sourcePosition);
-        console.log("dest coord: ", destCoordx, destCoordy);
-        console.log("dest position: ", destPosition);
-        console.log("dest normal: ", destNormal);
+        // console.log("trans src position: ", sourcePosition);
+        // console.log("dest coord: ", destCoordx, destCoordy);
+        // console.log("dest position: ", destPosition);
+        // console.log("dest normal: ", destNormal);
     }
     if (isNaN(sourcePosition[0]) || isNaN(destPosition[0])) {
         console.log("got NaN at index ", i, j);
@@ -135,17 +138,22 @@ function createLinearEqOnCPU(srcDepth, destDepth, destNormals, movement) {
     for (let i = 0; i < 6; i += 1) {
         A[i] = new Float32Array(6);
     }
+    let pointsFound = 0;
     let pointsUsed = 0;
     for (let i = 0; i < srcDepth.width; i += 1) {
         for (let j = 0; j < srcDepth.height; j += 1) {
             let result = correspondingPoint(srcDepth,
                 destDepth, destNormals, movement, i, j);
             if (result.length != 3) continue;
+            pointsFound += 1;
+            // found corresponding points, but they were thrown out (undefined
+            // normal or some other condition didn't pass)
+            if (arraysEqual(result[2], vec3.create())) continue;
+            pointsUsed += 1;
             let [p, q, n] = result;
             let c = vec3.create();
             let debug = (i == srcDepth.width/2 && j == srcDepth.height/2);
             // console.log("x", p, q, n);
-            pointsUsed += 1;
             vec3.cross(c, p, n);
             let diff = vec3.create();
             vec3.sub(diff, p, q);
@@ -184,10 +192,7 @@ function createLinearEqOnCPU(srcDepth, destDepth, destNormals, movement) {
     if (!matrixIsSymmetric(A, 0.001)) {
         throw Error("A is not symmetric");
     }
-    // TODO the 4th argument will be pointsFound which includes points for which
-    // it couldn't find the normal, but right now the normals are given so they
-    // are equal
-    return [A, b, error, pointsUsed, pointsUsed];
+    return [A, b, error, pointsFound, pointsUsed];
 }
 
 function estimateMovementCPU(srcData, destData, destNormals, initialMovement) {

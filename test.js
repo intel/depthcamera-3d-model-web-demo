@@ -145,7 +145,7 @@ function testNumberOfUsedPoints() {
     // they found and used is the same.
     let test = new Test("Test number of used points");
     let infoCPU;
-    [_, infoCPU] = estimateMovementCPU(destData, destData, destNormals, false);
+    [_, infoCPU] = estimateMovementCPU(destData, destData);
 
     let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
     let frame = 0;
@@ -161,8 +161,11 @@ function testNumberOfUsedPoints() {
         + " version.\nGPU version found " + infoGPU["pointsFound"]
         + " non-zero points, while the CPU version found "
         + infoCPU["pointsFound"] + " points.");
-    // TODO once the CPU version uses the same algorithm for calculating
-    // normals, compare the number of actually used points too
+    test.check(infoGPU["pointsUsed"] === infoCPU["pointsUsed"],
+        "Number of points used in GPU version is different than in CPU"
+        + " version.\nGPU version used " + infoGPU["pointsUsed"]
+        + " non-zero points, while the CPU version used "
+        + infoCPU["pointsUsed"] + " points.");
     // TODO do this for non-identical frames and compare A, b, error, etc
 }
 
