@@ -146,7 +146,7 @@ function testNumberOfUsedPointsSameFrame() {
     // they found and used is the same.
     let test = new Test("Compare number of used points, same frame");
     let infoCPU;
-    [_, infoCPU] = estimateMovementCPU(destData, destData);
+    [_, infoCPU] = estimateMovementCPU(destData, destData, 1);
 
     let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
     let frame = 0;
@@ -172,7 +172,7 @@ function testNumberOfUsedPointsSameFrame() {
 function testNumberOfUsedPoints() {
     let test = new Test("Compare number of used points");
     let infoCPU;
-    [_, infoCPU] = estimateMovementCPU(srcData, destData);
+    [_, infoCPU] = estimateMovementCPU(srcData, destData, 1);
 
     let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
     let frame = 0;
@@ -198,7 +198,7 @@ function testNumberOfUsedPoints() {
 function testCPUMovementEstimationIdentity() {
     let test = new Test("Test movement estimation on CPU with no movement");
     let movement;
-    [movement, _] = estimateMovementCPU(destData, destData, destNormals, false);
+    [movement, _] = estimateMovementCPU(destData, destData, 1, destNormals);
     test.check(arraysEqual(movement, mat4.create()),
         "estimated movement is not identity: " + movement);
 }
@@ -210,7 +210,7 @@ function testCPUMovementEstimation() {
     let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
     let x = mat4.create();
     let movement;
-    [movement, _] = estimateMovementCPU(srcData, destData, destNormals,
+    [movement, _] = estimateMovementCPU(srcData, destData, 1, destNormals,
         // mat4.create());
         knownMovement);
     test.check(arraysEqual(movement, knownMovement, 0.001),

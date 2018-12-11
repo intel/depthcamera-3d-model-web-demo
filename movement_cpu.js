@@ -195,7 +195,7 @@ function createLinearEqOnCPU(srcDepth, destDepth, destNormals, movement) {
     return [A, b, error, pointsFound, pointsUsed];
 }
 
-function estimateMovementCPU(srcData, destData, destNormals, initialMovement) {
+function estimateMovementCPU(srcData, destData, max_steps, destNormals, initialMovement) {
     let info = {
         "steps": 0,
         "success": true,
@@ -203,9 +203,10 @@ function estimateMovementCPU(srcData, destData, destNormals, initialMovement) {
         "pointsFound": 0,
         "pointsUsed": 0,
     };
+    if (max_steps === undefined) max_steps = MAX_STEPS;
     let movement = initialMovement ? initialMovement.slice() : mat4.create();
     let previousError = 0;
-    for (let step = 0; step < 1; step += 1) {
+    for (let step = 0; step < max_steps; step += 1) {
         let [A, b, error, pointsFound, pointsUsed] = 
                 createLinearEqOnCPU(srcData, destData, destNormals, movement);
         // if (Math.abs(error - previousError) < ERROR_DIFF_THRESHOLD) {
