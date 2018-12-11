@@ -122,7 +122,7 @@ function constructMovement(x) {
 //      https://www.cs.princeton.edu/%7Esmr/papers/icpstability.pdf
 // * Efficient Variants of the ICP Algorithm by Rusinkiewicz and Levoy:
 //      http://graphics.stanford.edu/papers/fasticp/fasticp_paper.pdf
-function estimateMovement(gl, programs, textures, framebuffers, frame) {
+function estimateMovement(gl, programs, textures, framebuffers, frame, max_steps) {
     let info = {
         "steps": 0,
         "success": true,
@@ -130,6 +130,7 @@ function estimateMovement(gl, programs, textures, framebuffers, frame) {
         "pointsFound": 0,
         "pointsUsed": 0,
     };
+    if (max_steps === undefined) max_steps = MAX_STEPS;
     if (frame === 0) return [mat4.create(), info];
     program = programs.points;
     gl.useProgram(program);
@@ -146,7 +147,7 @@ function estimateMovement(gl, programs, textures, framebuffers, frame) {
     let previousError = 0;
     // Run the ICP algorithm until the
     // error stops changing (which usually means it converged).
-    for (let step = 0; step < 1; step += 1) {
+    for (let step = 0; step < max_steps; step += 1) {
         // Find corresponding points and output information about them into
         // textures (i.e. the cross product, dot product, normal, error).
         program = programs.points;
@@ -205,6 +206,8 @@ function estimateMovement(gl, programs, textures, framebuffers, frame) {
         info["error"] = error;
         info["pointsFound"] = pointsFound;
         info["pointsUsed"] = pointsUsed;
+        info["A"] = A;
+        info["b"] = b;
 
         // The algorithm has converged, because the error didn't change much
         // from the last loop. Note that the error might actually get higher

@@ -182,7 +182,7 @@ function testNumberOfUsedPoints() {
     frame = 1;
     uploadDepthData(gl, textures, srcData, width, height, frame);
     let infoGPU;
-    [_, infoGPU] = estimateMovement(gl, programs, textures, framebuffers, frame);
+    [_, infoGPU] = estimateMovement(gl, programs, textures, framebuffers, frame, 1);
     test.check(infoGPU["pointsFound"] === infoCPU["pointsFound"],
         "Number of points found in GPU version is different than in CPU"
         + " version.\nGPU version found " + infoGPU["pointsFound"]
@@ -193,6 +193,10 @@ function testNumberOfUsedPoints() {
         + " version.\nGPU version used " + infoGPU["pointsUsed"]
         + " non-zero points, while the CPU version used "
         + infoCPU["pointsUsed"] + " points.");
+    test.check(arraysEqual(infoGPU["b"], infoCPU["b"]),
+        "The vector b in Ax=b created from the GPU version differs from the one"
+        + " created by the CPU version.\nGPU version b = " + infoGPU["b"]
+        + "\nCPU version b = " + infoCPU["b"]);
 }
 
 function testCPUMovementEstimationIdentity() {

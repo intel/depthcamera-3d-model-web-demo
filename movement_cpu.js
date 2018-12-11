@@ -224,6 +224,8 @@ function estimateMovementCPU(srcData, destData, max_steps, destNormals, initialM
         info["steps"] = step+1;
         info["pointsFound"] = pointsFound;
         info["pointsUsed"] = pointsUsed;
+        info["A"] = A;
+        info["b"] = b;
 
         if (!equationSolutionIsValid(A, x, b, 0.0001)) {
             throw Error("Ax = b is too imprecise")
