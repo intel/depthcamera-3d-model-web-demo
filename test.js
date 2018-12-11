@@ -14,14 +14,14 @@
 
 let width = 200;
 let height = 200;
-let transform = getViewMatrix(0, 0, 1.0);
-let transform2 = getViewMatrix(0, 30, 1.0);
-// mat4.translate(transform2, transform2, vec3.fromValues(0.1, 0.1, 0.1));
-let knownMovement = getMovement(transform2, transform);
+let frame0Transform = getViewMatrix(0, 0, 1.0);
+let frame1Transform = getViewMatrix(0, 30, 1.0);
+// mat4.translate(frame1Transform, frame1Transform, vec3.fromValues(0.1, 0.1, 0.1));
+let knownMovement = getMovement(frame1Transform, frame0Transform);
 let knownMovementInv = mat4.create();
 mat4.invert(knownMovementInv, knownMovement);
-let [frame0, frame0Normals] = createFakeData(width, height, transform);
-let [frame1, frame1Normals] = createFakeData(width, height, transform2);
+let [frame0, frame0Normals] = createFakeData(width, height, frame0Transform);
+let [frame1, frame1Normals] = createFakeData(width, height, frame1Transform);
 let cameraParams = createFakeCameraParams(height, width);
 
 class Test {
