@@ -20,8 +20,8 @@ let transform2 = getViewMatrix(0, 30, 1.0);
 let knownMovement = getMovement(transform2, transform);
 let knownMovementInv = mat4.create();
 mat4.invert(knownMovementInv, knownMovement);
-let [destData, destNormals] = createFakeData(width, height, transform);
-let [srcData, srcNormals] = createFakeData(width, height, transform2);
+let [frame0, frame0Normals] = createFakeData(width, height, transform);
+let [frame1, frame1Normals] = createFakeData(width, height, transform2);
 let cameraParams = createFakeCameraParams(height, width);
 
 class Test {
@@ -89,11 +89,11 @@ function testVolumetricModel() {
                + " shown above.");
     let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
     let frame = 0;
-    uploadDepthData(gl, textures, destData, width, height, frame);
+    uploadDepthData(gl, textures, frame0, width, height, frame);
     createModel(gl, programs, framebuffers, textures, frame, mat4.create());
 
     frame = 1;
-    uploadDepthData(gl, textures, srcData, width, height, frame);
+    uploadDepthData(gl, textures, frame1, width, height, frame);
     createModel(gl, programs, framebuffers, textures, frame, knownMovementInv);
     let animate = function () {
         renderModel(gl, programs, textures, frame, test.canvas);
@@ -106,11 +106,11 @@ function testMovementEstimationIdentity() {
     let test = new Test("Test movement estimation with no movement");
     let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
     let frame = 0;
-    uploadDepthData(gl, textures, destData, width, height, frame);
+    uploadDepthData(gl, textures, frame0, width, height, frame);
     createModel(gl, programs, framebuffers, textures, frame, mat4.create());
 
     frame = 1;
-    uploadDepthData(gl, textures, destData, width, height, frame);
+    uploadDepthData(gl, textures, frame0, width, height, frame);
     let movement, info;
     [movement, info] = estimateMovement(gl, programs, textures, framebuffers, frame);
     test.check(arraysEqual(movement, mat4.create()),
@@ -123,11 +123,11 @@ function testMovementEstimation() {
     test.bindMouseToCanvas();
     let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
     let frame = 0;
-    uploadDepthData(gl, textures, destData, width, height, frame);
+    uploadDepthData(gl, textures, frame0, width, height, frame);
     createModel(gl, programs, framebuffers, textures, frame, mat4.create());
 
     frame = 1;
-    uploadDepthData(gl, textures, srcData, width, height, frame);
+    uploadDepthData(gl, textures, frame1, width, height, frame);
     let movement, info;
     [movement, info] = estimateMovement(gl, programs, textures, framebuffers, frame);
     createModel(gl, programs, framebuffers, textures, frame, movement);
@@ -146,15 +146,15 @@ function testNumberOfUsedPointsSameFrame() {
     // they found and used is the same.
     let test = new Test("Compare number of used points, same frame");
     let infoCPU;
-    [_, infoCPU] = estimateMovementCPU(destData, destData, 1);
+    [_, infoCPU] = estimateMovementCPU(frame0, frame0, 1);
 
     let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
     let frame = 0;
-    uploadDepthData(gl, textures, destData, width, height, frame);
+    uploadDepthData(gl, textures, frame0, width, height, frame);
     createModel(gl, programs, framebuffers, textures, frame, mat4.create());
 
     frame = 1;
-    uploadDepthData(gl, textures, destData, width, height, frame);
+    uploadDepthData(gl, textures, frame0, width, height, frame);
     let infoGPU;
     [_, infoGPU] = estimateMovement(gl, programs, textures, framebuffers, frame);
     test.check(infoGPU["pointsFound"] === infoCPU["pointsFound"],
@@ -172,15 +172,15 @@ function testNumberOfUsedPointsSameFrame() {
 function testNumberOfUsedPoints() {
     let test = new Test("Compare number of used points");
     let infoCPU;
-    [_, infoCPU] = estimateMovementCPU(srcData, destData, 1);
+    [_, infoCPU] = estimateMovementCPU(frame1, frame0, 1);
 
     let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
     let frame = 0;
-    uploadDepthData(gl, textures, destData, width, height, frame);
+    uploadDepthData(gl, textures, frame0, width, height, frame);
     createModel(gl, programs, framebuffers, textures, frame, mat4.create());
 
     frame = 1;
-    uploadDepthData(gl, textures, srcData, width, height, frame);
+    uploadDepthData(gl, textures, frame1, width, height, frame);
     let infoGPU;
     [_, infoGPU] = estimateMovement(gl, programs, textures, framebuffers, frame, 1);
     test.check(infoGPU["pointsFound"] === infoCPU["pointsFound"],
@@ -202,7 +202,7 @@ function testNumberOfUsedPoints() {
 function testCPUMovementEstimationIdentity() {
     let test = new Test("Test movement estimation on CPU with no movement");
     let movement;
-    [movement, _] = estimateMovementCPU(destData, destData, 1, destNormals);
+    [movement, _] = estimateMovementCPU(frame0, frame0, 1, frame0Normals);
     test.check(arraysEqual(movement, mat4.create()),
         "estimated movement is not identity: " + movement);
 }
@@ -214,7 +214,7 @@ function testCPUMovementEstimation() {
     let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
     let x = mat4.create();
     let movement;
-    [movement, _] = estimateMovementCPU(srcData, destData, 1, destNormals,
+    [movement, _] = estimateMovementCPU(frame1, frame0, 1, frame0Normals,
         // mat4.create());
         knownMovement);
     test.check(arraysEqual(movement, knownMovement, 0.001),
@@ -225,13 +225,13 @@ function testCPUMovementEstimation() {
         + mat4ToStr(movement));
 
     let frame = 0;
-    uploadDepthData(gl, textures, destData, width, height, frame);
+    uploadDepthData(gl, textures, frame0, width, height, frame);
     createModel(gl, programs, framebuffers, textures, frame, mat4.create());
 
     frame = 1;
     let movementInv = mat4.create();
     mat4.invert(movementInv, movement);
-    uploadDepthData(gl, textures, srcData, width, height, frame);
+    uploadDepthData(gl, textures, frame1, width, height, frame);
     createModel(gl, programs, framebuffers, textures, frame, movementInv);
     let animate = function () {
         renderModel(gl, programs, textures, frame, test.canvas);
@@ -256,11 +256,11 @@ function testPointsShaderNormals() {
                + " points shader - it will be a lot more grainy.");
 
     let frame = 0;
-    uploadDepthData(gl, textures, srcData, width, height, frame);
+    uploadDepthData(gl, textures, frame1, width, height, frame);
     createModel(gl, programs, framebuffers, textures, frame, mat4.create());
 
     frame = 1;
-    uploadDepthData(gl, textures, srcData, width, height, frame);
+    uploadDepthData(gl, textures, frame1, width, height, frame);
 
     program = programs.points;
     gl.useProgram(program);
@@ -280,7 +280,7 @@ function testPointsShaderNormals() {
     gl.readPixels(0, 0, width, height, gl.RGBA, gl.FLOAT, d);
     d.width = width;
     d.height = height;
-    showNormals(canvas1, srcNormals);
+    showNormals(canvas1, frame1Normals);
     showNormals(canvas2, d);
 }
 
@@ -396,10 +396,10 @@ function testMain() {
     let data2Canvas = document.getElementById('data2');
     let normals1Canvas = document.getElementById('normals1');
     let normals2Canvas = document.getElementById('normals2');
-    showDepthData(data1Canvas, destData);
-    showNormals(normals1Canvas, destNormals);
-    showDepthData(data2Canvas, srcData);
-    showNormals(normals2Canvas, srcNormals);
+    showDepthData(data1Canvas, frame0);
+    showNormals(normals1Canvas, frame0Normals);
+    showDepthData(data2Canvas, frame1);
+    showNormals(normals2Canvas, frame1Normals);
     try {
         console.log("TESTS\n");
         // testCPUMovementEstimationIdentity();
