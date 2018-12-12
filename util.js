@@ -71,27 +71,88 @@ function getViewMatrix(yaw_degrees, pitch_degrees, zcenter) {
     return view;
 }
 
-function mat4ToStr(mat) {
-    let str = "";
-    for (let i = 0; i < 4; i += 1) {
-        for (let j = 0; j < 4; j += 1) {
-            let tmp = mat[j*4 + i].toFixed(3);
-            if (tmp >= 0) str += " ";
+// How many characters are needed to print a number and that many decimals.
+function numberOfDigits(number, decimals) {
+    if (decimals === undefined) decimals = 3;
+    return number.toFixed(decimals).toString().length;
+}
+
+// Convert a flat array of floating point numbers into a string with a pretty
+// formated width x height matrix. By default prints 3 decimals. The padding
+// argument is optional.
+function arrayToStr(array, width, height, decimals, padding) {
+    if (array === undefined || array.length != width*height) {
+        console.warn("Incorrect usage of arrayToStr");
+        return "";
+    }
+    if (decimals === undefined) decimals = 3;
+    let maxDigits = 1;
+    if (padding === undefined) {
+        for (let i = 0; i < array.length; i++) {
+            let digits = numberOfDigits(array[i], decimals);
+            if (digits > maxDigits) {
+                maxDigits = digits;
+            }
+        }
+    } else {
+        maxDigits = padding;
+    }
+    console.log(maxDigits);
+    let str = "<pre>";
+    for (let i = 0; i < height; i += 1) {
+        for (let j = 0; j < width; j += 1) {
+            let tmp = array[i*width + j].toFixed(decimals)
+                .toString().padStart(maxDigits);
+            if (tmp.length != maxDigits) throw Error("");
             str += tmp + " ";
         }
         str += "\n";
+    }
+    return str + "</pre>";
+}
+
+function array2DToStr(array, decimals) {
+    let maxDigits = 1;
+    for (let i = 0; i < array.length; i++) {
+        for (let j = 0; j < array[i].length; j++) {
+            let digits = numberOfDigits(array[i][j], decimals);
+            if (digits > maxDigits) {
+                maxDigits = digits;
+            }
+        }
+    }
+    let str = "";
+    for (let i = 0; i < array.length; i++) {
+        str += arrayToStr(array[i], array.length, 1, decimals, maxDigits);
     }
     return str;
 }
 
 
 function arraysEqual(array1, array2, epsilon) {
-    if (array1.length !== array2.length)
-        return false;
+    if (array1 === undefined || array2 === undefined
+        || array1.length !== array2.length) {
+            console.warn("Incorrect usage of arraysEqual");
+            return false;
+    }
     if (epsilon === undefined) epsilon = 0.0;
     for (let i = 0; i < array1.length; i++) {
         if (Math.abs(array1[i] - array2[i]) > epsilon) {
             // console.log("Diff in arrays, index ", i, array1[i], array2[i]);
+            return false;
+        }
+    }
+    return true;
+}
+
+function arrays2DEqual(array1, array2, epsilon) {
+    if (array1 === undefined || array2 === undefined
+        || array1.length !== array2.length) {
+            console.warn("Incorrect usage of arrays2DEqual");
+            return false;
+        }
+    for (let i = 0; i < array1.length; i++) {
+        if (!arraysEqual(array1[i], array2[i], epsilon)) {
             return false;
         }
     }
