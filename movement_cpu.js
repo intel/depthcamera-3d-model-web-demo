@@ -183,6 +183,9 @@ function createLinearEqOnCPU(srcDepth, destDepth, destNormals, movement) {
                     //         n[2]*c[0], n[2]*c[1], n[2]*c[2], n[2]*n[0], n[2]*n[1], n[2]*n[2];
         }
     }
+    for (let i = 0; i < b.length; i++) {
+        b[i] = -b[i];
+    }
     console.log("points used: ", pointsUsed);
     console.log("relative error: ", error/pointsUsed);
     const det = numeric.det(A);
