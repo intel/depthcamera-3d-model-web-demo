@@ -193,12 +193,16 @@ function compareEquationsBetweenVersions() {
         + " version.\nGPU version used " + infoGPU["pointsUsed"]
         + " non-zero points, while the CPU version used "
         + infoCPU["pointsUsed"] + " points.");
-    test.check(arraysEqual(infoGPU["b"], infoCPU["b"]),
+    test.check(Math.abs(infoGPU["error"] - infoCPU["error"]) < 0.001,
+        "The error in the GPU version (" + infoGPU["error"].toFixed(5)
+        + ") is too different from the error in the CPU version("
+        + infoCPU["error"].toFixed(5) + ")");
+    test.check(arraysEqual(infoGPU["b"], infoCPU["b"], 0.001),
         "The vector b in Ax=b created from the GPU version differs from the one"
         + " created by the CPU version.\nGPU version b = "
         + arrayToStr(infoGPU["b"], 6, 1)
         + "CPU version b = " + arrayToStr(infoCPU["b"], 6, 1));
-    test.check(arrays2DEqual(infoGPU["A"], infoCPU["A"]),
+    test.check(arrays2DEqual(infoGPU["A"], infoCPU["A"], 0.001),
         "The matrix A in Ax=b created from the GPU version differs from the one"
         + " created by the CPU version.\nGPU version A = \n"
         + array2DToStr(infoGPU["A"])
