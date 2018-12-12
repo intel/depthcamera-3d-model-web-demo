@@ -97,7 +97,6 @@ function arrayToStr(array, width, height, decimals, padding) {
     } else {
         maxDigits = padding;
     }
-    console.log(maxDigits);
     let str = "<pre>";
     for (let i = 0; i < height; i += 1) {
         for (let j = 0; j < width; j += 1) {

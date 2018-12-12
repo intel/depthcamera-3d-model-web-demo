@@ -169,8 +169,8 @@ function testNumberOfUsedPointsSameFrame() {
         + infoCPU["pointsUsed"] + " points.");
 }
 
-function testNumberOfUsedPoints() {
-    let test = new Test("Compare number of used points");
+function compareEquationsBetweenVersions() {
+    let test = new Test("Compare CPU and GPU versions of movement estimation");
     let infoCPU;
     [_, infoCPU] = estimateMovementCPU(frame1, frame0, 1);
 
@@ -195,8 +195,15 @@ function testNumberOfUsedPoints() {
         + infoCPU["pointsUsed"] + " points.");
     test.check(arraysEqual(infoGPU["b"], infoCPU["b"]),
         "The vector b in Ax=b created from the GPU version differs from the one"
-        + " created by the CPU version.\nGPU version b = " + infoGPU["b"]
-        + "\nCPU version b = " + infoCPU["b"]);
+        + " created by the CPU version.\nGPU version b = "
+        + arrayToStr(infoGPU["b"], 6, 1)
+        + "CPU version b = " + arrayToStr(infoCPU["b"], 6, 1));
+    test.check(arrays2DEqual(infoGPU["A"], infoCPU["A"]),
+        "The matrix A in Ax=b created from the GPU version differs from the one"
+        + " created by the CPU version.\nGPU version A = \n"
+        + array2DToStr(infoGPU["A"])
+        + "\nCPU version A = \n"
+        + array2DToStr(infoCPU["A"]));
 }
 
 function testCPUMovementEstimationIdentity() {
@@ -220,9 +227,9 @@ function testCPUMovementEstimation() {
     test.check(arraysEqual(movement, knownMovement, 0.001),
         "Estimated movement is not close enough to actual movement.\n"
         + "Expected:\n"
-        + mat4ToStr(knownMovement)
-        + "Actual:\n"
-        + mat4ToStr(movement));
+        + arrayToStr(knownMovement, 4, 4)
+        + "Calculated:\n"
+        + arrayToStr(movement, 4, 4));
 
     let frame = 0;
     uploadDepthData(gl, textures, frame0, width, height, frame);
@@ -406,7 +413,7 @@ function testMain() {
         // testCPUMovementEstimation();
         // testMovementEstimationIdentity();
         // testNumberOfUsedPointsSameFrame();
-        testNumberOfUsedPoints();
+        compareEquationsBetweenVersions();
         // testMovementEstimation();
         // testSumShaderSinglePass();
         // testSumShader();
