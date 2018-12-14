@@ -146,6 +146,29 @@ function testIndexCoordCoversion() {
     test.check(i === i_ && j === j_);
 }
 
+function testCorrespondingPointCPU() {
+    let test = new Test("Test the corresponding points are the same for"
+                        + " identical frames");
+    let i, j, p, q, n;
+    let foundDiff = false;
+    for (i = 0; i < width; i++) {
+        for (j = 0; j < height; j++) {
+            let result = correspondingPoint(frame0,
+                frame0, frame0Normals, mat4.create(), i, j);
+            if (result.length != 3) continue;
+            [p, q, n] = result;
+            if (!arraysEqual(p,q, 0.00001)) {
+                foundDiff = true;
+            }
+        }
+    }
+    test.check(!foundDiff, "The found corresponding points between identical"
+        + " frames were not themselves identical."
+        + "\np: " + p
+        + "\nq: " + q
+        + "\ni, j: " + i + " " + j);
+}
+
 function testVolumetricModel() {
     let test = new Test("Test volumetric model (visual test only)");
     test.showCanvas();
@@ -483,6 +506,7 @@ function testMain() {
     try {
         console.log("TESTS\n");
         testIndexCoordCoversion();
+        testCorrespondingPointCPU();
         testCPUMovementEstimationIdentity();
         // testCPUMovementEstimation();
         // testMovementEstimationIdentity();
