@@ -178,3 +178,26 @@ function equationSolutionIsValid(A, x, b, epsilon) {
     return arraysEqual(Ax, b, epsilon);
 }
 
+// Given two integer indices i, j, calculate the coordinates on the projection
+// plane at z=-1. This means that it will be flipped (projection flips the
+// image). The indices i, j start at [0, 0] in the top left corner and point
+// down and right. The resulting coordinates start at the center, and point down
+// and left. Additionally, 0.5 is added to the indices i and j, so that it is
+// more in line with how gl_FragCoord works in shaders. Therefore, for an image
+// 100x100, the index [50, 50] will be not converted to [0.0, 0.0], but to
+// [0.005, 0.005].
+function getCoordFromIndex(i, j, width, height) {
+    if (i < 0 || j < 0 || i >= width || j >= height) {
+        throw Error("Bad usage of getCoordFromIndex");
+    }
+    let coordx = -((i + 0.5)/width - 0.5);
+    let coordy = ((j + 0.5)/height - 0.5);
+    return [coordx, coordy];
+}
+
+// Inverse to getCoordFromIndex.
+function getIndexFromCoord(coordx, coordy, width, height) {
+    let i = Math.round((-coordx + 0.5)*width - 0.5);
+    let j = Math.round((coordy + 0.5)*height - 0.5);
+    return [i, j];
+}

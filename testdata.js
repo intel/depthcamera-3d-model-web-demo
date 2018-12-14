@@ -112,7 +112,7 @@ function createFakeData(width, height, transform) {
         for (let j = 0; j < height; j += 1) {
             // let debug = (i == width/2 && j == height/2);
             // let debug = (i == 150 && j == 150);
-            let debug = (i == 150 && j == 130);
+            let debug = (i == 100 && j == 130);
             // let debug = false;
 
             // Flip both coordinates because this is a position in the
@@ -120,10 +120,10 @@ function createFakeData(width, height, transform) {
             // both the x and y axis when projected onto it. Flip the
             // y coordinate again because the i=0 j=0 is at the top left corner
             // and we want it at the bottom left.
-            let coordx = -(i - width/2.0)/width;
-            let coordy = (j - height/2.0)/height;
+            let [coordx, coordy] = getCoordFromIndex(i, j, width, height);
             let position = vec3.fromValues(coordx, coordy, -1.0);
             if (debug) {
+                console.log("i, j:", i, j);
                 console.log("position on proj.plane", position);
             }
             vec3.transformMat4(position, position, transform);
@@ -132,9 +132,11 @@ function createFakeData(width, height, transform) {
             let viewDirection = vec3.create();
             vec3.scaleAndAdd(viewDirection, camera, position, -1.0);
             vec3.normalize(viewDirection, viewDirection);
+            // viewDirection[1] = -viewDirection[1];
 
             let result = raymarch(position, viewDirection);
             if (debug) {
+                console.log("view direction ", viewDirection);
                 console.log("camera", camera);
                 console.log("transformed position", position);
                 console.log("surface position", result);
@@ -148,7 +150,7 @@ function createFakeData(width, height, transform) {
                 data[j*width + i] = result_camera[2];
                 let normal = estimateNormalSignedDistance(result);
                 if (debug) {
-                    data[j*width + i] = result_camera[2];
+                    // data[j*width + i] = 0;
                     console.log("camera space surface", result_camera);
                     // console.log("normal", normal);
                 }

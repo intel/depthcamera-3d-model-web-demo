@@ -16,22 +16,6 @@
 // accompanied shaders. This CPU version is used only for testing (comparing
 // results between the GPU and CPU version).
 
-function getCoordFromIndex(i, j, width, height) {
-    if (i < 0 || j < 0 || i >= width || j >= height) {
-        throw Error("Bad usage of getCoordFromIndex");
-    }
-    let coordx = -((i + 0.5)/width - 0.5);
-    let coordy = -((j + 0.5)/height - 0.5);
-    return [coordx, coordy];
-}
-
-function getIndexFromCoord(coordx, coordy, width, height) {
-    let i = Math.round((-coordx + 0.5)*width - 0.5);
-    let j = Math.round((-coordy + 0.5)*height - 0.5);
-    // let i = Math.round(-coordx*width + width/2.0);
-    // let j = Math.round(coordy*height + height/2.0);
-    return [i, j];
-}
 
 function deproject(data, coordx, coordy, debug) {
     let i, j;

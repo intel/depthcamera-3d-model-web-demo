@@ -15,7 +15,7 @@
 let width = 200;
 let height = 200;
 let frame0Transform = getViewMatrix(0, 0, 1.0);
-let frame1Transform = getViewMatrix(0, 30, 1.0);
+let frame1Transform = getViewMatrix(0, 0, 1.0);
 // mat4.translate(frame1Transform, frame1Transform, vec3.fromValues(0.1, 0.1, 0.1));
 let knownMovement = getMovement(frame1Transform, frame0Transform);
 let knownMovementInv = mat4.create();
@@ -89,7 +89,7 @@ function testIndexCoordCoversion() {
     let i = 50;
     let j = 50;
     let expectedx = -0.005;
-    let expectedy = -0.005;
+    let expectedy = 0.005;
     let coordx, coordy;
     [coordx, coordy] = getCoordFromIndex(i, j, width, height);
     test.check(Math.abs(coordx - expectedx) < epsilon
@@ -104,7 +104,7 @@ function testIndexCoordCoversion() {
     i = 0;
     j = 0;
     expectedx = 0.495;
-    expectedy = 0.495;
+    expectedy = -0.495;
     coordx, coordy;
     [coordx, coordy] = getCoordFromIndex(i, j, width, height);
     test.check(Math.abs(coordx - expectedx) < epsilon
@@ -118,7 +118,7 @@ function testIndexCoordCoversion() {
     i = 99;
     j = 99;
     expectedx = -0.495;
-    expectedy = -0.495;
+    expectedy = 0.495;
     coordx, coordy;
     [coordx, coordy] = getCoordFromIndex(i, j, width, height);
     test.check(Math.abs(coordx - expectedx) < epsilon
@@ -134,7 +134,7 @@ function testIndexCoordCoversion() {
     width = 160;
     height = 180;
     expectedx = 0.371875;
-    expectedy = 0.275;
+    expectedy = -0.275;
     coordx, coordy;
     [coordx, coordy] = getCoordFromIndex(i, j, width, height);
     test.check(Math.abs(coordx - expectedx) < epsilon
@@ -156,7 +156,7 @@ function testCorrespondingPointCPU() {
         if (foundDiff) break;
         for (j = 0; j < height; j++) {
             let result = correspondingPoint(frame0,
-                frame0, undefined, mat4.create(), i, j);
+                frame0, frame0Normals, mat4.create(), i, j);
             if (result.length != 3) continue;
             [p, q, n] = result;
             if (!arraysEqual(p, q, 0.0)) {
@@ -166,9 +166,7 @@ function testCorrespondingPointCPU() {
             let index = (j*frame0Normals.width + i)*frame0Normals.stride;
             let n_ = vec3.fromValues(frame0Normals[index],
                 frame0Normals[index+1], frame0Normals[index+2]);
-            if (!arraysEqual(n, n_, 0.01)) {
-                // console.log("X n: ", n);
-                // console.log("X n_: ", n_);
+            if (!arraysEqual(n, n_, 0.0)) {
                 normalsDiff = true;
             }
         }
@@ -196,7 +194,7 @@ function testVolumetricModel() {
 
     frame = 1;
     uploadDepthData(gl, textures, frame1, width, height, frame);
-    createModel(gl, programs, framebuffers, textures, frame, knownMovementInv);
+    createModel(gl, programs, framebuffers, textures, frame, knownMovement);
     let animate = function () {
         renderModel(gl, programs, textures, frame, test.canvas);
         window.requestAnimationFrame(animate);
@@ -359,11 +357,11 @@ function testCPUMovementEstimation() {
 function compareNormalsVersions() {
     let test = new Test("Compare estimated normals between CPU and GPU"
         + " versions.");
+    let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
     let canvas1 = document.createElement('canvas');
     let canvas2 = document.createElement('canvas');
     test.div.appendChild(canvas1);
     test.div.appendChild(canvas2);
-    let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
     let frame = 0;
     uploadDepthData(gl, textures, frame1, width, height, frame);
     createModel(gl, programs, framebuffers, textures, frame, mat4.create());
@@ -410,16 +408,8 @@ function compareNormalsVersions() {
             d2[index+1] = normalCPU[1];
             d2[index+2] = normalCPU[2];
             normalGPU = vec3.fromValues(d[index], d[index+1], d[index+2]);
-            if (i === 100 && j == 130) {
-                console.log("lol ", i , j);
-                console.log(normalGPU);
-                console.log(normalCPU);
-            }
             if (!arraysEqual(normalCPU, normalGPU, 0.00001)) {
                 normalsDiff = true;
-                // d2[index] = 1;
-                // d2[index+1] = 1;
-                // d2[index+2] = 1;
                 // break;
             }
         }
@@ -596,17 +586,17 @@ function testMain() {
     try {
         console.log("TESTS\n");
         testIndexCoordCoversion();
-        testCorrespondingPointCPU();
+        // testCorrespondingPointCPU();
         testCPUMovementEstimationIdentity();
         // testCPUMovementEstimation();
         // testMovementEstimationIdentity();
-        testNumberOfUsedPointsSameFrame();
+        // testNumberOfUsedPointsSameFrame();
         // compareEquationsBetweenVersions();
         // testMovementEstimation();
         // testSumShaderSinglePass();
         // testSumShader();
         compareNormalsVersions();
-        // testPointsShaderNormals();
+        testPointsShaderNormals();
         // This test needs to be last, otherwise there might not be enough GPU
         // memory to create all the resources for all tests (the other tests
         // have their GL context deallocated once they are done, but this one

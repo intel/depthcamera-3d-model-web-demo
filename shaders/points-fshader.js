@@ -174,6 +174,9 @@ void main() {
 
     // TODO use aTexCoord
     ivec2 texSize = textureSize(depthTexture, 0);
+    // gl_FragCoord has the origin at the top left corner, with 0.5 added to the
+    // values (so it actually starts at [0.5, 0.5] and the bottom right corner
+    // for a 100x100 texture is [99.5, 99.5].
     vec2 coord = vec2(((gl_FragCoord.x))/float(texSize.x) - 0.5,
                       ((gl_FragCoord.y))/float(texSize.y) - 0.5);
     coord = -coord;
