@@ -20,14 +20,16 @@ function getCoordFromIndex(i, j, width, height) {
     if (i < 0 || j < 0 || i >= width || j >= height) {
         throw Error("Bad usage of getCoordFromIndex");
     }
-    let coordx = -((i + 0.5)/width - 0.5);
-    let coordy = -((j + 0.5)/height - 0.5);
+    let coordx = -((i + 0.0)/width - 0.5);
+    let coordy = -((j + 0.0)/height - 0.5);
     return [coordx, coordy];
 }
 
 function getIndexFromCoord(coordx, coordy, width, height) {
-    let i = Math.round((-coordx + 0.5)*width - 0.5);
-    let j = Math.round((-coordy + 0.5)*height - 0.5);
+    // let i = Math.round((-coordx + 0.5)*width - 0.5);
+    // let j = Math.round((-coordy + 0.5)*height - 0.5);
+    let i = Math.round(-coordx*width + width/2.0);
+    let j = Math.round(coordy*height + height/2.0);
     return [i, j];
 }
 
@@ -40,6 +42,7 @@ function deproject(data, coordx, coordy, debug) {
     let resultx = - coordx*depth;
     let resulty = - coordy*depth;
     if (debug) {
+        console.log("in deproject");
         console.log("i j: ", i, j);
         console.log("coord: ", coordx, coordy);
         console.log("depth: ", depth);
@@ -98,23 +101,16 @@ function getPrecomputedNormal(normals, coordx, coordy, debug) {
 // these points of is some other condition didn't pass.
 function correspondingPoint(srcDepth, destDepth, destNormals, movement, i, j) {
     // let debug = (i == srcDepth.width/2 && j == srcDepth.height/2);
-    let debug = (i == 150 && j == 130);
+    // let debug = (i == 150 && j == 130);
+    let debug = (i == 60 && j == 92);
+
     let coordx, coordy;
     [coordx, coordy] = getCoordFromIndex(i, j, width, height);
-    if (debug) {
-        // console.log(coordx, coordy);
-    }
-    let sourcePosition = deproject(srcDepth, coordx, coordy);
-    if (debug) {
-        console.log("coord: ", coordx, coordy);
-    }
+    let sourcePosition = deproject(srcDepth, coordx, coordy, debug);
     if (sourcePosition[2] === 0.0) return [];
-    if (debug) {
-        console.log("src position: ", sourcePosition);
-    }
     vec3.transformMat4(sourcePosition, sourcePosition, movement);
     let [destCoordx, destCoordy] = project(sourcePosition);
-    let destPosition = deproject(destDepth, destCoordx, destCoordy);
+    let destPosition = deproject(destDepth, destCoordx, destCoordy, debug);
     if (destPosition[2] === 0.0) return [];
     let destNormal;
     if (destNormals === undefined) {
@@ -124,11 +120,12 @@ function correspondingPoint(srcDepth, destDepth, destNormals, movement, i, j) {
             destNormals, destCoordx, destCoordy, debug);
     }
     if (debug) {
-        // console.log("coord: ", coordx, coordy);
-        // console.log("trans src position: ", sourcePosition);
-        // console.log("dest coord: ", destCoordx, destCoordy);
-        // console.log("dest position: ", destPosition);
-        // console.log("dest normal: ", destNormal);
+        console.log("in correspondingPoint");
+        console.log("coord: ", coordx, coordy);
+        console.log("trans src position: ", sourcePosition);
+        console.log("dest coord: ", destCoordx, destCoordy);
+        console.log("dest position: ", destPosition);
+        console.log("dest normal: ", destNormal);
     }
     if (isNaN(sourcePosition[0]) || isNaN(destPosition[0])) {
         console.log("got NaN at index ", i, j);
@@ -137,13 +134,13 @@ function correspondingPoint(srcDepth, destDepth, destNormals, movement, i, j) {
         console.log("dest coord ", destCoordx, destCoordy);
         throw Error("One of the results is NaN");
     }
-    if (!arraysEqual(sourcePosition,destPosition, 0.01)) {
-        console.log("src ", sourcePosition);
-        console.log("dst ", destPosition);
-        console.log("i j ", i, j);
-        console.log("coord ", coordx, coordy);
-        throw Error("");
-    }
+    // if (!arraysEqual(sourcePosition,destPosition, 0.01)) {
+    //     console.log("src ", sourcePosition);
+    //     console.log("dst ", destPosition);
+    //     console.log("i j ", i, j);
+    //     console.log("coord ", coordx, coordy);
+    //     throw Error("");
+    // }
     return [sourcePosition, destPosition, destNormal];
 }
 

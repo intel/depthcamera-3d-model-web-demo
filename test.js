@@ -284,7 +284,7 @@ function testCPUMovementEstimationIdentity() {
     let movement;
     [movement, _] = estimateMovementCPU(frame0, frame0, 1, frame0Normals);
     test.check(arraysEqual(movement, mat4.create()),
-        "estimated movement is not identity: " + movement);
+        "estimated movement is not identity: " + arrayToStr(movement, 4, 4));
 }
 
 function testCPUMovementEstimation() {
@@ -483,10 +483,10 @@ function testMain() {
     try {
         console.log("TESTS\n");
         testIndexCoordCoversion();
-        // testCPUMovementEstimationIdentity();
-        testCPUMovementEstimation();
+        testCPUMovementEstimationIdentity();
+        // testCPUMovementEstimation();
         // testMovementEstimationIdentity();
-        // testNumberOfUsedPointsSameFrame();
+        testNumberOfUsedPointsSameFrame();
         // compareEquationsBetweenVersions();
         // testMovementEstimation();
         // testSumShaderSinglePass();
