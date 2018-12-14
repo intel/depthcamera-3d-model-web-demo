@@ -16,20 +16,33 @@
 // accompanied shaders. This CPU version is used only for testing (comparing
 // results between the GPU and CPU version).
 
-function deproject(data, coordx, coordy) {
-    let i = Math.round(-coordx*data.width + data.width/2.0);
-    let j = Math.round(coordy*data.height + data.height/2.0);
-    let debug = (i == data.width/2 && j == data.height/2);
-    // let debug = (i == 150 && j==150);
+function getCoordFromIndex(i, j, width, height) {
+    if (i < 0 || j < 0 || i >= width || j >= height) {
+        throw Error("Bad usage of getCoordFromIndex");
+    }
+    let coordx = -((i + 0.5)/width - 0.5);
+    let coordy = -((j + 0.5)/height - 0.5);
+    return [coordx, coordy];
+}
+
+function getIndexFromCoord(coordx, coordy, width, height) {
+    let i = Math.round((-coordx + 0.5)*width - 0.5);
+    let j = Math.round((-coordy + 0.5)*height - 0.5);
+    return [i, j];
+}
+
+function deproject(data, coordx, coordy, debug) {
+    let i, j;
+    [i, j] = getIndexFromCoord(coordx, coordy, data.width, data.height);
     let depth = data[j*data.width + i];
     if (isNaN(depth))
         return vec3.create();
     let resultx = - coordx*depth;
     let resulty = - coordy*depth;
     if (debug) {
-        // console.log("i j: ", i, j);
-        // console.log("coord: ", coordx, coordy);
-        // console.log("depth: ", depth);
+        console.log("i j: ", i, j);
+        console.log("coord: ", coordx, coordy);
+        console.log("depth: ", depth);
     }
     return vec3.fromValues(resultx, resulty, depth);
 }
@@ -62,15 +75,12 @@ function estimateNormalPointCloud(data, coordx, coordy, debug) {
     vec3.sub(tmp2, positionRight, position);
     vec3.cross(normal, tmp1, tmp2);
     vec3.normalize(normal, normal);
-    if (debug) {
-        console.log(positionRight);
-    }
     return normal;
 }
 
 function getPrecomputedNormal(normals, coordx, coordy, debug) {
-    let i = Math.round(-coordx*normals.width + normals.width/2.0);
-    let j = Math.round(coordy*normals.height + normals.height/2.0);
+    let i, j;
+    [i, j] = getIndexFromCoord(coordx, coordy, normals.width, normals.height);
     let index = (j*normals.width + i)*normals.stride;
     let nx = normals[index];
     let ny = normals[index+1];
@@ -88,10 +98,9 @@ function getPrecomputedNormal(normals, coordx, coordy, debug) {
 // these points of is some other condition didn't pass.
 function correspondingPoint(srcDepth, destDepth, destNormals, movement, i, j) {
     // let debug = (i == srcDepth.width/2 && j == srcDepth.height/2);
-    // let debug = (i == 150 && j == 150);
     let debug = (i == 150 && j == 130);
-    let coordx = -(i - srcDepth.width/2.0)/srcDepth.width;
-    let coordy = (j - srcDepth.height/2.0)/srcDepth.height;
+    let coordx, coordy;
+    [coordx, coordy] = getCoordFromIndex(i, j, width, height);
     if (debug) {
         // console.log(coordx, coordy);
     }
@@ -127,6 +136,13 @@ function correspondingPoint(srcDepth, destDepth, destNormals, movement, i, j) {
         console.log("dest position ", destPosition);
         console.log("dest coord ", destCoordx, destCoordy);
         throw Error("One of the results is NaN");
+    }
+    if (!arraysEqual(sourcePosition,destPosition, 0.01)) {
+        console.log("src ", sourcePosition);
+        console.log("dst ", destPosition);
+        console.log("i j ", i, j);
+        console.log("coord ", coordx, coordy);
+        throw Error("");
     }
     return [sourcePosition, destPosition, destNormal];
 }

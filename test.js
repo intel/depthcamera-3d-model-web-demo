@@ -80,6 +80,72 @@ function setupGraphics(canvas) {
     return [gl, programs, textures, framebuffers];
 }
 
+function testIndexCoordCoversion() {
+    let test = new Test("Test coversion between indices and image coordinates");
+    let epsilon = 0.00001;
+    let width = 100;
+    let height = 100;
+
+    let i = 50;
+    let j = 50;
+    let expectedx = -0.005;
+    let expectedy = -0.005;
+    let coordx, coordy;
+    [coordx, coordy] = getCoordFromIndex(i, j, width, height);
+    test.check(Math.abs(coordx - expectedx) < epsilon
+               && Math.abs(coordy - expectedy) < epsilon,
+        "The image coordinates were supposed to be ["
+        + expectedx + ", " + expectedy + "] but are ["
+        + coordx + ", " + coordy + "]");
+    let i_, j_;
+    [i_, j_] = getIndexFromCoord(coordx, coordy, width, height);
+    test.check(i === i_ && j === j_);
+
+    i = 0;
+    j = 0;
+    expectedx = 0.495;
+    expectedy = 0.495;
+    coordx, coordy;
+    [coordx, coordy] = getCoordFromIndex(i, j, width, height);
+    test.check(Math.abs(coordx - expectedx) < epsilon
+               && Math.abs(coordy - expectedy) < epsilon,
+        "The image coordinates were supposed to be ["
+        + expectedx + ", " + expectedy + "] but are ["
+        + coordx + ", " + coordy + "]");
+    [i_, j_] = getIndexFromCoord(coordx, coordy, width, height);
+    test.check(i === i_ && j === j_);
+
+    i = 99;
+    j = 99;
+    expectedx = -0.495;
+    expectedy = -0.495;
+    coordx, coordy;
+    [coordx, coordy] = getCoordFromIndex(i, j, width, height);
+    test.check(Math.abs(coordx - expectedx) < epsilon
+               && Math.abs(coordy - expectedy) < epsilon,
+        "The image coordinates were supposed to be ["
+        + expectedx + ", " + expectedy + "] but are ["
+        + coordx + ", " + coordy + "]");
+    [i_, j_] = getIndexFromCoord(coordx, coordy, width, height);
+    test.check(i === i_ && j === j_);
+
+    i = 20;
+    j = 40;
+    width = 160;
+    height = 180;
+    expectedx = 0.371875;
+    expectedy = 0.275;
+    coordx, coordy;
+    [coordx, coordy] = getCoordFromIndex(i, j, width, height);
+    test.check(Math.abs(coordx - expectedx) < epsilon
+               && Math.abs(coordy - expectedy) < epsilon,
+        "The image coordinates were supposed to be ["
+        + expectedx + ", " + expectedy + "] but are ["
+        + coordx + ", " + coordy + "]");
+    [i_, j_] = getIndexFromCoord(coordx, coordy, width, height);
+    test.check(i === i_ && j === j_);
+}
+
 function testVolumetricModel() {
     let test = new Test("Test volumetric model (visual test only)");
     test.showCanvas();
@@ -208,6 +274,9 @@ function compareEquationsBetweenVersions() {
         + array2DToStr(infoGPU["A"])
         + "\nCPU version A = \n"
         + array2DToStr(infoCPU["A"]));
+    // TODO check how the CPU version looks like if I just deproject/project the
+    // point and draw it on screen - it should be identical
+    // TODO don't use the round function in the CPU version maybe?
 }
 
 function testCPUMovementEstimationIdentity() {
@@ -225,7 +294,7 @@ function testCPUMovementEstimation() {
     let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
     let x = mat4.create();
     let movement;
-    [movement, _] = estimateMovementCPU(frame1, frame0, 1, frame0Normals,
+    [movement, _] = estimateMovementCPU(frame0, frame0, 1, frame0Normals,
         // mat4.create());
         knownMovement);
     test.check(arraysEqual(movement, knownMovement, 0.001),
@@ -413,11 +482,12 @@ function testMain() {
     showNormals(normals2Canvas, frame1Normals);
     try {
         console.log("TESTS\n");
+        testIndexCoordCoversion();
         // testCPUMovementEstimationIdentity();
-        // testCPUMovementEstimation();
+        testCPUMovementEstimation();
         // testMovementEstimationIdentity();
         // testNumberOfUsedPointsSameFrame();
-        compareEquationsBetweenVersions();
+        // compareEquationsBetweenVersions();
         // testMovementEstimation();
         // testSumShaderSinglePass();
         // testSumShader();
