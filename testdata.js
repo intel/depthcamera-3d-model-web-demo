@@ -213,9 +213,15 @@ function showNormals(canvas, data) {
         let normalx = data[i];
         let normaly = data[i + 1];
         let normalz = data[i + 2];
-        imageData.data[i+0] = Math.abs(normalx)*255;
-        imageData.data[i+1] = Math.abs(normaly)*255;
-        imageData.data[i+2] = Math.abs(normalz)*255;
+        // imageData.data[i+0] = Math.abs(normalx)*255;
+        // imageData.data[i+1] = Math.abs(normaly)*255;
+        // imageData.data[i+2] = Math.abs(normalz)*255;
+        if (normalx != 0)
+            imageData.data[i+0] = (normalx+0.5)*255;
+        if (normaly != 0)
+            imageData.data[i+1] = (normaly+0.5)*255;
+        if (normalz != 0)
+            imageData.data[i+2] = (normalz+0.5)*255;
         imageData.data[i+3] = 255;
     }
     context.putImageData(imageData, 0, 0);

@@ -151,14 +151,25 @@ function testCorrespondingPointCPU() {
                         + " identical frames");
     let i, j, p, q, n;
     let foundDiff = false;
+    let normalsDiff = false;
     for (i = 0; i < width; i++) {
+        if (foundDiff) break;
         for (j = 0; j < height; j++) {
             let result = correspondingPoint(frame0,
-                frame0, frame0Normals, mat4.create(), i, j);
+                frame0, undefined, mat4.create(), i, j);
             if (result.length != 3) continue;
             [p, q, n] = result;
-            if (!arraysEqual(p,q, 0.00001)) {
+            if (!arraysEqual(p, q, 0.0)) {
                 foundDiff = true;
+                break;
+            }
+            let index = (j*frame0Normals.width + i)*frame0Normals.stride;
+            let n_ = vec3.fromValues(frame0Normals[index],
+                frame0Normals[index+1], frame0Normals[index+2]);
+            if (!arraysEqual(n, n_, 0.01)) {
+                // console.log("X n: ", n);
+                // console.log("X n_: ", n_);
+                normalsDiff = true;
             }
         }
     }
@@ -167,6 +178,8 @@ function testCorrespondingPointCPU() {
         + "\np: " + p
         + "\nq: " + q
         + "\ni, j: " + i + " " + j);
+    test.check(!normalsDiff, "The corresponding point algorithm didn't use the"
+        + " same pre-computed normal as given.");
 }
 
 function testVolumetricModel() {
@@ -343,6 +356,78 @@ function testCPUMovementEstimation() {
     animate();
 }
 
+function compareNormalsVersions() {
+    let test = new Test("Compare estimated normals between CPU and GPU"
+        + " versions.");
+    let canvas1 = document.createElement('canvas');
+    let canvas2 = document.createElement('canvas');
+    test.div.appendChild(canvas1);
+    test.div.appendChild(canvas2);
+    let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
+    let frame = 0;
+    uploadDepthData(gl, textures, frame1, width, height, frame);
+    createModel(gl, programs, framebuffers, textures, frame, mat4.create());
+
+    frame = 1;
+    uploadDepthData(gl, textures, frame1, width, height, frame);
+
+    program = programs.points;
+    gl.useProgram(program);
+    let l = gl.getUniformLocation(program, 'cubeTexture');
+    gl.uniform1i(l, textures.cube[frame%2].glId);
+    l = gl.getUniformLocation(program, 'depthTexture');
+    gl.uniform1i(l, textures.depth[frame%2].glId);
+    l = gl.getUniformLocation(program, 'previousDepthTexture');
+    gl.uniform1i(l, textures.depth[(frame+1)%2].glId);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.points);
+    // TODO not sure why this breaks things
+    // gl.viewport(0, 0, textures.points.width, textures.points.height);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    let stride = 4;
+    const d = new Float32Array(width*height*stride);
+    gl.readBuffer(gl.COLOR_ATTACHMENT1);
+    gl.readPixels(0, 0, width, height, gl.RGBA, gl.FLOAT, d);
+    d.width = width;
+    d.height = height;
+
+    let d2 = new Float32Array(width*height*stride);
+    d2.width = width;
+    d2.height = height;
+    let normalsDiff = false;
+    let i, j, normalGPU, normalCPU;
+    for (i = 0; i < width; i++) {
+        // if (normalsDiff) { 
+        //     i--;
+        //     break;
+        // }
+        for (j = 0; j < height; j++) {
+            let result = correspondingPoint(frame1,
+                frame1, undefined, mat4.create(), i, j);
+            if (result.length != 3) continue;
+            [_, _, normalCPU] = result;
+            let index = (j*d.width + i)*stride;
+            d2[index] = normalCPU[0];
+            d2[index+1] = normalCPU[1];
+            d2[index+2] = normalCPU[2];
+            normalGPU = vec3.fromValues(d[index], d[index+1], d[index+2]);
+            if (!arraysEqual(normalCPU, normalGPU, 0.1)) {
+                normalsDiff = true;
+                // d2[index] = 1;
+                // d2[index+1] = 1;
+                // d2[index+2] = 1;
+                // break;
+            }
+        }
+    }
+    test.check(!normalsDiff, "There is a difference between the normal"
+        + " calculated by the GPU [" + normalGPU + "] and the normal"
+        + " calculated by the CPU [" + normalCPU + "], at index i, j: "
+        + i + " " + j);
+    showNormals(canvas1, d);
+    showNormals(canvas2, d2);
+}
+
+
 function testPointsShaderNormals() {
     // Note: the normals won't look right in this kind of test if there is any
     // movement between the frames, because the fragment shader can't move the
@@ -515,6 +600,7 @@ function testMain() {
         // testMovementEstimation();
         // testSumShaderSinglePass();
         // testSumShader();
+        compareNormalsVersions();
         // testPointsShaderNormals();
         // This test needs to be last, otherwise there might not be enough GPU
         // memory to create all the resources for all tests (the other tests
