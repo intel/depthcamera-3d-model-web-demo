@@ -410,7 +410,12 @@ function compareNormalsVersions() {
             d2[index+1] = normalCPU[1];
             d2[index+2] = normalCPU[2];
             normalGPU = vec3.fromValues(d[index], d[index+1], d[index+2]);
-            if (!arraysEqual(normalCPU, normalGPU, 0.1)) {
+            if (i === 100 && j == 130) {
+                console.log("lol ", i , j);
+                console.log(normalGPU);
+                console.log(normalCPU);
+            }
+            if (!arraysEqual(normalCPU, normalGPU, 0.00001)) {
                 normalsDiff = true;
                 // d2[index] = 1;
                 // d2[index+1] = 1;
