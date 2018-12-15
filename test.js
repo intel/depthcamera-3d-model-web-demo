@@ -358,10 +358,6 @@ function compareNormalsVersions() {
     let test = new Test("Compare estimated normals between CPU and GPU"
         + " versions.");
     let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
-    let canvas1 = document.createElement('canvas');
-    let canvas2 = document.createElement('canvas');
-    test.div.appendChild(canvas1);
-    test.div.appendChild(canvas2);
     let frame = 0;
     uploadDepthData(gl, textures, frame1, width, height, frame);
     createModel(gl, programs, framebuffers, textures, frame, mat4.create());
@@ -388,29 +384,23 @@ function compareNormalsVersions() {
     d.width = width;
     d.height = height;
 
-    let d2 = new Float32Array(width*height*stride);
-    d2.width = width;
-    d2.height = height;
     let normalsDiff = false;
     let i, j, normalGPU, normalCPU;
     for (i = 0; i < width; i++) {
-        // if (normalsDiff) { 
-        //     i--;
-        //     break;
-        // }
+        if (normalsDiff) {
+            i--;
+            break;
+        }
         for (j = 0; j < height; j++) {
             let result = correspondingPoint(frame1,
                 frame1, undefined, mat4.create(), i, j);
             if (result.length != 3) continue;
             [_, _, normalCPU] = result;
             let index = (j*d.width + i)*stride;
-            d2[index] = normalCPU[0];
-            d2[index+1] = normalCPU[1];
-            d2[index+2] = normalCPU[2];
             normalGPU = vec3.fromValues(d[index], d[index+1], d[index+2]);
             if (!arraysEqual(normalCPU, normalGPU, 0.00001)) {
                 normalsDiff = true;
-                // break;
+                break;
             }
         }
     }
@@ -418,8 +408,6 @@ function compareNormalsVersions() {
         + " calculated by the GPU [" + normalGPU + "] and the normal"
         + " calculated by the CPU [" + normalCPU + "], at index i, j: "
         + i + " " + j);
-    showNormals(canvas1, d);
-    showNormals(canvas2, d2);
 }
 
 
