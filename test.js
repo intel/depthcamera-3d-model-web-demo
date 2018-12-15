@@ -15,7 +15,7 @@
 let width = 200;
 let height = 200;
 let frame0Transform = getViewMatrix(0, 0, 1.0);
-let frame1Transform = getViewMatrix(0, 0, 1.0);
+let frame1Transform = getViewMatrix(0, 30, 1.0);
 // mat4.translate(frame1Transform, frame1Transform, vec3.fromValues(0.1, 0.1, 0.1));
 let knownMovement = getMovement(frame1Transform, frame0Transform);
 let knownMovementInv = mat4.create();
@@ -194,7 +194,7 @@ function testVolumetricModel() {
 
     frame = 1;
     uploadDepthData(gl, textures, frame1, width, height, frame);
-    createModel(gl, programs, framebuffers, textures, frame, knownMovement);
+    createModel(gl, programs, framebuffers, textures, frame, knownMovementInv);
     let animate = function () {
         renderModel(gl, programs, textures, frame, test.canvas);
         window.requestAnimationFrame(animate);
@@ -586,15 +586,15 @@ function testMain() {
     try {
         console.log("TESTS\n");
         testIndexCoordCoversion();
-        // testCorrespondingPointCPU();
+        testCorrespondingPointCPU();
         testCPUMovementEstimationIdentity();
         // testCPUMovementEstimation();
-        // testMovementEstimationIdentity();
-        // testNumberOfUsedPointsSameFrame();
-        // compareEquationsBetweenVersions();
+        testMovementEstimationIdentity();
+        testNumberOfUsedPointsSameFrame();
+        compareEquationsBetweenVersions();
         // testMovementEstimation();
-        // testSumShaderSinglePass();
-        // testSumShader();
+        testSumShaderSinglePass();
+        testSumShader();
         compareNormalsVersions();
         testPointsShaderNormals();
         // This test needs to be last, otherwise there might not be enough GPU
