@@ -302,7 +302,7 @@ function compareEquationsBetweenVersions() {
         + " created by the CPU version.\nGPU version b = "
         + arrayToStr(infoGPU["b"], 6, 1)
         + "CPU version b = " + arrayToStr(infoCPU["b"], 6, 1));
-    test.check(arrays2DEqual(infoGPU["A"], infoCPU["A"], 0.001),
+    test.check(arrays2DEqual(infoGPU["A"], infoCPU["A"], 0.01),
         "The matrix A in Ax=b created from the GPU version differs from the one"
         + " created by the CPU version.\nGPU version A = \n"
         + array2DToStr(infoGPU["A"])
@@ -593,11 +593,11 @@ function testMain() {
     showNormals(normals2Canvas, frame1Normals);
     try {
         console.log("TESTS\n");
-        // testIndexCoordCoversion();
-        // testCorrespondingPointCPU();
-        // testNumberOfUsedPointsSameFrame();
+        testIndexCoordCoversion();
+        testCorrespondingPointCPU();
+        testNumberOfUsedPointsSameFrame();
         compareCorrespondingPointsVersions();
-        // compareEquationsBetweenVersions();
+        compareEquationsBetweenVersions();
         // testCPUMovementEstimationIdentity();
         // testCPUMovementEstimation();
         // testMovementEstimationIdentity();
