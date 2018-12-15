@@ -162,7 +162,7 @@ function arrays2DEqual(array1, array2, epsilon) {
 function matrixIsSymmetric(A, epsilon) {
     if (epsilon === undefined) epsilon = 0.001;
     const AA = numeric.transpose(A);
-    return arraysEqual(A, AA, epsilon);
+    return arrays2DEqual(A, AA, epsilon);
 }
 
 // Verify that Ax = b, at least approximately.
