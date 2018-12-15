@@ -411,6 +411,65 @@ function compareNormalsVersions() {
 }
 
 
+function compareCrossProductsVersions() {
+    let test = new Test("Compare cross products of corresponding points"
+        + "between CPU and GPU versions.");
+    let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
+    let frame = 0;
+    uploadDepthData(gl, textures, frame1, width, height, frame);
+    createModel(gl, programs, framebuffers, textures, frame, mat4.create());
+
+    frame = 1;
+    uploadDepthData(gl, textures, frame1, width, height, frame);
+
+    program = programs.points;
+    gl.useProgram(program);
+    let l = gl.getUniformLocation(program, 'cubeTexture');
+    gl.uniform1i(l, textures.cube[frame%2].glId);
+    l = gl.getUniformLocation(program, 'depthTexture');
+    gl.uniform1i(l, textures.depth[frame%2].glId);
+    l = gl.getUniformLocation(program, 'previousDepthTexture');
+    gl.uniform1i(l, textures.depth[(frame+1)%2].glId);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.points);
+    // TODO not sure why this breaks things
+    // gl.viewport(0, 0, textures.points.width, textures.points.height);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    let stride = 4;
+    const d = new Float32Array(width*height*stride);
+    gl.readBuffer(gl.COLOR_ATTACHMENT0);
+    gl.readPixels(0, 0, width, height, gl.RGBA, gl.FLOAT, d);
+    d.width = width;
+    d.height = height;
+
+    let crossDiff = false;
+    let i, j, p, n, crossGPU, crossCPU;
+    for (i = 0; i < width; i++) {
+        if (crossDiff) {
+            i--;
+            break;
+        }
+        for (j = 0; j < height; j++) {
+            let result = correspondingPoint(frame1,
+                frame1, undefined, mat4.create(), i, j);
+            if (result.length != 3) continue;
+            [p, _, n] = result;
+            crossCPU = vec3.create();
+            vec3.cross(crossCPU, p, n);
+            let index = (j*d.width + i)*stride;
+            crossGPU = vec3.fromValues(d[index], d[index+1], d[index+2]);
+            if (!arraysEqual(crossCPU, crossGPU, 0.00001)) {
+                crossDiff = true;
+                break;
+            }
+        }
+    }
+    test.check(!crossDiff, "There is a difference between the cross product"
+        + " calculated by the GPU [" + crossGPU + "] and the cross product"
+        + " calculated by the CPU [" + crossCPU + "], at index i, j: "
+        + i + " " + j);
+}
+
+
 function testPointsShaderNormals() {
     // Note: the normals won't look right in this kind of test if there is any
     // movement between the frames, because the fragment shader can't move the
@@ -584,6 +643,7 @@ function testMain() {
         testSumShaderSinglePass();
         testSumShader();
         compareNormalsVersions();
+        compareCrossProductsVersions();
         testPointsShaderNormals();
         // This test needs to be last, otherwise there might not be enough GPU
         // memory to create all the resources for all tests (the other tests
