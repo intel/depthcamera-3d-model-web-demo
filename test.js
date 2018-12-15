@@ -354,9 +354,9 @@ function testCPUMovementEstimation() {
     animate();
 }
 
-function compareNormalsVersions() {
-    let test = new Test("Compare estimated normals between CPU and GPU"
-        + " versions.");
+function compareCorrespondingPointsVersions() {
+    let test = new Test("Compare corresponding points and normals between"
+        + " CPU and GPU versions.");
     let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
     let frame = 0;
     uploadDepthData(gl, textures, frame1, width, height, frame);
@@ -378,97 +378,44 @@ function compareNormalsVersions() {
     // gl.viewport(0, 0, textures.points.width, textures.points.height);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
     let stride = 4;
-    const d = new Float32Array(width*height*stride);
+    let dataCrossGPU = new Float32Array(width*height*stride);
+    gl.readBuffer(gl.COLOR_ATTACHMENT0);
+    gl.readPixels(0, 0, width, height, gl.RGBA, gl.FLOAT, dataCrossGPU);
+    dataCrossGPU.width = width;
+    dataCrossGPU.height = height;
+    let dataNormalGPU = new Float32Array(width*height*stride);
     gl.readBuffer(gl.COLOR_ATTACHMENT1);
-    gl.readPixels(0, 0, width, height, gl.RGBA, gl.FLOAT, d);
-    d.width = width;
-    d.height = height;
+    gl.readPixels(0, 0, width, height, gl.RGBA, gl.FLOAT, dataNormalGPU);
+    dataNormalGPU.width = width;
+    dataNormalGPU.height = height;
 
     let normalsDiff = false;
-    let i, j, normalGPU, normalCPU;
+    let crossDiff = false;
+    let i, j, p, q, normalGPU, normalCPU;
+    let crossCPU = vec3.create();
     for (i = 0; i < width; i++) {
-        if (normalsDiff) {
-            i--;
-            break;
-        }
         for (j = 0; j < height; j++) {
             let result = correspondingPoint(frame1,
                 frame1, undefined, mat4.create(), i, j);
             if (result.length != 3) continue;
-            [_, _, normalCPU] = result;
-            let index = (j*d.width + i)*stride;
-            normalGPU = vec3.fromValues(d[index], d[index+1], d[index+2]);
+            [p, q, normalCPU] = result;
+            vec3.cross(crossCPU, p, normalCPU);
+            let index = (j*dataNormalGPU.width + i)*stride;
+            let crossGPU = vec3.fromValues(dataCrossGPU[index],
+                dataCrossGPU[index+1], dataCrossGPU[index+2]);
+            normalGPU = vec3.fromValues(dataNormalGPU[index],
+                dataNormalGPU[index+1], dataNormalGPU[index+2]);
             if (!arraysEqual(normalCPU, normalGPU, 0.00001)) {
                 normalsDiff = true;
-                break;
             }
-        }
-    }
-    test.check(!normalsDiff, "There is a difference between the normal"
-        + " calculated by the GPU [" + normalGPU + "] and the normal"
-        + " calculated by the CPU [" + normalCPU + "], at index i, j: "
-        + i + " " + j);
-}
-
-
-function compareCrossProductsVersions() {
-    let test = new Test("Compare cross products of corresponding points"
-        + "between CPU and GPU versions.");
-    let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
-    let frame = 0;
-    uploadDepthData(gl, textures, frame1, width, height, frame);
-    createModel(gl, programs, framebuffers, textures, frame, mat4.create());
-
-    frame = 1;
-    uploadDepthData(gl, textures, frame1, width, height, frame);
-
-    program = programs.points;
-    gl.useProgram(program);
-    let l = gl.getUniformLocation(program, 'cubeTexture');
-    gl.uniform1i(l, textures.cube[frame%2].glId);
-    l = gl.getUniformLocation(program, 'depthTexture');
-    gl.uniform1i(l, textures.depth[frame%2].glId);
-    l = gl.getUniformLocation(program, 'previousDepthTexture');
-    gl.uniform1i(l, textures.depth[(frame+1)%2].glId);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.points);
-    // TODO not sure why this breaks things
-    // gl.viewport(0, 0, textures.points.width, textures.points.height);
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
-    let stride = 4;
-    const d = new Float32Array(width*height*stride);
-    gl.readBuffer(gl.COLOR_ATTACHMENT0);
-    gl.readPixels(0, 0, width, height, gl.RGBA, gl.FLOAT, d);
-    d.width = width;
-    d.height = height;
-
-    let crossDiff = false;
-    let i, j, p, n, crossGPU, crossCPU;
-    for (i = 0; i < width; i++) {
-        if (crossDiff) {
-            i--;
-            break;
-        }
-        for (j = 0; j < height; j++) {
-            let result = correspondingPoint(frame1,
-                frame1, undefined, mat4.create(), i, j);
-            if (result.length != 3) continue;
-            [p, _, n] = result;
-            crossCPU = vec3.create();
-            vec3.cross(crossCPU, p, n);
-            let index = (j*d.width + i)*stride;
-            crossGPU = vec3.fromValues(d[index], d[index+1], d[index+2]);
             if (!arraysEqual(crossCPU, crossGPU, 0.00001)) {
                 crossDiff = true;
-                break;
             }
         }
     }
-    test.check(!crossDiff, "There is a difference between the cross product"
-        + " calculated by the GPU [" + crossGPU + "] and the cross product"
-        + " calculated by the CPU [" + crossCPU + "], at index i, j: "
-        + i + " " + j);
+    test.check(!normalsDiff, "There is a difference between the normals");
+    test.check(!crossDiff, "There is a difference between the cross products");
 }
-
 
 function testPointsShaderNormals() {
     // Note: the normals won't look right in this kind of test if there is any
@@ -632,19 +579,18 @@ function testMain() {
     showNormals(normals2Canvas, frame1Normals);
     try {
         console.log("TESTS\n");
-        testIndexCoordCoversion();
-        testCorrespondingPointCPU();
-        testCPUMovementEstimationIdentity();
+        // testIndexCoordCoversion();
+        // testCorrespondingPointCPU();
+        // testNumberOfUsedPointsSameFrame();
+        compareCorrespondingPointsVersions();
+        // compareEquationsBetweenVersions();
+        // testCPUMovementEstimationIdentity();
         // testCPUMovementEstimation();
-        testMovementEstimationIdentity();
-        testNumberOfUsedPointsSameFrame();
-        compareEquationsBetweenVersions();
+        // testMovementEstimationIdentity();
         // testMovementEstimation();
-        testSumShaderSinglePass();
-        testSumShader();
-        compareNormalsVersions();
-        compareCrossProductsVersions();
-        testPointsShaderNormals();
+        // testSumShaderSinglePass();
+        // testSumShader();
+        // testPointsShaderNormals();
         // This test needs to be last, otherwise there might not be enough GPU
         // memory to create all the resources for all tests (the other tests
         // have their GL context deallocated once they are done, but this one
