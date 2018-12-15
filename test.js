@@ -359,7 +359,7 @@ function compareCorrespondingPointsVersions() {
         + " CPU and GPU versions.");
     let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
     let frame = 0;
-    uploadDepthData(gl, textures, frame1, width, height, frame);
+    uploadDepthData(gl, textures, frame0, width, height, frame);
     createModel(gl, programs, framebuffers, textures, frame, mat4.create());
 
     frame = 1;
@@ -388,33 +388,47 @@ function compareCorrespondingPointsVersions() {
     gl.readPixels(0, 0, width, height, gl.RGBA, gl.FLOAT, dataNormalGPU);
     dataNormalGPU.width = width;
     dataNormalGPU.height = height;
+    let dataDotErrorGPU = new Float32Array(width*height*stride);
+    gl.readBuffer(gl.COLOR_ATTACHMENT2);
+    gl.readPixels(0, 0, width, height, gl.RGBA, gl.FLOAT, dataDotErrorGPU);
+    dataDotErrorGPU.width = width;
+    dataDotErrorGPU.height = height;
 
+    let epsilon = 0.00001;
     let normalsDiff = false;
     let crossDiff = false;
-    let i, j, p, q, normalGPU, normalCPU;
+    let dotDiff = false;
     let crossCPU = vec3.create();
-    for (i = 0; i < width; i++) {
-        for (j = 0; j < height; j++) {
+    for (let i = 0; i < width; i++) {
+        for (let j = 0; j < height; j++) {
             let result = correspondingPoint(frame1,
-                frame1, undefined, mat4.create(), i, j);
+                frame0, undefined, mat4.create(), i, j);
             if (result.length != 3) continue;
-            [p, q, normalCPU] = result;
+            let [p, q, normalCPU] = result;
             vec3.cross(crossCPU, p, normalCPU);
+            let tmp = vec3.create();
+            vec3.sub(tmp, p, q);
+            let dotCPU = vec3.dot(tmp, normalCPU);
             let index = (j*dataNormalGPU.width + i)*stride;
             let crossGPU = vec3.fromValues(dataCrossGPU[index],
                 dataCrossGPU[index+1], dataCrossGPU[index+2]);
-            normalGPU = vec3.fromValues(dataNormalGPU[index],
+            let normalGPU = vec3.fromValues(dataNormalGPU[index],
                 dataNormalGPU[index+1], dataNormalGPU[index+2]);
-            if (!arraysEqual(normalCPU, normalGPU, 0.00001)) {
+            let dotGPU = dataDotErrorGPU[index];
+            if (!arraysEqual(normalCPU, normalGPU, epsilon)) {
                 normalsDiff = true;
             }
-            if (!arraysEqual(crossCPU, crossGPU, 0.00001)) {
+            if (!arraysEqual(crossCPU, crossGPU, epsilon)) {
                 crossDiff = true;
+            }
+            if (Math.abs(dotCPU - dotGPU) >= epsilon) {
+                dotDiff = true;
             }
         }
     }
     test.check(!normalsDiff, "There is a difference between the normals");
     test.check(!crossDiff, "There is a difference between the cross products");
+    test.check(!dotDiff, "There is difference between dot products");
 }
 
 function testPointsShaderNormals() {
