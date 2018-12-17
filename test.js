@@ -15,7 +15,7 @@
 let width = 200;
 let height = 200;
 let frame0Transform = getViewMatrix(0, 0, 1.0);
-let frame1Transform = getViewMatrix(0, 30, 1.0);
+let frame1Transform = getViewMatrix(0, 10, 1.0);
 // mat4.translate(frame1Transform, frame1Transform, vec3.fromValues(0.1, 0.1, 0.1));
 let knownMovement = getMovement(frame1Transform, frame0Transform);
 let knownMovementInv = mat4.create();
@@ -328,9 +328,9 @@ function testCPUMovementEstimation() {
     let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
     let x = mat4.create();
     let movement;
-    [movement, _] = estimateMovementCPU(frame0, frame0, 1, frame0Normals,
-        // mat4.create());
-        knownMovement);
+    [movement, _] = estimateMovementCPU(frame1, frame0, 1, frame0Normals,
+        mat4.create());
+        // knownMovement);
     test.check(arraysEqual(movement, knownMovement, 0.001),
         "Estimated movement is not close enough to actual movement.\n"
         + "Expected:\n"
@@ -349,7 +349,7 @@ function testCPUMovementEstimation() {
     createModel(gl, programs, framebuffers, textures, frame, movementInv);
     let animate = function () {
         renderModel(gl, programs, textures, frame, test.canvas);
-        window.requestAnimationFrame(animate);
+        // window.requestAnimationFrame(animate);
     };
     animate();
 }
@@ -598,8 +598,8 @@ function testMain() {
         testNumberOfUsedPointsSameFrame();
         compareCorrespondingPointsVersions();
         compareEquationsBetweenVersions();
-        // testCPUMovementEstimationIdentity();
-        // testCPUMovementEstimation();
+        testCPUMovementEstimationIdentity();
+        testCPUMovementEstimation();
         // testMovementEstimationIdentity();
         // testMovementEstimation();
         // testSumShaderSinglePass();
