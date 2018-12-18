@@ -26,10 +26,10 @@ function deproject(data, coordx, coordy, debug) {
     let resultx = - coordx*depth;
     let resulty = - coordy*depth;
     if (debug) {
-        console.log("in deproject");
-        console.log("i j: ", i, j);
-        console.log("coord: ", coordx, coordy);
-        console.log("depth: ", depth);
+        // console.log("in deproject");
+        // console.log("i j: ", i, j);
+        // console.log("coord: ", coordx, coordy);
+        // console.log("depth: ", depth);
     }
     return vec3.fromValues(resultx, resulty, depth);
 }
@@ -80,6 +80,56 @@ function getPrecomputedNormal(normals, coordx, coordy, debug) {
     return vec3.fromValues(nx, ny, nz);
 }
 
+function correspondingPointBruteForce(srcDepth, destDepth, destNormals, movement, i, j) {
+    // let debug = (i == srcDepth.width/2 && j == srcDepth.height/2);
+    // let debug = (i == 150 && j == 130);
+    let debug = (i == 60 && j == 92);
+
+    let coordx, coordy;
+    [coordx, coordy] = getCoordFromIndex(i, j, width, height);
+    let sourcePosition = deproject(srcDepth, coordx, coordy, debug);
+    if (sourcePosition[2] === 0.0) return [];
+    vec3.transformMat4(sourcePosition, sourcePosition, movement);
+    let closestDestPosition = vec3.fromValues(10000, 10000, 10000);
+    // for (let k = Math.max(0, i-20); k < Math.min(srcDepth.width, i+20); k++) {
+    //     for (let l = Math.max(0, j-40); l < Math.min(srcDepth.height, j+40); l++) {
+    for (let k = Math.max(0, i-20); k < Math.min(srcDepth.width, i+20); k++) {
+        for (let l = 0; l < srcDepth.height; l++) {
+            let [destCoordx, destCoordy] = getCoordFromIndex(k, l, width, height);
+            let destPosition = deproject(destDepth, destCoordx, destCoordy, debug);
+            if (destPosition[2] === 0.0) continue;
+            if (vec3.distance(sourcePosition, destPosition) <
+                vec3.distance(sourcePosition, closestDestPosition)) {
+                    closestDestPosition = destPosition.slice();
+            }
+        }
+    }
+    let [destCoordx, destCoordy] = project(closestDestPosition);
+    let destNormal;
+    if (destNormals === undefined) {
+        destNormal = estimateNormalPointCloud(destDepth, destCoordx, destCoordy, debug);
+    } else {
+        destNormal = getPrecomputedNormal(
+            destNormals, destCoordx, destCoordy, debug);
+    }
+    if (debug) {
+        // console.log("in correspondingPoint");
+        // console.log("coord: ", coordx, coordy);
+        // console.log("trans src position: ", sourcePosition);
+        // console.log("dest coord: ", destCoordx, destCoordy);
+        // console.log("dest position: ", closestDestPosition);
+        // console.log("dest normal: ", destNormal);
+    }
+    if (isNaN(sourcePosition[0]) || isNaN(closestDestPosition[0])) {
+        console.log("got NaN at index ", i, j);
+        console.log("source position ", sourcePosition);
+        console.log("dest position ", closestDestPosition);
+        console.log("dest coord ", destCoordx, destCoordy);
+        throw Error("One of the results is NaN");
+    }
+    return [sourcePosition, closestDestPosition, destNormal];
+}
+
 // Return [srcPoint, destPoint, normal], where the points will be reasonably
 // close to each other. The normal will be zero if it couldn't be calculated for
 // these points of is some other condition didn't pass.
@@ -98,7 +148,7 @@ function correspondingPoint(srcDepth, destDepth, destNormals, movement, i, j) {
     if (destPosition[2] === 0.0) return [];
     let destNormal;
     if (destNormals === undefined) {
-        destNormal = estimateNormalPointCloud(destDepth, coordx, coordy, debug);
+        destNormal = estimateNormalPointCloud(destDepth, destCoordx, destCoordy, debug);
     } else {
         destNormal = getPrecomputedNormal(
             destNormals, destCoordx, destCoordy, debug);

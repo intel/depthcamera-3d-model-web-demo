@@ -48,7 +48,7 @@ function constructEquation(data) {
     // console.log('A: ', A);
     // console.log('b: ', b);
     console.log("points used: ", pointsUsed);
-    console.log("relative error: ", (error/pointsUsed).toExponential());
+    // console.log("relative error: ", (error/pointsUsed).toExponential());
     const det = numeric.det(A);
     if (Number.isNaN(det) || Math.abs(det) < 1e-15) {
         throw Error("Invalid determinant of A");
@@ -123,12 +123,13 @@ function constructMovement(x) {
 // * Efficient Variants of the ICP Algorithm by Rusinkiewicz and Levoy:
 //      http://graphics.stanford.edu/papers/fasticp/fasticp_paper.pdf
 function estimateMovement(gl, programs, textures, framebuffers, frame, max_steps) {
+    // For debugging purposes
     let info = {
-        "steps": 0,
-        "success": true,
         "error": 0.0,
         "pointsFound": 0,
         "pointsUsed": 0,
+        "A": undefined,
+        "b": undefined,
     };
     if (max_steps === undefined) max_steps = MAX_STEPS;
     if (frame === 0) return [mat4.create(), info];
@@ -143,26 +144,28 @@ function estimateMovement(gl, programs, textures, framebuffers, frame, max_steps
     // Number of items in each texel, 4 means RGBA, 3 means RGB.
     const stride = 4;
 
-    const movement = mat4.create();
+    let movement = mat4.create();
     let previousError = 0;
-    // Run the ICP algorithm until the
-    // error stops changing (which usually means it converged).
+    // Run the ICP algorithm until the error stops changing (which usually means
+    // it converged).
     for (let step = 0; step < max_steps; step += 1) {
         // Find corresponding points and output information about them into
         // textures (i.e. the cross product, dot product, normal, error).
+        console.log("step ", step);
         program = programs.points;
         gl.useProgram(program);
-        l = gl.getUniformLocation(program, 'movement');
-        gl.uniformMatrix4fv(l, false, movement);
+        let tmp = movement.slice();
+        if (step===0) {
+            tmp[0] = 5;
+        } else {
+            tmp[0] = 3;
+        }
+        l = gl.getUniformLocation(program, 'xmovement');
+        gl.uniformMatrix4fv(l, false, tmp);
         gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.points);
-        // gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         // TODO why does this break stuff
         // gl.viewport(0, 0, textures.points.width, textures.points.height);
         gl.drawArrays(gl.TRIANGLES, 0, 6);
-        // throw Error("test");
-        const d = new Float32Array(stride)
-        gl.readPixels(150, 150, 1, 1, gl.RGBA, gl.FLOAT, d);
-        console.log("data from points shader", d);
 
         // Use the textures created by the points shader to construct a 6x6
         // matrix A and 6x1 vector b for each point and store it into a texture.
@@ -194,13 +197,11 @@ function estimateMovement(gl, programs, textures, framebuffers, frame, max_steps
         const data = new Float32Array(5 * 3 * stride);
         gl.readPixels(0, 0, 5, 3, gl.RGBA, gl.FLOAT, data);
         let A, b, error, pointsFound, pointsUsed;
-        info["steps"] = step+1;
         try {
             [A, b, error, pointsFound, pointsUsed] = constructEquation(data);
         } catch (e) {
             console.error("Ignoring frame ", frame,
                           " for movement estimation: ", e);
-            info["success"] = false;
             return [undefined, info];
         }
         info["error"] = error;
@@ -214,20 +215,25 @@ function estimateMovement(gl, programs, textures, framebuffers, frame, max_steps
         // (and this is not a bad thing), because a better movement estimate may
         // match more points to each other. A very small error could simply mean
         // that there isn't much overlap between the point clouds.
-        if (Math.abs(error - previousError) < ERROR_DIFF_THRESHOLD) {
-            break;
-        }
+        // if (Math.abs(error - previousError) < ERROR_DIFF_THRESHOLD) {
+        //     break;
+        // }
         // Solve Ax = b. The x vector will contain the 3 rotation angles (around
         // the x axis, y axis and z axis) and the translation (tx, ty, tz).
-        const x = numeric.solve(A, b);
+        let x = numeric.solve(A, b);
+        console.log("b", arrayToStr(b, 6, 1));
+        // console.log("x", x);
         if (Number.isNaN(x[0])) {
             throw Error('No corresponding points between frames found.');
         }
         if (!equationSolutionIsValid(A, x, b, 0.0001)) {
             throw Error("Ax = b is too imprecise")
         }
+        console.log("GPU version diff movement: \n", arrayToStr(constructMovement(x), 4, 4));
         mat4.mul(movement, constructMovement(x), movement);
+        // console.log("M*M-1 \n", arrayToStr(movement, 4, 4));
         previousError = error;
+        gl.finish();
     }
     return [movement, info];
 }

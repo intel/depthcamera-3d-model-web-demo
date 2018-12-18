@@ -14,9 +14,9 @@
 
 let width = 200;
 let height = 200;
-let frame0Transform = getViewMatrix(0, 0, 1.0);
+let frame0Transform = getViewMatrix(5, 0, 1.0);
 let frame1Transform = getViewMatrix(0, 10, 1.0);
-// mat4.translate(frame1Transform, frame1Transform, vec3.fromValues(0.1, 0.1, 0.1));
+// mat4.translate(frame1Transform, frame1Transform, vec3.fromValues(0.0, 0.1, 0.0));
 let knownMovement = getMovement(frame1Transform, frame0Transform);
 let knownMovementInv = mat4.create();
 mat4.invert(knownMovementInv, knownMovement);
@@ -197,7 +197,7 @@ function testVolumetricModel() {
     createModel(gl, programs, framebuffers, textures, frame, knownMovementInv);
     let animate = function () {
         renderModel(gl, programs, textures, frame, test.canvas);
-        window.requestAnimationFrame(animate);
+        // window.requestAnimationFrame(animate);
     };
     animate();
 }
@@ -214,7 +214,7 @@ function testMovementEstimationIdentity() {
     let movement, info;
     [movement, info] = estimateMovement(gl, programs, textures, framebuffers, frame);
     test.check(arraysEqual(movement, mat4.create()),
-        "estimated movement is not identity: " + movement);
+        "estimated movement is not identity:\n" + arrayToStr(movement, 4, 4));
 }
 
 function testMovementEstimation() {
@@ -229,12 +229,21 @@ function testMovementEstimation() {
     frame = 1;
     uploadDepthData(gl, textures, frame1, width, height, frame);
     let movement, info;
-    [movement, info] = estimateMovement(gl, programs, textures, framebuffers, frame);
-    createModel(gl, programs, framebuffers, textures, frame, movement);
+    [movement, info] = estimateMovement(gl, programs, textures, framebuffers, frame, 2);
+    let movementInv = mat4.create();
+    mat4.invert(movementInv, movement);
+    createModel(gl, programs, framebuffers, textures, frame, movementInv);
+
+    test.check(arraysEqual(movement, knownMovement, 0.001),
+        "Estimated movement is not close enough to actual movement.\n"
+        + "Expected:\n"
+        + arrayToStr(knownMovement, 4, 4)
+        + "Calculated:\n"
+        + arrayToStr(movement, 4, 4));
 
     let animate = function () {
         renderModel(gl, programs, textures, frame, test.canvas);
-        window.requestAnimationFrame(animate);
+        // window.requestAnimationFrame(animate);
     };
     animate();
 }
@@ -244,7 +253,7 @@ function testNumberOfUsedPointsSameFrame() {
     // Give identical frames to the motion estimation, first to the CPU version
     // and then the GPU version. Check that the number of corresponding points
     // they found and used is the same.
-    let test = new Test("Compare number of used points, same frame");
+    let test = new Test("Compare number of used points between versions, same frame");
     let infoCPU;
     [_, infoCPU] = estimateMovementCPU(frame0, frame0, 1);
 
@@ -272,7 +281,7 @@ function testNumberOfUsedPointsSameFrame() {
 function compareEquationsBetweenVersions() {
     let test = new Test("Compare CPU and GPU versions of movement estimation");
     let infoCPU;
-    [_, infoCPU] = estimateMovementCPU(frame1, frame0, 1);
+    [_, infoCPU] = estimateMovementCPU(frame1, frame0, 2);
 
     let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
     let frame = 0;
@@ -282,7 +291,7 @@ function compareEquationsBetweenVersions() {
     frame = 1;
     uploadDepthData(gl, textures, frame1, width, height, frame);
     let infoGPU;
-    [_, infoGPU] = estimateMovement(gl, programs, textures, framebuffers, frame, 1);
+    [_, infoGPU] = estimateMovement(gl, programs, textures, framebuffers, frame, 2);
     test.check(infoGPU["pointsFound"] === infoCPU["pointsFound"],
         "Number of points found in GPU version is different than in CPU"
         + " version.\nGPU version found " + infoGPU["pointsFound"]
@@ -328,7 +337,7 @@ function testCPUMovementEstimation() {
     let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
     let x = mat4.create();
     let movement;
-    [movement, _] = estimateMovementCPU(frame1, frame0, 1, frame0Normals,
+    [movement, _] = estimateMovementCPU(frame1, frame0, 2, undefined,
         mat4.create());
         // knownMovement);
     test.check(arraysEqual(movement, knownMovement, 0.001),
@@ -593,15 +602,16 @@ function testMain() {
     showNormals(normals2Canvas, frame1Normals);
     try {
         console.log("TESTS\n");
-        testIndexCoordCoversion();
-        testCorrespondingPointCPU();
-        testNumberOfUsedPointsSameFrame();
-        compareCorrespondingPointsVersions();
-        compareEquationsBetweenVersions();
-        testCPUMovementEstimationIdentity();
-        testCPUMovementEstimation();
+        // testIndexCoordCoversion();
+        // testCorrespondingPointCPU();
+        // testNumberOfUsedPointsSameFrame();
+        // compareCorrespondingPointsVersions();
+        // compareEquationsBetweenVersions();
+        // testCPUMovementEstimationIdentity();
+        // testCPUMovementEstimation();
         // testMovementEstimationIdentity();
-        // testMovementEstimation();
+        // console.log("x\n\n");
+        testMovementEstimation();
         // testSumShaderSinglePass();
         // testSumShader();
         // testPointsShaderNormals();

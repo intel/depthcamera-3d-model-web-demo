@@ -112,8 +112,8 @@ function createFakeData(width, height, transform) {
         for (let j = 0; j < height; j += 1) {
             // let debug = (i == width/2 && j == height/2);
             // let debug = (i == 150 && j == 150);
-            let debug = (i == 100 && j == 130);
-            // let debug = false;
+            // let debug = (i == 100 && j == 130);
+            let debug = false;
 
             // Flip both coordinates because this is a position in the
             // projection plane at -1 and the image will get mirrored around
@@ -168,8 +168,8 @@ function createFakeData(width, height, transform) {
             }
         }
     }
-    console.log("generated ", points, " points");
-    console.log("");
+    // console.log("generated ", points, " points");
+    // console.log("");
     return [data, normals];
 }
 
