@@ -213,7 +213,7 @@ function testMovementEstimationIdentity() {
     uploadDepthData(gl, textures, frame0, width, height, frame);
     let movement, info;
     [movement, info] = estimateMovement(gl, programs, textures, framebuffers, frame);
-    test.check(arraysEqual(movement, mat4.create()),
+    test.check(arraysEqual(movement, mat4.create(), 0.0001),
         "estimated movement is not identity:\n" + arrayToStr(movement, 4, 4));
 }
 
@@ -229,12 +229,12 @@ function testMovementEstimation() {
     frame = 1;
     uploadDepthData(gl, textures, frame1, width, height, frame);
     let movement, info;
-    [movement, info] = estimateMovement(gl, programs, textures, framebuffers, frame, 2);
+    [movement, info] = estimateMovement(gl, programs, textures, framebuffers, frame);
     let movementInv = mat4.create();
     mat4.invert(movementInv, movement);
     createModel(gl, programs, framebuffers, textures, frame, movementInv);
 
-    test.check(arraysEqual(movement, knownMovement, 0.001),
+    test.check(arraysEqual(movement, knownMovement, 0.01),
         "Estimated movement is not close enough to actual movement.\n"
         + "Expected:\n"
         + arrayToStr(knownMovement, 4, 4)
@@ -281,7 +281,7 @@ function testNumberOfUsedPointsSameFrame() {
 function compareEquationsBetweenVersions() {
     let test = new Test("Compare CPU and GPU versions of movement estimation");
     let infoCPU;
-    [_, infoCPU] = estimateMovementCPU(frame1, frame0, 2);
+    [_, infoCPU] = estimateMovementCPU(frame1, frame0, 1);
 
     let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
     let frame = 0;
@@ -291,7 +291,7 @@ function compareEquationsBetweenVersions() {
     frame = 1;
     uploadDepthData(gl, textures, frame1, width, height, frame);
     let infoGPU;
-    [_, infoGPU] = estimateMovement(gl, programs, textures, framebuffers, frame, 2);
+    [_, infoGPU] = estimateMovement(gl, programs, textures, framebuffers, frame);
     test.check(infoGPU["pointsFound"] === infoCPU["pointsFound"],
         "Number of points found in GPU version is different than in CPU"
         + " version.\nGPU version found " + infoGPU["pointsFound"]
@@ -317,16 +317,13 @@ function compareEquationsBetweenVersions() {
         + array2DToStr(infoGPU["A"])
         + "\nCPU version A = \n"
         + array2DToStr(infoCPU["A"]));
-    // TODO check how the CPU version looks like if I just deproject/project the
-    // point and draw it on screen - it should be identical
-    // TODO don't use the round function in the CPU version maybe?
 }
 
 function testCPUMovementEstimationIdentity() {
     let test = new Test("Test movement estimation on CPU with no movement");
     let movement;
     [movement, _] = estimateMovementCPU(frame0, frame0, 1, frame0Normals);
-    test.check(arraysEqual(movement, mat4.create()),
+    test.check(arraysEqual(movement, mat4.create(), 0.0001),
         "estimated movement is not identity: " + arrayToStr(movement, 4, 4));
 }
 
@@ -337,10 +334,8 @@ function testCPUMovementEstimation() {
     let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
     let x = mat4.create();
     let movement;
-    [movement, _] = estimateMovementCPU(frame1, frame0, 2, undefined,
-        mat4.create());
-        // knownMovement);
-    test.check(arraysEqual(movement, knownMovement, 0.001),
+    [movement, _] = estimateMovementCPU(frame1, frame0);
+    test.check(arraysEqual(movement, knownMovement, 0.01),
         "Estimated movement is not close enough to actual movement.\n"
         + "Expected:\n"
         + arrayToStr(knownMovement, 4, 4)
@@ -382,9 +377,9 @@ function compareCorrespondingPointsVersions() {
     gl.uniform1i(l, textures.depth[frame%2].glId);
     l = gl.getUniformLocation(program, 'previousDepthTexture');
     gl.uniform1i(l, textures.depth[(frame+1)%2].glId);
+    gl.viewport(0, 0, textures.points.normal.width,
+        textures.points.normal.height);
     gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.points);
-    // TODO not sure why this breaks things
-    // gl.viewport(0, 0, textures.points.width, textures.points.height);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
     let stride = 4;
     let dataCrossGPU = new Float32Array(width*height*stride);
@@ -471,8 +466,8 @@ function testPointsShaderNormals() {
     l = gl.getUniformLocation(program, 'previousDepthTexture');
     gl.uniform1i(l, textures.depth[(frame+1)%2].glId);
     gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.points);
-    // TODO not sure why this breaks things
-    // gl.viewport(0, 0, textures.points.width, textures.points.height);
+    gl.viewport(0, 0, textures.points.normal.width,
+        textures.points.normal.height);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
     let stride = 4;
     const d = new Float32Array(width*height*stride);
@@ -602,19 +597,19 @@ function testMain() {
     showNormals(normals2Canvas, frame1Normals);
     try {
         console.log("TESTS\n");
-        // testIndexCoordCoversion();
-        // testCorrespondingPointCPU();
-        // testNumberOfUsedPointsSameFrame();
-        // compareCorrespondingPointsVersions();
-        // compareEquationsBetweenVersions();
-        // testCPUMovementEstimationIdentity();
-        // testCPUMovementEstimation();
-        // testMovementEstimationIdentity();
+        testIndexCoordCoversion();
+        testCorrespondingPointCPU();
+        testNumberOfUsedPointsSameFrame();
+        compareCorrespondingPointsVersions();
+        compareEquationsBetweenVersions();
+        testCPUMovementEstimationIdentity();
+        testCPUMovementEstimation();
+        testMovementEstimationIdentity();
         // console.log("x\n\n");
         testMovementEstimation();
-        // testSumShaderSinglePass();
-        // testSumShader();
-        // testPointsShaderNormals();
+        testSumShaderSinglePass();
+        testSumShader();
+        testPointsShaderNormals();
         // This test needs to be last, otherwise there might not be enough GPU
         // memory to create all the resources for all tests (the other tests
         // have their GL context deallocated once they are done, but this one

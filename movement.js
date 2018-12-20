@@ -154,17 +154,11 @@ function estimateMovement(gl, programs, textures, framebuffers, frame, max_steps
         console.log("step ", step);
         program = programs.points;
         gl.useProgram(program);
-        let tmp = movement.slice();
-        if (step===0) {
-            tmp[0] = 5;
-        } else {
-            tmp[0] = 3;
-        }
         l = gl.getUniformLocation(program, 'xmovement');
-        gl.uniformMatrix4fv(l, false, tmp);
+        gl.uniformMatrix4fv(l, false, movement);
         gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.points);
-        // TODO why does this break stuff
-        // gl.viewport(0, 0, textures.points.width, textures.points.height);
+        gl.viewport(0, 0, textures.points.normal.width,
+            textures.points.normal.height);
         gl.drawArrays(gl.TRIANGLES, 0, 6);
 
         // Use the textures created by the points shader to construct a 6x6
@@ -221,19 +215,14 @@ function estimateMovement(gl, programs, textures, framebuffers, frame, max_steps
         // Solve Ax = b. The x vector will contain the 3 rotation angles (around
         // the x axis, y axis and z axis) and the translation (tx, ty, tz).
         let x = numeric.solve(A, b);
-        console.log("b", arrayToStr(b, 6, 1));
-        // console.log("x", x);
         if (Number.isNaN(x[0])) {
             throw Error('No corresponding points between frames found.');
         }
         if (!equationSolutionIsValid(A, x, b, 0.0001)) {
             throw Error("Ax = b is too imprecise")
         }
-        console.log("GPU version diff movement: \n", arrayToStr(constructMovement(x), 4, 4));
         mat4.mul(movement, constructMovement(x), movement);
-        // console.log("M*M-1 \n", arrayToStr(movement, 4, 4));
         previousError = error;
-        gl.finish();
     }
     return [movement, info];
 }
