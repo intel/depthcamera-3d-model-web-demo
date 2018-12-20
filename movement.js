@@ -221,7 +221,7 @@ function estimateMovement(gl, programs, textures, framebuffers, frame, max_steps
         mat4.mul(movement, constructMovement(x), movement);
         previousError = error;
         console.log("estimation step ", step, ", relative error ",
-            error/pointsUsed);
+            (error/pointsUsed).toFixed(9));
     }
     return [movement, info];
 }
