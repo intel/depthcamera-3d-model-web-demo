@@ -77,8 +77,6 @@ async function doMain() {
                 initUniforms(gl, programs, textures, cameraParams, width, height);
                 framebuffers = initFramebuffers(gl, programs, textures);
             }
-            // if (frame < 2) {
-            if (true) {
             let source = depthStreamElement;
             if (USE_FAKE_DATA) {
                 source = fakeData;
@@ -95,12 +93,10 @@ async function doMain() {
                 frame,
             );
             mat4.mul(globalMovement, movement, globalMovement);
-            console.log(movement);
-            console.log("");
-
-            }
+            let globalMovementInv = mat4.create();
+            mat4.invert(globalMovementInv, globalMovement);
             createModel(gl, programs, framebuffers, textures, frame,
-                        globalMovement);
+                        globalMovementInv);
             renderModel(gl, programs, textures, frame, canvasElement);
             frame += 1;
         }
