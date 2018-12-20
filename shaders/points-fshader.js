@@ -84,7 +84,7 @@ uniform highp sampler2D previousDepthTexture;
 uniform highp sampler3D cubeTexture;
 
 
-uniform mat4 xmovement;
+uniform mat4 movement;
 
 ${PROJECT_DEPROJECT_SHADER_FUNCTIONS}
 
@@ -188,7 +188,7 @@ void main() {
     // I test that it works properly.
     vec3 sourcePosition = deproject(depthTexture, coord);
     if (sourcePosition != vec3(0.0, 0.0, 0.0)) {
-        sourcePosition = (xmovement * vec4(sourcePosition, 1.0)).xyz;
+        sourcePosition = (movement * vec4(sourcePosition, 1.0)).xyz;
 
         // To find the point corresponding to the transformed position, cast
         // a ray into the cube texture which contains data from previous frames.

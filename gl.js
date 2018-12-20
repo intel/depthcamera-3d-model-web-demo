@@ -161,7 +161,7 @@ function initUniforms(gl, programs, textures, parameters, width, height) {
     gl.uniform1i(l, textures.depth[0].glId);
     l = gl.getUniformLocation(program, 'previousDepthTexture');
     gl.uniform1i(l, textures.depth[1].glID);
-    l = gl.getUniformLocation(program, 'xmovement');
+    l = gl.getUniformLocation(program, 'movement');
     gl.uniformMatrix4fv(l, false, mat4.create());
     l = gl.getUniformLocation(program, 'depthScale');
     gl.uniform1f(l, parameters.depthScale);

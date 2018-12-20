@@ -154,7 +154,7 @@ function estimateMovement(gl, programs, textures, framebuffers, frame, max_steps
         // textures (i.e. the cross product, dot product, normal, error).
         program = programs.points;
         gl.useProgram(program);
-        l = gl.getUniformLocation(program, 'xmovement');
+        l = gl.getUniformLocation(program, 'movement');
         gl.uniformMatrix4fv(l, false, movement);
         gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.points);
         gl.viewport(0, 0, textures.points.normal.width,
@@ -217,9 +217,6 @@ function estimateMovement(gl, programs, textures, framebuffers, frame, max_steps
         let x = numeric.solve(A, b);
         if (Number.isNaN(x[0])) {
             throw Error('No corresponding points between frames found.');
-        }
-        if (!equationSolutionIsValid(A, x, b, 0.0001)) {
-            throw Error("Ax = b is too imprecise")
         }
         mat4.mul(movement, constructMovement(x), movement);
         previousError = error;
