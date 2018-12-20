@@ -154,12 +154,12 @@ function correspondingPoint(srcDepth, destDepth, destNormals, movement, i, j) {
             destNormals, destCoordx, destCoordy, debug);
     }
     if (debug) {
-        console.log("in correspondingPoint");
-        console.log("coord: ", coordx, coordy);
-        console.log("trans src position: ", sourcePosition);
-        console.log("dest coord: ", destCoordx, destCoordy);
-        console.log("dest position: ", destPosition);
-        console.log("dest normal: ", destNormal);
+        // console.log("in correspondingPoint");
+        // console.log("coord: ", coordx, coordy);
+        // console.log("trans src position: ", sourcePosition);
+        // console.log("dest coord: ", destCoordx, destCoordy);
+        // console.log("dest position: ", destPosition);
+        // console.log("dest normal: ", destNormal);
     }
     if (isNaN(sourcePosition[0]) || isNaN(destPosition[0])) {
         console.log("got NaN at index ", i, j);
@@ -259,8 +259,8 @@ function createLinearEqOnCPU(srcDepth, destDepth, destNormals, movement) {
     for (let i = 0; i < b.length; i++) {
         b[i] = -b[i];
     }
-    console.log("points used: ", pointsUsed);
-    console.log("relative error: ", error/pointsUsed);
+    // console.log("points used: ", pointsUsed);
+    // console.log("relative error: ", error/pointsUsed);
     const det = numeric.det(A);
     if (Number.isNaN(det) || Math.abs(1.0 - det) < 1e-15) {
         throw Error("Invalid determinant of A");
@@ -295,7 +295,7 @@ function estimateMovementCPU(srcData, destData, max_steps, destNormals, initialM
         mat4.mul(movement, constructMovement(x), movement);
         // mat4.mul(movement, movement, constructMovement(x));
         previousError = error;
-        console.log("step ", step, ", error ", error);
+        // console.log("step ", step, ", error ", error);
         info["error"] = error;
         info["steps"] = step+1;
         info["pointsFound"] = pointsFound;

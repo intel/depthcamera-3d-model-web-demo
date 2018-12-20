@@ -47,7 +47,8 @@ function constructEquation(data) {
     // console.log('error: ', error);
     // console.log('A: ', A);
     // console.log('b: ', b);
-    console.log("points used: ", pointsUsed);
+    // console.log("points found: ", pointsFound);
+    // console.log("points used: ", pointsUsed);
     // console.log("relative error: ", (error/pointsUsed).toExponential());
     const det = numeric.det(A);
     if (Number.isNaN(det) || Math.abs(det) < 1e-15) {
@@ -151,7 +152,6 @@ function estimateMovement(gl, programs, textures, framebuffers, frame, max_steps
     for (let step = 0; step < max_steps; step += 1) {
         // Find corresponding points and output information about them into
         // textures (i.e. the cross product, dot product, normal, error).
-        console.log("step ", step);
         program = programs.points;
         gl.useProgram(program);
         l = gl.getUniformLocation(program, 'xmovement');
@@ -223,6 +223,8 @@ function estimateMovement(gl, programs, textures, framebuffers, frame, max_steps
         }
         mat4.mul(movement, constructMovement(x), movement);
         previousError = error;
+        console.log("estimation step ", step, ", relative error ",
+            error/pointsUsed);
     }
     return [movement, info];
 }

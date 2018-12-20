@@ -151,7 +151,7 @@ function createFakeData(width, height, transform) {
                 let normal = estimateNormalSignedDistance(result);
                 if (debug) {
                     // data[j*width + i] = 0;
-                    console.log("camera space surface", result_camera);
+                    // console.log("camera space surface", result_camera);
                     // console.log("normal", normal);
                 }
                 let rotation = mat3.create();
@@ -162,7 +162,7 @@ function createFakeData(width, height, transform) {
                 normals[(j*width + i)*4 + 1] = normal[1];
                 normals[(j*width + i)*4 + 2] = normal[2];
                 if (debug) {
-                    console.log("normal in camera space", normal);
+                    // console.log("normal in camera space", normal);
 
                 }
             }
