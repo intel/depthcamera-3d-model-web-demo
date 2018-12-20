@@ -197,7 +197,7 @@ function testVolumetricModel() {
     createModel(gl, programs, framebuffers, textures, frame, knownMovementInv);
     let animate = function () {
         renderModel(gl, programs, textures, frame, test.canvas);
-        // window.requestAnimationFrame(animate);
+        window.requestAnimationFrame(animate);
     };
     animate();
 }
@@ -219,8 +219,6 @@ function testMovementEstimationIdentity() {
 
 function testMovementEstimation() {
     let test = new Test("Test movement estimation");
-    test.showCanvas();
-    test.bindMouseToCanvas();
     let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
     let frame = 0;
     uploadDepthData(gl, textures, frame0, width, height, frame);
@@ -241,11 +239,13 @@ function testMovementEstimation() {
         + "Calculated:\n"
         + arrayToStr(movement, 4, 4));
 
-    let animate = function () {
-        renderModel(gl, programs, textures, frame, test.canvas);
-        // window.requestAnimationFrame(animate);
-    };
-    animate();
+    // test.showCanvas();
+    // test.bindMouseToCanvas();
+    // let animate = function () {
+    //     renderModel(gl, programs, textures, frame, test.canvas);
+    //     window.requestAnimationFrame(animate);
+    // };
+    // animate();
 }
 
 
@@ -329,8 +329,6 @@ function testCPUMovementEstimationIdentity() {
 
 function testCPUMovementEstimation() {
     let test = new Test("Test Movement Estimation on CPU");
-    test.showCanvas();
-    test.bindMouseToCanvas();
     let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
     let x = mat4.create();
     let movement;
@@ -353,11 +351,13 @@ function testCPUMovementEstimation() {
     mat4.invert(movementInv, movement);
     uploadDepthData(gl, textures, frame1, width, height, frame);
     createModel(gl, programs, framebuffers, textures, frame, movementInv);
-    let animate = function () {
-        renderModel(gl, programs, textures, frame, test.canvas);
-        // window.requestAnimationFrame(animate);
-    };
-    animate();
+    // test.showCanvas();
+    // test.bindMouseToCanvas();
+    // let animate = function () {
+    //     renderModel(gl, programs, textures, frame, test.canvas);
+    //     window.requestAnimationFrame(animate);
+    // };
+    // animate();
 }
 
 function compareCorrespondingPointsVersions() {
@@ -594,9 +594,7 @@ function testMain() {
     let normals1Canvas = document.getElementById('normals1');
     let normals2Canvas = document.getElementById('normals2');
     showDepthData(data1Canvas, frame0);
-    showNormals(normals1Canvas, frame0Normals);
     showDepthData(data2Canvas, frame1);
-    showNormals(normals2Canvas, frame1Normals);
     try {
         testIndexCoordCoversion();
         testCorrespondingPointCPU();
