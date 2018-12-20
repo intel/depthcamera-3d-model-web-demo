@@ -18,7 +18,7 @@
 const MAX_STEPS = 20;
 // Stop the motion estimation when the difference between the previous and
 // current error is smaller than this (the algorithm has converged).
-const ERROR_DIFF_THRESHOLD = 0.0001;
+const ERROR_DIFF_THRESHOLD = 0.00001;
 
 // Re-construct the 6x6 matrix A, 6x1 vector b and the scalar error from the raw
 // data that we got from the GPU.
@@ -209,9 +209,9 @@ function estimateMovement(gl, programs, textures, framebuffers, frame, max_steps
         // (and this is not a bad thing), because a better movement estimate may
         // match more points to each other. A very small error could simply mean
         // that there isn't much overlap between the point clouds.
-        // if (Math.abs(error - previousError) < ERROR_DIFF_THRESHOLD) {
-        //     break;
-        // }
+        if (Math.abs(error - previousError) < ERROR_DIFF_THRESHOLD) {
+            break;
+        }
         // Solve Ax = b. The x vector will contain the 3 rotation angles (around
         // the x axis, y axis and z axis) and the translation (tx, ty, tz).
         let x = numeric.solve(A, b);

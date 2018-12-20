@@ -285,23 +285,22 @@ function estimateMovementCPU(srcData, destData, max_steps, destNormals, initialM
     for (let step = 0; step < max_steps; step += 1) {
         let [A, b, error, pointsFound, pointsUsed] = 
                 createLinearEqOnCPU(srcData, destData, destNormals, movement);
-        // if (Math.abs(error - previousError) < ERROR_DIFF_THRESHOLD) {
-        //     break;
-        // }
-        let x = numeric.solve(A, b);
-        if (Number.isNaN(x[0])) {
-            throw Error('No corresponding points between frames found.');
-        }
-        mat4.mul(movement, constructMovement(x), movement);
-        // mat4.mul(movement, movement, constructMovement(x));
-        previousError = error;
-        // console.log("step ", step, ", error ", error);
         info["error"] = error;
         info["steps"] = step+1;
         info["pointsFound"] = pointsFound;
         info["pointsUsed"] = pointsUsed;
         info["A"] = A;
         info["b"] = b;
+        // console.log("step ", step, ", error ", error);
+        if (Math.abs(error - previousError) < ERROR_DIFF_THRESHOLD) {
+            break;
+        }
+        let x = numeric.solve(A, b);
+        if (Number.isNaN(x[0])) {
+            throw Error('No corresponding points between frames found.');
+        }
+        mat4.mul(movement, constructMovement(x), movement);
+        previousError = error;
 
         if (!equationSolutionIsValid(A, x, b, 0.0001)) {
             throw Error("Ax = b is too imprecise")
