@@ -223,5 +223,6 @@ function estimateMovement(gl, programs, textures, framebuffers, frame, max_steps
         console.log("estimation step ", step, ", relative error ",
             (error/pointsUsed).toFixed(9));
     }
+    console.log("");
     return [movement, info];
 }

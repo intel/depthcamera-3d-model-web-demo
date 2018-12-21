@@ -13,7 +13,7 @@
 // limitations under the License.
 
 
-const USE_FAKE_DATA = true;
+const USE_FAKE_DATA = false;
 
 
 // Returns the calibration data.
