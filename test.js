@@ -197,7 +197,7 @@ function testVolumetricModel() {
     createModel(gl, programs, framebuffers, textures, frame, knownMovementInv);
     let animate = function () {
         renderModel(gl, programs, textures, frame, test.canvas);
-        window.requestAnimationFrame(animate);
+        // window.requestAnimationFrame(animate);
     };
     animate();
 }
@@ -612,7 +612,7 @@ function testMain() {
         // memory to create all the resources for all tests (the other tests
         // have their GL context deallocated once they are done, but this one
         // keeps running).
-        // testVolumetricModel();
+        testVolumetricModel();
     } catch (e) {
         handleError(e);
     }
