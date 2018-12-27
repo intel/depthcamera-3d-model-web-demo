@@ -193,11 +193,13 @@ function showDepthData(canvas, data) {
             depth = Math.max(depth, 0.0);
             depth = Math.min(depth, 1.0);
             imageData.data[i++] = 255 - ((depth*256) % 256);
+            imageData.data[i++] = 255 - ((depth*256) % 256);
+            imageData.data[i++] = 255 - ((depth*256) % 256);
         } else {
             imageData.data[i++] = 0;
+            imageData.data[i++] = 0;
+            imageData.data[i++] = 0;
         }
-        imageData.data[i++] = 0;
-        imageData.data[i++] = 0;
         imageData.data[i] = 255;
     }
     context.putImageData(imageData, 0, 0);
