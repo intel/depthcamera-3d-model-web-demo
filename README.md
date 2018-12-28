@@ -31,6 +31,13 @@ which implements a similar version of the algorithm optimized for GPUs. Thanks
 to this design, it's able to process the frames in real-time even on
 a relatively weak GPU.
 
+The images below show how two frames of data (that were artificially created)
+get aligned over the course of 10 steps of the ICP algorithm.
+
+![frame 0](https://github.com/intel/depthcamera-3d-model-web-demo/raw/master/images/frame0.png)
+![frame 1](https://github.com/intel/depthcamera-3d-model-web-demo/raw/master/images/frame1.png)
+![ICP iterations](https://github.com/intel/depthcamera-3d-model-web-demo/raw/master/images/icp.gif)
+
 The principle is similar to
 [linear regression](https://en.wikipedia.org/wiki/Linear_regression). In linear
 regression, you are trying to fit a line trough a noisy set of points,
