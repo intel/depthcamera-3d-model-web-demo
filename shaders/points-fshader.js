@@ -53,7 +53,8 @@ const pointsShader = `#version 300 es
 precision highp float;
 
 // Throw out points whose distance is higher than this.
-#define MAX_DISTANCE 0.2
+// If you change this, update it in movement_cpu.js too.
+#define MAX_DISTANCE 0.1
 // How many steps the raymarcher will take at most.
 #define MAX_STEPS 512
 // Floats with a difference smaller than this are considered equal.

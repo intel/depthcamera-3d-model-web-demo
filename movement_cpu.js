@@ -16,6 +16,8 @@
 // accompanied shaders. This CPU version is used only for testing (comparing
 // results between the GPU and CPU version).
 
+// If you change this, update it in shaders/points-fshader.js too.
+const MAX_DISTANCE = 0.1;
 
 function deproject(data, coordx, coordy, debug) {
     let i, j;
@@ -175,6 +177,8 @@ function correspondingPoint(srcDepth, destDepth, destNormals, movement, i, j) {
     //     console.log("coord ", coordx, coordy);
     //     throw Error("");
     // }
+    if (vec3.distance(sourcePosition, destPosition) >= MAX_DISTANCE)
+        return [vec3.create(), vec3.create(), vec3.create()];
     return [sourcePosition, destPosition, destNormal];
 }
 
