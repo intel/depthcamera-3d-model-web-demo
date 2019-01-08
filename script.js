@@ -18,7 +18,8 @@ const USE_FAKE_DATA = false;
 
 // Returns the calibration data.
 async function setupCamera() {
-    const [depthStream, colorStream] = await DepthCamera.getStreams();
+    let depthStream = await DepthCamera.getDepthStream();
+    var colorStream = await DepthCamera.getColorStreamForDepthStream(depthStream);
     const video = document.getElementById('colorStream');
     video.srcObject = colorStream;
     const depthVideo = document.getElementById('depthStream');
