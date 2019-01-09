@@ -85,15 +85,21 @@ function estimateNormalSignedDistance(position) {
     return normal;
 }
 
+// Generate camera intrinsics for fake depth data, as if it was made by
+// depth-camera.js
 function createFakeCameraParams(width, height) {
     return {
         depthScale: 1.0,
         getDepthIntrinsics(_, __) {
+            let size = Math.max(width, height);
             return {
                 offset: [width/2.0, height/2.0],
-                focalLength: [width, height],
+                focalLength: [size, size],
             };
         },
+        // these are not normally here, but I found them useful
+        width: width,
+        height: height,
     };
 }
 
@@ -122,6 +128,8 @@ function createFakeData(width, height, transform) {
             // and we want it at the bottom left.
             let [coordx, coordy] = getCoordFromIndex(i, j, width, height);
             let position = vec3.fromValues(coordx, coordy, -1.0);
+            let aspect = width/height;
+            position[1] = coordy/aspect;
             if (debug) {
                 console.log("i, j:", i, j);
                 console.log("position on proj.plane", position);

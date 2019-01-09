@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-let width = 200;
+let width = 250;
 let height = 200;
 let frame0Transform = getViewMatrix(5, 0, 1.0);
 let frame1Transform = getViewMatrix(0, 10, 1.0);
@@ -22,7 +22,7 @@ let knownMovementInv = mat4.create();
 mat4.invert(knownMovementInv, knownMovement);
 let [frame0, frame0Normals] = createFakeData(width, height, frame0Transform);
 let [frame1, frame1Normals] = createFakeData(width, height, frame1Transform);
-let cameraParams = createFakeCameraParams(height, width);
+let cameraParams = createFakeCameraParams(width, height);
 
 class Test {
     constructor(testName) {
@@ -82,14 +82,14 @@ function setupGraphics(canvas) {
 
 function testIndexCoordCoversion() {
     let test = new Test("Test coversion between indices and image coordinates");
-    let epsilon = 0.00001;
+    let epsilon = 0.01;
     let width = 100;
     let height = 100;
 
     let i = 50;
     let j = 50;
-    let expectedx = -0.005;
-    let expectedy = 0.005;
+    let expectedx = 0;
+    let expectedy = 0;
     let coordx, coordy;
     [coordx, coordy] = getCoordFromIndex(i, j, width, height);
     test.check(Math.abs(coordx - expectedx) < epsilon
@@ -103,8 +103,8 @@ function testIndexCoordCoversion() {
 
     i = 0;
     j = 0;
-    expectedx = 0.495;
-    expectedy = -0.495;
+    expectedx = 0.5;
+    expectedy = -0.5;
     coordx, coordy;
     [coordx, coordy] = getCoordFromIndex(i, j, width, height);
     test.check(Math.abs(coordx - expectedx) < epsilon
@@ -117,8 +117,8 @@ function testIndexCoordCoversion() {
 
     i = 99;
     j = 99;
-    expectedx = -0.495;
-    expectedy = 0.495;
+    expectedx = -0.5;
+    expectedy = 0.5;
     coordx, coordy;
     [coordx, coordy] = getCoordFromIndex(i, j, width, height);
     test.check(Math.abs(coordx - expectedx) < epsilon
@@ -129,12 +129,26 @@ function testIndexCoordCoversion() {
     [i_, j_] = getIndexFromCoord(coordx, coordy, width, height);
     test.check(i === i_ && j === j_);
 
-    i = 20;
-    j = 40;
-    width = 160;
-    height = 180;
-    expectedx = 0.371875;
-    expectedy = -0.275;
+    width = 200;
+    height = 100;
+    i = 100;
+    j = 50;
+    expectedx = 0.0;
+    expectedy = 0.0;
+    coordx, coordy;
+    [coordx, coordy] = getCoordFromIndex(i, j, width, height);
+    test.check(Math.abs(coordx - expectedx) < epsilon
+               && Math.abs(coordy - expectedy) < epsilon,
+        "The image coordinates were supposed to be ["
+        + expectedx + ", " + expectedy + "] but are ["
+        + coordx + ", " + coordy + "]");
+    [i_, j_] = getIndexFromCoord(coordx, coordy, width, height);
+    test.check(i === i_ && j === j_);
+
+    i = 0;
+    j = 0;
+    expectedx = 0.5;
+    expectedy = -0.5;
     coordx, coordy;
     [coordx, coordy] = getCoordFromIndex(i, j, width, height);
     test.check(Math.abs(coordx - expectedx) < epsilon
@@ -156,7 +170,7 @@ function testCorrespondingPointCPU() {
         if (foundDiff) break;
         for (j = 0; j < height; j++) {
             let result = correspondingPoint(frame0,
-                frame0, frame0Normals, mat4.create(), i, j);
+                frame0, frame0Normals, mat4.create(), i, j, cameraParams);
             if (result.length != 3) continue;
             [p, q, n] = result;
             if (!arraysEqual(p, q, 0.0)) {
@@ -175,7 +189,7 @@ function testCorrespondingPointCPU() {
         + " frames were not themselves identical."
         + "\np: " + p
         + "\nq: " + q
-        + "\ni, j: " + i + " " + j);
+        + "\ni, j: " + (i-1) + " " + j);
     test.check(!normalsDiff, "The corresponding point algorithm didn't use the"
         + " same pre-computed normal as given.");
 }
@@ -255,7 +269,7 @@ function testNumberOfUsedPointsSameFrame() {
     // they found and used is the same.
     let test = new Test("Compare number of used points between versions, same frame");
     let infoCPU;
-    [_, infoCPU] = estimateMovementCPU(frame0, frame0, 1);
+    [_, infoCPU] = estimateMovementCPU(frame0, frame0, cameraParams, 1);
 
     let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
     let frame = 0;
@@ -281,7 +295,7 @@ function testNumberOfUsedPointsSameFrame() {
 function compareEquationsBetweenVersions() {
     let test = new Test("Compare CPU and GPU versions of movement estimation");
     let infoCPU;
-    [_, infoCPU] = estimateMovementCPU(frame1, frame0, 1);
+    [_, infoCPU] = estimateMovementCPU(frame1, frame0, cameraParams, 1);
 
     let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
     let frame = 0;
@@ -311,7 +325,7 @@ function compareEquationsBetweenVersions() {
         + " created by the CPU version.\nGPU version b = "
         + arrayToStr(infoGPU["b"], 6, 1)
         + "CPU version b = " + arrayToStr(infoCPU["b"], 6, 1));
-    test.check(arrays2DEqual(infoGPU["A"], infoCPU["A"], 0.01),
+    test.check(arrays2DEqual(infoGPU["A"], infoCPU["A"], 0.1, true),
         "The matrix A in Ax=b created from the GPU version differs from the one"
         + " created by the CPU version.\nGPU version A = \n"
         + array2DToStr(infoGPU["A"])
@@ -322,7 +336,7 @@ function compareEquationsBetweenVersions() {
 function testCPUMovementEstimationIdentity() {
     let test = new Test("Test movement estimation on CPU with no movement");
     let movement;
-    [movement, _] = estimateMovementCPU(frame0, frame0, 1, frame0Normals);
+    [movement, _] = estimateMovementCPU(frame0, frame0, cameraParams, 1, frame0Normals);
     test.check(arraysEqual(movement, mat4.create(), 0.0001),
         "estimated movement is not identity: " + arrayToStr(movement, 4, 4));
 }
@@ -332,7 +346,7 @@ function testCPUMovementEstimation() {
     let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
     let x = mat4.create();
     let movement;
-    [movement, _] = estimateMovementCPU(frame1, frame0);
+    [movement, _] = estimateMovementCPU(frame1, frame0, cameraParams);
     // TODO not sure why the CPU version is a bit less precise than the GPU
     // version.
     test.check(arraysEqual(movement, knownMovement, 0.1),
@@ -408,7 +422,7 @@ function compareCorrespondingPointsVersions() {
     for (let i = 0; i < width; i++) {
         for (let j = 0; j < height; j++) {
             let result = correspondingPoint(frame1,
-                frame0, undefined, mat4.create(), i, j);
+                frame0, undefined, mat4.create(), i, j, cameraParams);
             if (result.length != 3) continue;
             let [p, q, normalCPU] = result;
             vec3.cross(crossCPU, p, normalCPU);

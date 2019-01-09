@@ -128,7 +128,7 @@ function array2DToStr(array, decimals) {
 }
 
 
-function arraysEqual(array1, array2, epsilon) {
+function arraysEqual(array1, array2, epsilon, debug) {
     if (array1 === undefined || array2 === undefined
         || array1.length !== array2.length) {
             console.warn("Incorrect usage of arraysEqual");
@@ -139,20 +139,26 @@ function arraysEqual(array1, array2, epsilon) {
         if (Number.isNaN(array1[i]) || Number.isNaN(array2[i])) return false;
         if (Math.abs(array1[i] - array2[i]) > epsilon) {
             // console.log("Diff in arrays, index ", i, array1[i], array2[i]);
+            if (debug) {
+                console.log("column", i);
+            }
             return false;
         }
     }
     return true;
 }
 
-function arrays2DEqual(array1, array2, epsilon) {
+function arrays2DEqual(array1, array2, epsilon, debug) {
     if (array1 === undefined || array2 === undefined
         || array1.length !== array2.length) {
             console.warn("Incorrect usage of arrays2DEqual");
             return false;
         }
     for (let i = 0; i < array1.length; i++) {
-        if (!arraysEqual(array1[i], array2[i], epsilon)) {
+        if (!arraysEqual(array1[i], array2[i], epsilon, debug)) {
+            if (debug) {
+                console.log("row", i);
+            }
             return false;
         }
     }

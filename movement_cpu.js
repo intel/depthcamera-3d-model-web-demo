@@ -19,14 +19,19 @@
 // If you change this, update it in shaders/points-fshader.js too.
 const MAX_DISTANCE = 0.1;
 
-function deproject(data, coordx, coordy, debug) {
+function deproject(data, coordx, coordy, cameraParams, debug) {
+    const intrin = cameraParams.getDepthIntrinsics();
+    const offsetx = (intrin.offset[0] / cameraParams.width) - 0.5;
+    const offsety = (intrin.offset[1] / cameraParams.height) - 0.5;
+    const focalx = intrin.focalLength[0] / cameraParams.width;
+    const focaly = intrin.focalLength[1] / cameraParams.height;
     let i, j;
     [i, j] = getIndexFromCoord(coordx, coordy, data.width, data.height);
     let depth = data[j*data.width + i];
     if (isNaN(depth))
         return vec3.create();
-    let resultx = - coordx*depth;
-    let resulty = - coordy*depth;
+    let resultx = (-coordx - offsetx)/focalx*depth;
+    let resulty = (-coordy - offsety)/focaly*depth;
     if (debug) {
         // console.log("in deproject");
         // console.log("i j: ", i, j);
@@ -36,24 +41,30 @@ function deproject(data, coordx, coordy, debug) {
     return vec3.fromValues(resultx, resulty, depth);
 }
 
-function project(position) {
+function project(position, cameraParams, debug) {
+    const intrin = cameraParams.getDepthIntrinsics();
+    const offsetx = (intrin.offset[0] / cameraParams.width) - 0.5;
+    const offsety = (intrin.offset[1] / cameraParams.height) - 0.5;
+    const focalx = intrin.focalLength[0] / cameraParams.width;
+    const focaly = intrin.focalLength[1] / cameraParams.height;
     if (position[2] === 0.0)
         throw Error("Trying to project invalid data");
     let coordx = - position[0]/position[2];
     let coordy = - position[1]/position[2];
-    return [coordx, coordy];
+    return [coordx*focalx + offsetx, coordy*focaly + offsety];
 }
 
-function estimateNormalPointCloud(data, coordx, coordy, debug) {
+function estimateNormalPointCloud(data, coordx, coordy, cameraParams, debug) {
+    if (cameraParams === undefined) throw Error("Undefined camera parameters");
     let zero = vec3.fromValues(0,0,0);
-    let position = deproject(data, coordx, coordy);
+    let position = deproject(data, coordx, coordy, cameraParams);
     let texStepx = 1.0/data.width;
     let texStepy = 1.0/data.height;
     if (coordx + texStepx >= 0.5 || coordy + texStepy >= 0.5) {
         return zero;
     }
-    let positionRight = deproject(data, coordx + texStepx, coordy);
-    let positionTop = deproject(data, coordx, coordy + texStepy);
+    let positionRight = deproject(data, coordx + texStepx, coordy, cameraParams);
+    let positionTop = deproject(data, coordx, coordy + texStepy, cameraParams);
     if (arraysEqual(positionRight, zero) || arraysEqual(positionTop, zero)) {
         return zero;
     }
@@ -82,14 +93,15 @@ function getPrecomputedNormal(normals, coordx, coordy, debug) {
     return vec3.fromValues(nx, ny, nz);
 }
 
-function correspondingPointBruteForce(srcDepth, destDepth, destNormals, movement, i, j) {
+function correspondingPointBruteForce(srcDepth, destDepth, destNormals, movement, i, j, cameraParams) {
+    if (cameraParams === undefined) throw Error("Undefined camera parameters");
     // let debug = (i == srcDepth.width/2 && j == srcDepth.height/2);
     // let debug = (i == 150 && j == 130);
     let debug = (i == 60 && j == 92);
 
     let coordx, coordy;
     [coordx, coordy] = getCoordFromIndex(i, j, width, height);
-    let sourcePosition = deproject(srcDepth, coordx, coordy, debug);
+    let sourcePosition = deproject(srcDepth, coordx, coordy, cameraParams, debug);
     if (sourcePosition[2] === 0.0) return [];
     vec3.transformMat4(sourcePosition, sourcePosition, movement);
     let closestDestPosition = vec3.fromValues(10000, 10000, 10000);
@@ -98,7 +110,7 @@ function correspondingPointBruteForce(srcDepth, destDepth, destNormals, movement
     for (let k = Math.max(0, i-20); k < Math.min(srcDepth.width, i+20); k++) {
         for (let l = 0; l < srcDepth.height; l++) {
             let [destCoordx, destCoordy] = getCoordFromIndex(k, l, width, height);
-            let destPosition = deproject(destDepth, destCoordx, destCoordy, debug);
+            let destPosition = deproject(destDepth, destCoordx, destCoordy, cameraParams, debug);
             if (destPosition[2] === 0.0) continue;
             if (vec3.distance(sourcePosition, destPosition) <
                 vec3.distance(sourcePosition, closestDestPosition)) {
@@ -106,10 +118,10 @@ function correspondingPointBruteForce(srcDepth, destDepth, destNormals, movement
             }
         }
     }
-    let [destCoordx, destCoordy] = project(closestDestPosition);
+    let [destCoordx, destCoordy] = project(closestDestPosition, cameraParams);
     let destNormal;
     if (destNormals === undefined) {
-        destNormal = estimateNormalPointCloud(destDepth, destCoordx, destCoordy, debug);
+        destNormal = estimateNormalPointCloud(destDepth, destCoordx, destCoordy, cameraParams, debug);
     } else {
         destNormal = getPrecomputedNormal(
             destNormals, destCoordx, destCoordy, debug);
@@ -135,22 +147,23 @@ function correspondingPointBruteForce(srcDepth, destDepth, destNormals, movement
 // Return [srcPoint, destPoint, normal], where the points will be reasonably
 // close to each other. The normal will be zero if it couldn't be calculated for
 // these points of is some other condition didn't pass.
-function correspondingPoint(srcDepth, destDepth, destNormals, movement, i, j) {
+function correspondingPoint(srcDepth, destDepth, destNormals, movement, i, j, cameraParams) {
+    if (cameraParams === undefined) throw Error("Undefined camera parameters");
     // let debug = (i == srcDepth.width/2 && j == srcDepth.height/2);
     // let debug = (i == 150 && j == 130);
-    let debug = (i == 60 && j == 92);
+    let debug = (i == 118 && j == 92);
 
     let coordx, coordy;
     [coordx, coordy] = getCoordFromIndex(i, j, width, height);
-    let sourcePosition = deproject(srcDepth, coordx, coordy, debug);
+    let sourcePosition = deproject(srcDepth, coordx, coordy, cameraParams, debug);
     if (sourcePosition[2] === 0.0) return [];
     vec3.transformMat4(sourcePosition, sourcePosition, movement);
-    let [destCoordx, destCoordy] = project(sourcePosition);
-    let destPosition = deproject(destDepth, destCoordx, destCoordy, debug);
+    let [destCoordx, destCoordy] = project(sourcePosition, cameraParams, debug);
+    let destPosition = deproject(destDepth, destCoordx, destCoordy, cameraParams, debug);
     if (destPosition[2] === 0.0) return [];
     let destNormal;
     if (destNormals === undefined) {
-        destNormal = estimateNormalPointCloud(destDepth, destCoordx, destCoordy, debug);
+        destNormal = estimateNormalPointCloud(destDepth, destCoordx, destCoordy, cameraParams, debug);
     } else {
         destNormal = getPrecomputedNormal(
             destNormals, destCoordx, destCoordy, debug);
@@ -182,7 +195,8 @@ function correspondingPoint(srcDepth, destDepth, destNormals, movement, i, j) {
     return [sourcePosition, destPosition, destNormal];
 }
 
-function createLinearEqOnCPU(srcDepth, destDepth, destNormals, movement) {
+function createLinearEqOnCPU(srcDepth, destDepth, destNormals, movement, cameraParams) {
+    if (cameraParams === undefined) throw Error("Undefined camera parameters");
     let error = 0;
     let A = Array(6);
     let b = new Float32Array(6);
@@ -194,7 +208,7 @@ function createLinearEqOnCPU(srcDepth, destDepth, destNormals, movement) {
     for (let i = 0; i < srcDepth.width; i += 1) {
         for (let j = 0; j < srcDepth.height; j += 1) {
             let result = correspondingPoint(srcDepth,
-                destDepth, destNormals, movement, i, j);
+                destDepth, destNormals, movement, i, j, cameraParams);
             if (result.length != 3) continue;
             pointsFound += 1;
             // found corresponding points, but they were thrown out (undefined
@@ -275,7 +289,7 @@ function createLinearEqOnCPU(srcDepth, destDepth, destNormals, movement) {
     return [A, b, error, pointsFound, pointsUsed];
 }
 
-function estimateMovementCPU(srcData, destData, max_steps, destNormals, initialMovement) {
+function estimateMovementCPU(srcData, destData, cameraParams, max_steps, destNormals, initialMovement) {
     let info = {
         "steps": 0,
         "success": true,
@@ -283,12 +297,13 @@ function estimateMovementCPU(srcData, destData, max_steps, destNormals, initialM
         "pointsFound": 0,
         "pointsUsed": 0,
     };
+    if (cameraParams === undefined) throw Error("Undefined camera parameters");
     if (max_steps === undefined) max_steps = MAX_STEPS;
     let movement = initialMovement ? initialMovement.slice() : mat4.create();
     let previousError = 0;
     for (let step = 0; step < max_steps; step += 1) {
         let [A, b, error, pointsFound, pointsUsed] = 
-                createLinearEqOnCPU(srcData, destData, destNormals, movement);
+                createLinearEqOnCPU(srcData, destData, destNormals, movement, cameraParams);
         info["error"] = error;
         info["steps"] = step+1;
         info["pointsFound"] = pointsFound;
