@@ -17,7 +17,9 @@
 // results between the GPU and CPU version).
 
 // If you change this, update it in shaders/points-fshader.js too.
-const MAX_DISTANCE = 0.1;
+const MAX_DISTANCE = 0.05;
+// If you change this, update it in shaders/points-fshader.js too.
+const MIN_DOT_PRODUCT = 0.9;
 
 function deproject(data, coordx, coordy, cameraParams, debug) {
     const intrin = cameraParams.getDepthIntrinsics();
@@ -157,7 +159,11 @@ function correspondingPoint(srcDepth, destDepth, destNormals, movement, i, j, ca
     [coordx, coordy] = getCoordFromIndex(i, j, width, height);
     let sourcePosition = deproject(srcDepth, coordx, coordy, cameraParams, debug);
     if (sourcePosition[2] === 0.0) return [];
+    let sourceNormal = estimateNormalPointCloud(srcDepth, coordx, coordy, cameraParams, debug);
+    let movementMat3 = mat3.create();
+    mat3.fromMat4(movementMat3, movement);
     vec3.transformMat4(sourcePosition, sourcePosition, movement);
+    vec3.transformMat3(sourceNormal, sourceNormal, movementMat3);
     let [destCoordx, destCoordy] = project(sourcePosition, cameraParams, debug);
     let destPosition = deproject(destDepth, destCoordx, destCoordy, cameraParams, debug);
     if (destPosition[2] === 0.0) return [];
@@ -183,14 +189,8 @@ function correspondingPoint(srcDepth, destDepth, destNormals, movement, i, j, ca
         console.log("dest coord ", destCoordx, destCoordy);
         throw Error("One of the results is NaN");
     }
-    // if (!arraysEqual(sourcePosition,destPosition, 0.01)) {
-    //     console.log("src ", sourcePosition);
-    //     console.log("dst ", destPosition);
-    //     console.log("i j ", i, j);
-    //     console.log("coord ", coordx, coordy);
-    //     throw Error("");
-    // }
-    if (vec3.distance(sourcePosition, destPosition) >= MAX_DISTANCE)
+    if (vec3.distance(sourcePosition, destPosition) >= MAX_DISTANCE
+        || vec3.dot(sourceNormal, destNormal) < MIN_DOT_PRODUCT)
         return [vec3.create(), vec3.create(), vec3.create()];
     return [sourcePosition, destPosition, destNormal];
 }

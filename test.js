@@ -163,25 +163,18 @@ function testIndexCoordCoversion() {
 function testCorrespondingPointCPU() {
     let test = new Test("Test the corresponding points are the same for"
                         + " identical frames");
-    let i, j, p, q, n;
+    let i, j, p, q;
     let foundDiff = false;
-    let normalsDiff = false;
     for (i = 0; i < width; i++) {
         if (foundDiff) break;
         for (j = 0; j < height; j++) {
             let result = correspondingPoint(frame0,
                 frame0, frame0Normals, mat4.create(), i, j, cameraParams);
             if (result.length != 3) continue;
-            [p, q, n] = result;
+            [p, q, _] = result;
             if (!arraysEqual(p, q, 0.0)) {
                 foundDiff = true;
                 break;
-            }
-            let index = (j*frame0Normals.width + i)*frame0Normals.stride;
-            let n_ = vec3.fromValues(frame0Normals[index],
-                frame0Normals[index+1], frame0Normals[index+2]);
-            if (!arraysEqual(n, n_, 0.0)) {
-                normalsDiff = true;
             }
         }
     }
@@ -190,8 +183,6 @@ function testCorrespondingPointCPU() {
         + "\np: " + p
         + "\nq: " + q
         + "\ni, j: " + (i-1) + " " + j);
-    test.check(!normalsDiff, "The corresponding point algorithm didn't use the"
-        + " same pre-computed normal as given.");
 }
 
 function testVolumetricModel() {

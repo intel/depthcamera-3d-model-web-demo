@@ -54,7 +54,11 @@ precision highp float;
 
 // Throw out points whose distance is higher than this.
 // If you change this, update it in movement_cpu.js too.
-#define MAX_DISTANCE 0.1
+#define MAX_DISTANCE 0.05
+// Throw out points for which the estimated normals have a dot product lower
+// than this.
+// If you change this, update it in movement_cpu.js too.
+#define MIN_DOT_PRODUCT 0.9
 // How many steps the raymarcher will take at most.
 #define MAX_STEPS 512
 // Floats with a difference smaller than this are considered equal.
@@ -188,8 +192,10 @@ void main() {
     // something that doesn't use branching, but this should be done only after
     // I test that it works properly.
     vec3 sourcePosition = deproject(depthTexture, coord);
+    vec3 sourceNormal = estimateNormalPointCloud(depthTexture, coord);
     if (sourcePosition != vec3(0.0, 0.0, 0.0)) {
         sourcePosition = (movement * vec4(sourcePosition, 1.0)).xyz;
+        sourceNormal = mat3(movement) * sourceNormal;
 
         // To find the point corresponding to the transformed position, cast
         // a ray into the cube texture which contains data from previous frames.
@@ -210,7 +216,8 @@ void main() {
             // destPosition.z += 1.0;
             vec3 normal = estimateNormalPointCloud(previousDepthTexture, rayCoord);
             if (normal != vec3(0.0, 0.0, 0.0)) {
-                if (distance(sourcePosition, destPosition) < MAX_DISTANCE) {
+                if (distance(sourcePosition, destPosition) < MAX_DISTANCE
+                        && dot(sourceNormal, normal) > MIN_DOT_PRODUCT) {
                     outCrossProduct = vec4(cross(sourcePosition, normal), 0.0);
                     outNormal = vec4(normal, 0.0);
                     float dotProduct = dot(sourcePosition - destPosition, normal);
