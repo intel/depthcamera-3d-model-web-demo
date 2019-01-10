@@ -218,8 +218,9 @@ function testMovementEstimationIdentity() {
     uploadDepthData(gl, textures, frame0, width, height, frame);
     let movement, info;
     [movement, info] = estimateMovement(gl, programs, textures, framebuffers, frame);
-    test.check(arraysEqual(movement, mat4.create(), 0.0001),
+    test.check(arraysEqual(movement, mat4.create(), 0.0),
         "estimated movement is not identity:\n" + arrayToStr(movement, 4, 4));
+    test.check(info["error"] < 1e-10, "error wasn't close enough to 0 " + info["error"]);
 }
 
 function testMovementEstimation() {
@@ -327,9 +328,10 @@ function compareEquationsBetweenVersions() {
 function testCPUMovementEstimationIdentity() {
     let test = new Test("Test movement estimation on CPU with no movement");
     let movement;
-    [movement, _] = estimateMovementCPU(frame0, frame0, cameraParams, 1, frame0Normals);
-    test.check(arraysEqual(movement, mat4.create(), 0.0001),
+    [movement, info] = estimateMovementCPU(frame0, frame0, cameraParams, 1, frame0Normals);
+    test.check(arraysEqual(movement, mat4.create(), 0.0),
         "estimated movement is not identity: " + arrayToStr(movement, 4, 4));
+    test.check(info["error"] < 1e-10, "error wasn't close enough to 0 " + info["error"]);
 }
 
 function testCPUMovementEstimation() {
