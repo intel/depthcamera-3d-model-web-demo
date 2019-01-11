@@ -103,6 +103,30 @@ function createFakeCameraParams(width, height) {
     };
 }
 
+// The camera parameters for D415. Used only for testing with previously stored
+// depth map from this camera.
+function getRealCameraParams() {
+    return {
+        depthScale: 0.00100000005* 65535,
+        getDepthIntrinsics: function(_, __) {
+            // return {
+            //   offset: [315.847442626953, 241.684616088867],
+            //   focalLength: [643.142272949219, 643.142272949219],
+            // };
+            let width = 480;
+            let height = 270;
+            let size = Math.max(width, height);
+            return {
+                offset: [width/2.0, height/2.0],
+                focalLength: [size, size],
+            };
+        },
+        // these are not normally here, but I found them useful
+        width: 480,
+        height: 270,
+    };
+}
+
 function createFakeData(width, height, transform) {
     const data = new Float32Array(width*height);
     const normals = new Float32Array(width*height*4);
@@ -181,28 +205,26 @@ function createFakeData(width, height, transform) {
     return [data, normals];
 }
 
+// Show the raw generated depth data on the webpage.
 // 'data' should be Float32Array of size width*height
-function showDepthData(canvas, data) {
-    // Show the raw generated depth data on the webpage (don't use this for raw
-    // camera data, those need to be scaled too).
+function showDepthData(canvas, data, depthScale) {
     canvas.width = data.width;
     canvas.height = data.height;
+    if (depthScale === undefined) { depthScale = 1; }
     const context = canvas.getContext('2d');
     let imageData = context.createImageData(data.width, data.height);
     for(let i=0; i < data.width * data.height * 4; i += 1) {
         let depth = data[i/4];
         if (depth) {
-            // Make the data more visible - it assumes that the camera is 1.0
-            // away from the center of the object and the object is about 0.1 to
-            // 0.3 in diameter, so the range will be about 0.7-1.3. This should
-            // put it approximately in the 0.0-1.0 range so it can be displayed
-            // in red.
-            depth = (depth - 0.7)*2.0;
+            depth = depth*depthScale;
+            // make it a little brighter
+            depth -= 0.2;
+            depth *= 1.2;
             depth = Math.max(depth, 0.0);
             depth = Math.min(depth, 1.0);
-            imageData.data[i++] = 255 - ((depth*256) % 256);
-            imageData.data[i++] = 255 - ((depth*256) % 256);
-            imageData.data[i++] = 255 - ((depth*256) % 256);
+            imageData.data[i++] = 255 - ((depth*255) % 256);
+            imageData.data[i++] = 255 - ((depth*255) % 256);
+            imageData.data[i++] = 255 - ((depth*255) % 256);
         } else {
             imageData.data[i++] = 0;
             imageData.data[i++] = 0;
@@ -248,4 +270,39 @@ function getMovement(src, dest) {
     mat4.invert(dest_inv, dest);
     mat4.mul(movement, dest_inv, src);
     return movement;
+}
+
+// Assumes 'data' is an uint8array holding data in the RGBA fromat, where the RG
+// components encode a floating point number, B is 0 and A is 255. Returns
+// a Float32Array with a size that is a fourth of the original.
+function convertRGtoFloat(data) {
+    let result = new Float32Array(data.length/4);
+    for (let i = 0; i < result.length; i++) {
+        result[i] = ((data[i*4] + data[i*4+1]*256)/65535.0);
+    }
+    return result;
+}
+
+function loadImage(url) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.setAttribute('crossOrigin', 'anonymous');
+    img.addEventListener('load', () => resolve(img));
+    img.addEventListener('error', reject);
+    img.src = url;
+  });
+}
+
+async function getImageData(url) {
+    const img = await loadImage(url);
+    let canvas = document.createElement("canvas");
+    canvas.width =img.width;
+    canvas.height =img.height;
+    let ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0);
+    let data = ctx.getImageData(0, 0, img.width, img.height).data;
+    let depthData = convertRGtoFloat(data);
+    depthData.width = img.width;
+    depthData.height = img.height;
+    return depthData;
 }

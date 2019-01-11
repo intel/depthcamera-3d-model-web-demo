@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// This block of parameters and data is only for the artificially generated
+// depth data.
 let width = 250;
 let height = 200;
 let frame0Transform = getViewMatrix(5, 0, 1.0);
@@ -23,6 +25,12 @@ mat4.invert(knownMovementInv, knownMovement);
 let [frame0, frame0Normals] = createFakeData(width, height, frame0Transform);
 let [frame1, frame1Normals] = createFakeData(width, height, frame1Transform);
 let cameraParams = createFakeCameraParams(width, height);
+
+// Depth map captured from an actual camera.
+let realFrame0Url = "https://raw.githubusercontent.com/intel/depthcamera-3d-model-web-demo/devel/images/depth/frame0.png";
+let realFrame1Url = "https://raw.githubusercontent.com/intel/depthcamera-3d-model-web-demo/devel/images/depth/frame1.png";
+let realCameraParams = getRealCameraParams();
+
 
 class Test {
     constructor(testName) {
@@ -70,12 +78,14 @@ class Test {
     }
 }
 
-function setupGraphics(canvas) {
+function setupGraphics(canvas, cameraParameters) {
+    let width = cameraParameters.width;
+    let height = cameraParameters.height;
     let gl = setupGL(canvas);
     let programs = setupPrograms(gl);
     initAttributes(gl, programs);
     let textures = setupTextures(gl, programs, width, height);
-    initUniforms(gl, programs, textures, cameraParams, width, height);
+    initUniforms(gl, programs, textures, cameraParameters, width, height);
     let framebuffers = initFramebuffers(gl, programs, textures);
     return [gl, programs, textures, framebuffers];
 }
@@ -192,7 +202,7 @@ function testVolumetricModel() {
     test.print("Visual test only. Should show a sphere and a box next to each"
                + " other. It should be a combination of the two input frames"
                + " shown above.");
-    let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
+    let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas, cameraParams);
     let frame = 0;
     uploadDepthData(gl, textures, frame0, width, height, frame);
     createModel(gl, programs, framebuffers, textures, frame, mat4.create());
@@ -209,7 +219,7 @@ function testVolumetricModel() {
 
 function testMovementEstimationIdentity() {
     let test = new Test("Test movement estimation with no movement");
-    let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
+    let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas, cameraParams);
     let frame = 0;
     uploadDepthData(gl, textures, frame0, width, height, frame);
     createModel(gl, programs, framebuffers, textures, frame, mat4.create());
@@ -225,7 +235,7 @@ function testMovementEstimationIdentity() {
 
 function testMovementEstimation() {
     let test = new Test("Test movement estimation");
-    let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
+    let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas, cameraParams);
     let frame = 0;
     uploadDepthData(gl, textures, frame0, width, height, frame);
     createModel(gl, programs, framebuffers, textures, frame, mat4.create());
@@ -263,7 +273,7 @@ function testNumberOfUsedPointsSameFrame() {
     let infoCPU;
     [_, infoCPU] = estimateMovementCPU(frame0, frame0, cameraParams, 1);
 
-    let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
+    let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas, cameraParams);
     let frame = 0;
     uploadDepthData(gl, textures, frame0, width, height, frame);
     createModel(gl, programs, framebuffers, textures, frame, mat4.create());
@@ -289,7 +299,7 @@ function compareEquationsBetweenVersions() {
     let infoCPU;
     [_, infoCPU] = estimateMovementCPU(frame1, frame0, cameraParams, 1);
 
-    let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
+    let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas, cameraParams);
     let frame = 0;
     uploadDepthData(gl, textures, frame0, width, height, frame);
     createModel(gl, programs, framebuffers, textures, frame, mat4.create());
@@ -336,7 +346,7 @@ function testCPUMovementEstimationIdentity() {
 
 function testCPUMovementEstimation() {
     let test = new Test("Test Movement Estimation on CPU");
-    let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
+    let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas, cameraParams);
     let x = mat4.create();
     let movement;
     [movement, _] = estimateMovementCPU(frame1, frame0, cameraParams);
@@ -370,7 +380,7 @@ function testCPUMovementEstimation() {
 function compareCorrespondingPointsVersions() {
     let test = new Test("Compare corresponding points and normals between"
         + " CPU and GPU versions.");
-    let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
+    let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas, cameraParams);
     let frame = 0;
     uploadDepthData(gl, textures, frame0, width, height, frame);
     createModel(gl, programs, framebuffers, textures, frame, mat4.create());
@@ -450,7 +460,7 @@ function testPointsShaderNormals() {
     // pixel to another position. This doesn't matter for the actual purpose of
     // the shader, it just can't be visually checked.
     let test = new Test("Test normals in points shader (visual test only)");
-    let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
+    let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas, cameraParams);
     let canvas1 = document.createElement('canvas');
     let canvas2 = document.createElement('canvas');
     test.div.appendChild(canvas1);
@@ -492,7 +502,7 @@ function testSumShaderSinglePass() {
     // Sum 2x2 blocks of data, where each block is a 5x3 array of vectors. Get
     // a single block of data as a result.
     let test = new Test("Test sum shader single pass");
-    let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
+    let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas, cameraParams);
 
     let width = 2;
     let height = 2;
@@ -547,7 +557,7 @@ function testSumShader() {
     // Sum width x height blocks of data, where each block is a 5x3 array of
     // vectors. Get a single block of data as a result.
     let test = new Test("Test sum shader");
-    let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas);
+    let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas, cameraParams);
 
     // size of each block
     let blockWidth = 5;
@@ -595,9 +605,32 @@ function testSumShader() {
         + data);
 }
 
+function testRealData(data1, data2) {
+    let test = new Test("Test volumetric model2 (visual test only)");
+    test.showCanvas();
+    test.bindMouseToCanvas();
+    let width = realCameraParams.width;
+    let height = realCameraParams.height;
+    let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas, realCameraParams);
+    let frame = 0;
+    uploadDepthData(gl, textures, data1, width, height, frame);
+    createModel(gl, programs, framebuffers, textures, frame, mat4.create());
+
+    // frame = 1;
+    // uploadDepthData(gl, textures, data2, width, height, frame);
+    // createModel(gl, programs, framebuffers, textures, frame, mat4.create());
+    let animate = function () {
+        renderModel(gl, programs, textures, frame, test.canvas);
+        // window.requestAnimationFrame(animate);
+    };
+    animate();
+}
+
 function testMain() {
     let data1Canvas = document.getElementById('data1');
     let data2Canvas = document.getElementById('data2');
+    let realData1Canvas = document.getElementById('realdata1');
+    let realData2Canvas = document.getElementById('realdata2');
     let normals1Canvas = document.getElementById('normals1');
     let normals2Canvas = document.getElementById('normals2');
     showDepthData(data1Canvas, frame0);
@@ -615,6 +648,14 @@ function testMain() {
         testSumShaderSinglePass();
         testSumShader();
         testPointsShaderNormals();
+        Promise.all([getImageData(realFrame0Url), getImageData(realFrame1Url)])
+            .then(results => {
+                showDepthData(realData1Canvas,
+                    results[0], realCameraParams.depthScale);
+                showDepthData(realData2Canvas,
+                    results[1], realCameraParams.depthScale);
+                testRealData(results[0], results[1])
+            });
         // This test needs to be last, otherwise there might not be enough GPU
         // memory to create all the resources for all tests (the other tests
         // have their GL context deallocated once they are done, but this one
