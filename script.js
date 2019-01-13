@@ -19,9 +19,6 @@ const USE_FAKE_DATA = false;
 // Returns the calibration data.
 async function setupCamera() {
     let depthStream = await DepthCamera.getDepthStream();
-    var colorStream = await DepthCamera.getColorStreamForDepthStream(depthStream);
-    const video = document.getElementById('colorStream');
-    video.srcObject = colorStream;
     const depthVideo = document.getElementById('depthStream');
     depthVideo.srcObject = depthStream;
     return DepthCamera.getCameraCalibration(depthStream);
@@ -33,11 +30,8 @@ async function doMain() {
     document.onmouseup = handleMouseUp;
     document.onmousemove = handleMouseMove;
 
-    const colorStreamElement = document.getElementById('colorStream');
     const depthStreamElement = document.getElementById('depthStream');
-    let colorStreamReady = false;
     let depthStreamReady = false;
-    colorStreamElement.oncanplay = function () { colorStreamReady = true; };
     depthStreamElement.oncanplay = function () { depthStreamReady = true; };
 
     const gl = setupGL(canvasElement);
@@ -56,7 +50,6 @@ async function doMain() {
         [fakeData, _] = createFakeData(width, height, transform);
         [fakeData2, __] = createFakeData(width, height, transform2);
         depthStreamReady = true;
-        colorStreamReady = true;
     } else {
         cameraParams = await setupCamera();
     }
@@ -68,7 +61,7 @@ async function doMain() {
     let globalMovement = mat4.create();
     // Run for each frame. Will do nothing if the camera is not ready yet.
     const animate = function () {
-        if (depthStreamReady && colorStreamReady) {
+        if (depthStreamReady) {
             if (frame === 0) {
                 if (!USE_FAKE_DATA) {
                     width = depthStreamElement.videoWidth;
