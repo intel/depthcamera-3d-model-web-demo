@@ -49,8 +49,8 @@ class Test {
         this.div.appendChild(this.msgDiv);
 
         this.canvas = document.createElement('canvas');
-        this.canvas.width = 400;
-        this.canvas.height = 400;
+        this.canvas.width = 600;
+        this.canvas.height = 500;
         this.canvas.style.display = "none";
         this.div.appendChild(this.canvas);
     }
@@ -606,7 +606,7 @@ function testSumShader() {
 }
 
 function testRealData(data1, data2) {
-    let test = new Test("Test volumetric model2 (visual test only)");
+    let test = new Test("Test motion estimation for real data (visual test only)");
     test.showCanvas();
     test.bindMouseToCanvas();
     let width = realCameraParams.width;
@@ -616,9 +616,13 @@ function testRealData(data1, data2) {
     uploadDepthData(gl, textures, data1, width, height, frame);
     createModel(gl, programs, framebuffers, textures, frame, mat4.create());
 
-    // frame = 1;
-    // uploadDepthData(gl, textures, data2, width, height, frame);
-    // createModel(gl, programs, framebuffers, textures, frame, mat4.create());
+    frame = 1;
+    uploadDepthData(gl, textures, data2, width, height, frame);
+    let movement, info;
+    [movement, info] = estimateMovement(gl, programs, textures, framebuffers, frame);
+    let movementInv = mat4.create();
+    mat4.invert(movementInv, movement);
+    createModel(gl, programs, framebuffers, textures, frame, movementInv);
     let animate = function () {
         renderModel(gl, programs, textures, frame, test.canvas);
         // window.requestAnimationFrame(animate);
