@@ -378,7 +378,7 @@ function renderModel(gl, programs, textures, frame, canvas) {
     l = gl.getUniformLocation(program, 'cubeTexture');
     gl.uniform1i(l, textures.cube[(frame + 1) % 2].glId);
     l = gl.getUniformLocation(program, 'viewMatrix');
-    gl.uniformMatrix4fv(l, false, getViewMatrix(yaw, pitch, 1.8));
+    gl.uniformMatrix4fv(l, false, getViewMatrix(yaw, pitch, 1.3));
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
