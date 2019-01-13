@@ -382,7 +382,11 @@
               focalLength: [964.713439941406, 964.713439941406],
             };
           } else {
-            throwUnsupportedSizeError();
+            // throwUnsupportedSizeError();
+            return {
+              offset: [width/2, height/2],
+              focalLength: [width, width],
+            };
           }
         },
         getColorIntrinsics: function(width, height) {
