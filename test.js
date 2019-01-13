@@ -654,10 +654,10 @@ function testMain() {
         testPointsShaderNormals();
         Promise.all([getImageData(realFrame0Url), getImageData(realFrame1Url)])
             .then(results => {
-                showDepthData(realData1Canvas,
-                    results[0], realCameraParams.depthScale);
-                showDepthData(realData2Canvas,
-                    results[1], realCameraParams.depthScale);
+                // showDepthData(realData1Canvas,
+                //     results[0], realCameraParams.depthScale);
+                // showDepthData(realData2Canvas,
+                //     results[1], realCameraParams.depthScale);
                 testRealData(results[0], results[1])
             });
         // This test needs to be last, otherwise there might not be enough GPU
