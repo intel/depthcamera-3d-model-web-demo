@@ -147,7 +147,7 @@
         : (label.includes("Camera S") || label.includes("SR300")) ? "SR300"
         : label.includes("ZR300") ? "ZR300"
         : label.includes("415") ? "D415"
-        : label.includes("430") ? "D430"
+        : label.includes("430") || label.includes("435") ? "D430"
         : label.includes(") 4") ? "generic4"
         : label;
 
@@ -436,19 +436,23 @@
       result =  {
         depthScale: 0.00100000005,
         getDepthIntrinsics: function(width, height) {
-          if (width == 640 && height == 480) {
             return {
-              offset: [318.229400634766, 239.944534301758],
-              focalLength: [381.902008056641, 381.902008056641],
+              offset: [width/2, height/2],
+              focalLength: [width, width],
             };
-          } else if (width == 1280 && height == 720) {
-            return {
-              offset: [637.048950195312, 359.907562255859],
-              focalLength: [636.503356933594, 636.503356933594],
-            };
-          } else {
-            throwUnsupportedSizeError();
-          }
+          // if (width == 640 && height == 480) {
+          //   return {
+          //     offset: [318.229400634766, 239.944534301758],
+          //     focalLength: [381.902008056641, 381.902008056641],
+          //   };
+          // } else if (width == 1280 && height == 720) {
+          //   return {
+          //     offset: [637.048950195312, 359.907562255859],
+          //     focalLength: [636.503356933594, 636.503356933594],
+          //   };
+          // } else {
+          //   throwUnsupportedSizeError();
+          // }
         },
         getColorIntrinsics: function(width, height) {
           if (width == 640 && height == 480) {
