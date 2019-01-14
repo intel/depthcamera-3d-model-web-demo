@@ -6,6 +6,8 @@ depth camera around it. It is able to guess the movement of the camera without
 any additional motion sensor, just from the depth data. It then combines the
 data into a single model.
 
+![Early stage recording](https://github.com/intel/depthcamera-3d-model-web-demo/raw/master/images/recording.gif)
+
 ## How it works
 
 Parts of the code originate from the [Pointcloud
