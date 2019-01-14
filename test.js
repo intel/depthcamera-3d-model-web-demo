@@ -605,6 +605,45 @@ function testSumShader() {
         + data);
 }
 
+function testRealDataNormals(data1, data2) {
+    let test = new Test("Show normals of read captured data (visual test only)");
+    let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas, realCameraParams);
+    let width = realCameraParams.width;
+    let height = realCameraParams.height;
+    let canvas1 = document.createElement('canvas');
+    let canvas2 = document.createElement('canvas');
+    test.div.appendChild(canvas1);
+    test.div.appendChild(canvas2);
+
+    let frame = 0;
+    uploadDepthData(gl, textures, data1, width, height, frame);
+    createModel(gl, programs, framebuffers, textures, frame, mat4.create());
+
+    frame = 1;
+    uploadDepthData(gl, textures, data2, width, height, frame);
+
+    program = programs.points;
+    gl.useProgram(program);
+    let l = gl.getUniformLocation(program, 'cubeTexture');
+    gl.uniform1i(l, textures.cube[frame%2].glId);
+    l = gl.getUniformLocation(program, 'depthTexture');
+    gl.uniform1i(l, textures.depth[frame%2].glId);
+    l = gl.getUniformLocation(program, 'previousDepthTexture');
+    gl.uniform1i(l, textures.depth[(frame+1)%2].glId);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.points);
+    gl.viewport(0, 0, textures.points.normal.width,
+        textures.points.normal.height);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    let stride = 4;
+    const d = new Float32Array(width*height*stride);
+    gl.readBuffer(gl.COLOR_ATTACHMENT1);
+    gl.readPixels(0, 0, width, height, gl.RGBA, gl.FLOAT, d);
+    d.width = width;
+    d.height = height;
+    showNormals(canvas1, frame1Normals);
+    showNormals(canvas2, d);
+}
+
 function testRealData(data1, data2) {
     let test = new Test("Test motion estimation for real data (visual test only)");
     test.showCanvas();
@@ -658,7 +697,8 @@ function testMain() {
                 //     results[0], realCameraParams.depthScale);
                 // showDepthData(realData2Canvas,
                 //     results[1], realCameraParams.depthScale);
-                testRealData(results[0], results[1])
+                testRealData(results[0], results[1]);
+                testRealDataNormals(results[0], results[1]);
             });
         // This test needs to be last, otherwise there might not be enough GPU
         // memory to create all the resources for all tests (the other tests
