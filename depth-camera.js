@@ -371,23 +371,23 @@
       result =  {
         depthScale: 0.00100000005,
         getDepthIntrinsics: function(width, height) {
-          if (width == 640 && height == 480) {
-            return {
-              offset: [315.847442626953, 241.684616088867],
-              focalLength: [643.142272949219, 643.142272949219],
-            };
-          } else if (width == 1280 && height == 720) {
-            return {
-              offset: [633.771179199219, 362.526947021484],
-              focalLength: [964.713439941406, 964.713439941406],
-            };
-          } else {
+          // if (width == 640 && height == 480) {
+          //   return {
+          //     offset: [315.847442626953, 241.684616088867],
+          //     focalLength: [643.142272949219, 643.142272949219],
+          //   };
+          // } else if (width == 1280 && height == 720) {
+          //   return {
+          //     offset: [633.771179199219, 362.526947021484],
+          //     focalLength: [964.713439941406, 964.713439941406],
+          //   };
+          // } else {
             // throwUnsupportedSizeError();
             return {
               offset: [width/2, height/2],
               focalLength: [width, width],
             };
-          }
+          // }
         },
         getColorIntrinsics: function(width, height) {
           if (width == 640 && height == 480) {
