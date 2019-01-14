@@ -78,19 +78,23 @@ async function doMain() {
             }
             uploadDepthData(gl, textures, source, width, height, frame);
 
-            let movement, info;
-            [movement, info] = estimateMovement(
-                gl,
-                programs,
-                textures,
-                framebuffers,
-                frame,
-            );
-            mat4.mul(globalMovement, movement, globalMovement);
-            let globalMovementInv = mat4.create();
-            mat4.invert(globalMovementInv, globalMovement);
-            createModel(gl, programs, framebuffers, textures, frame,
-                        globalMovementInv);
+            try {
+                let movement, info;
+                [movement, info] = estimateMovement(
+                    gl,
+                    programs,
+                    textures,
+                    framebuffers,
+                    frame,
+                );
+                mat4.mul(globalMovement, movement, globalMovement);
+                let globalMovementInv = mat4.create();
+                mat4.invert(globalMovementInv, globalMovement);
+                createModel(gl, programs, framebuffers, textures, frame,
+                    globalMovementInv);
+            } catch(e) {
+                console.warn("Ignoring frame ", frame);
+            }
             renderModel(gl, programs, textures, frame, canvasElement);
             frame += 1;
         }

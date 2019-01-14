@@ -194,9 +194,7 @@ function estimateMovement(gl, programs, textures, framebuffers, frame, max_steps
         try {
             [A, b, error, pointsFound, pointsUsed] = constructEquation(data);
         } catch (e) {
-            console.error("Ignoring frame ", frame,
-                          " for movement estimation: ", e);
-            return [undefined, info];
+            throw e;
         }
         info["error"] = error;
         info["pointsFound"] = pointsFound;
@@ -220,8 +218,8 @@ function estimateMovement(gl, programs, textures, framebuffers, frame, max_steps
         }
         mat4.mul(movement, constructMovement(x), movement);
         previousError = error;
-        console.log("estimation step ", step, ", relative error ",
-            (error/pointsUsed).toFixed(9));
+        // console.log("estimation step ", step, ", relative error ",
+        //     (error/pointsUsed).toFixed(9));
     }
     console.log("");
     return [movement, info];
