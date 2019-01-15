@@ -122,12 +122,12 @@ function initAttributes(gl, programs) {
     program = programs.points;
     gl.useProgram(program);
     uploadAttribute('inPosition', posOffset, posItems);
-    //uploadAttribute('inTexCoord', texOffset, texItems);
+    uploadAttribute('inTexCoord', texOffset, texItems);
 
     program = programs.matrices;
     gl.useProgram(program);
     uploadAttribute('inPosition', posOffset, posItems);
-    //uploadAttribute('inTexCoord', texOffset, texItems);
+    uploadAttribute('inTexCoord', texOffset, texItems);
 
     program = programs.sum;
     gl.useProgram(program);
@@ -136,10 +136,12 @@ function initAttributes(gl, programs) {
     program = programs.model;
     gl.useProgram(program);
     uploadAttribute('inPosition', posOffset, posItems);
+    uploadAttribute('inTexCoord', texOffset, texItems);
 
     program = programs.render;
     gl.useProgram(program);
     uploadAttribute('inPosition', posOffset, posItems);
+    uploadAttribute('inTexCoord', texOffset, texItems);
 }
 
 // Take the parameters returned from `DepthCamera.getCameraCalibration` and

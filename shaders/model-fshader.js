@@ -97,6 +97,7 @@ precision highp float;
 #define MAX_WEIGHT 20.0
 
 layout(location = 0) out vec2 outTexel;
+in vec2 aTexCoord;
 
 // Length of each side of the cubeTexture.
 uniform int cubeSize;
@@ -140,19 +141,9 @@ vec2 calculateSdf(vec3 texelCoordinate, vec3 position) {
     return vec2(newSdf, min(newWeight, MAX_WEIGHT));
 }
 
-// Calculate the texel coordinate for a texel with index (i, j, k).
-vec3 texelCenter(uint i, uint j, uint k) {
-    float size = float(cubeSize);
-    return vec3((float(i) + 0.5) / size,
-                (float(j) + 0.5) / size,
-                (float(k) + 0.5) / size);
-}
-
 void main() {
     // We are reading from the same texel as we are outputting.
-    vec3 texel = texelCenter(uint(gl_FragCoord.x),
-                              uint(gl_FragCoord.y),
-                              zslice);
+    vec3 texel = vec3(aTexCoord, (float(zslice)+0.5) / float(cubeSize));
     // Convert texel coordinate where each component is from 0 to 1, into global
     // coordinates where each component is from -0.5 to 0.5, i.e. the cube
     // texture is going to be centered at the origin.

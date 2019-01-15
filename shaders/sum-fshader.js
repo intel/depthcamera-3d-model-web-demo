@@ -51,6 +51,7 @@ vec3 getTexture(vec2 texCoord) {
 }
 
 void main() {
+    // TODO maybe use TexCoord from vshader
     // outSum = vec4(1.0, 0.0, 0.0, 0.0);
     // The built-in gl_FragCoord goes from [0.5, 0.5] to [width - 0.5, height
     // -0.5] where width and height are the size of the output texture. Make it

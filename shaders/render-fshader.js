@@ -52,6 +52,7 @@ const renderShader = `#version 300 es
 precision highp float;
 
 out vec4 outColor;
+in vec2 aTexCoord;
 
 uniform highp sampler3D cubeTexture;
 // this should be 1.0/CUBE_SIZE, i.e. the side length of each sub-cube
@@ -143,12 +144,13 @@ vec4 raymarch(vec3 position, vec3 viewDirection) {
 
 
 void main() {
-    // Each pixel/fragment gets a coordinate between (-0.5, -0.5) and (0.5,
-    // 0.5). Flip the y coordinate, because textures are by default stored
-    // flipped around.
-    float size = float(max(canvasSize.x, canvasSize.y));
-    vec2 coord = vec2(-(float(gl_FragCoord.x) - float(canvasSize.x)/2.0)/size,
-                      -(float(gl_FragCoord.y) - float(canvasSize.y)/2.0)/size);
+    vec2 coord = -aTexCoord + 0.5;
+    float aspect = float(canvasSize.x)/float(canvasSize.y);
+    // The x values will range from -0.5 to 0.5 while the y values will be
+    // shrunken or extended based on the ratio. Doing coord.x*aspect would also
+    // work, but this was the old behavior when I calculated indices manually
+    // and I didn't want to change it now.
+    coord.y = coord.y/aspect;
     // The projection plane is at z=-1 and the camera at origin.
     vec4 position = viewMatrix * vec4(coord, -1.0, 1.0);
     vec4 camera = viewMatrix * vec4(0.0, 0.0, 0.0, 1.0);

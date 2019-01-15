@@ -28,15 +28,13 @@ void main() {
     ivec2 texSize = textureSize(crossProductTexture, 0);
     texSize.x = texSize.x * 5;
     texSize.y = texSize.y * 3;
-    vec2 coord = vec2(gl_FragCoord.x/float(texSize.x),
-                      gl_FragCoord.y/float(texSize.y));
 
     int x = int(mod(floor(gl_FragCoord.x), 5.0));
     int y = int(mod(floor(gl_FragCoord.y), 3.0));
     int part = y * 5 + x;
-    vec4 c = vec4(texture(crossProductTexture, coord).rgb, 0.0);
-    vec4 n = vec4(texture(normalTexture, coord).rgb, 0.0);
-    vec4 dotAndError = texture(dotAndErrorTexture, coord);
+    vec4 c = vec4(texture(crossProductTexture, aTexCoord).rgb, 0.0);
+    vec4 n = vec4(texture(normalTexture, aTexCoord).rgb, 0.0);
+    vec4 dotAndError = texture(dotAndErrorTexture, aTexCoord);
     float d = dotAndError.x;
     float e = dotAndError.y;
     float pointsFound = dotAndError.z;

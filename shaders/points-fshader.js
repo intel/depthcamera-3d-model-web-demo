@@ -177,16 +177,8 @@ void main() {
     outNormal = vec4(0.0, 0.0, 0.0, 0.0);
     outDotAndError = vec4(0.0, 0.0, 0.0, 0.0);
 
-    // TODO use aTexCoord
-    ivec2 texSize = textureSize(depthTexture, 0);
-    // gl_FragCoord has the origin at the top left corner, with 0.5 added to the
-    // values (so it actually starts at [0.5, 0.5] and the bottom right corner
-    // for a 100x100 texture is [99.5, 99.5].
-    // Convert it into a coordinate on the projection plane at z=-1, so that the
-    // origin is that [0.5, 0.5] and the x axis points left and the y axis
-    // points down. This is because projection will flip the image.
-    vec2 coord = vec2(((gl_FragCoord.x))/float(texSize.x) - 0.5,
-                      ((gl_FragCoord.y))/float(texSize.y) - 0.5);
+    vec2 coord = aTexCoord;
+    coord = coord - 0.5;
     coord.x = -coord.x;
     // TODO most of these if conditions could be removed or replaced by
     // something that doesn't use branching, but this should be done only after
