@@ -145,10 +145,6 @@ function estimateMovement(gl, programs, textures, framebuffers, frame, max_steps
     // Number of items in each texel, 4 means RGBA, 3 means RGB.
     const stride = 4;
 
-    let tPoints = 0;
-    let tMatrices = 0;
-    let tSum = 0;
-    let tRead = 0;
     let movement = mat4.create();
     let previousError = 0;
     // Run the ICP algorithm until the error stops changing (which usually means
@@ -156,7 +152,6 @@ function estimateMovement(gl, programs, textures, framebuffers, frame, max_steps
     for (let step = 0; step < max_steps; step += 1) {
         // Find corresponding points and output information about them into
         // textures (i.e. the cross product, dot product, normal, error).
-        let t0 = performance.now();
         program = programs.points;
         gl.useProgram(program);
         l = gl.getUniformLocation(program, 'movement');
@@ -165,7 +160,6 @@ function estimateMovement(gl, programs, textures, framebuffers, frame, max_steps
         gl.viewport(0, 0, textures.points.normal.width,
             textures.points.normal.height);
         gl.drawArrays(gl.TRIANGLES, 0, 6);
-        let t1 = performance.now();
 
         // Use the textures created by the points shader to construct a 6x6
         // matrix A and 6x1 vector b for each point and store it into a texture.
@@ -174,7 +168,6 @@ function estimateMovement(gl, programs, textures, framebuffers, frame, max_steps
         gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers.matrices);
         gl.viewport(0, 0, textures.matrices.width, textures.matrices.height);
         gl.drawArrays(gl.TRIANGLES, 0, 6);
-        let t2 = performance.now();
 
         // Sum up the matrices and vectors from the 'matrices' shader to create
         // a single 6x6 matrix A and 6x1 vector b. Uses a tree reduction, so
@@ -193,12 +186,10 @@ function estimateMovement(gl, programs, textures, framebuffers, frame, max_steps
             l = gl.getUniformLocation(program, 'inputTexture');
             gl.uniform1i(l, textures.sum[i].glId);
         }
-        let t3 = performance.now();
         // The last result of the summing will be a single block of data
         // containing the matrix A, the vector b and the error
         const data = new Float32Array(5 * 3 * stride);
         gl.readPixels(0, 0, 5, 3, gl.RGBA, gl.FLOAT, data);
-        let t4 = performance.now();
         let A, b, error, pointsFound, pointsUsed;
         try {
             [A, b, error, pointsFound, pointsUsed] = constructEquation(data);
@@ -229,15 +220,7 @@ function estimateMovement(gl, programs, textures, framebuffers, frame, max_steps
         previousError = error;
         // console.log("estimation step ", step, ", relative error ",
         //     (error/pointsUsed).toFixed(9));
-        tPoints += t1-t0;
-        tMatrices += t2-t1;
-        tSum += t3-t2;
-        tRead += t4-t3;
     }
-    console.log("points ", tPoints);
-    console.log("matrices", tMatrices);
-    console.log("sum", tSum);
-    console.log("read", tRead);
     console.log("");
     return [movement, info];
 }
