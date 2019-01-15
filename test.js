@@ -679,6 +679,7 @@ function testMain() {
     showDepthData(data1Canvas, frame0);
     showDepthData(data2Canvas, frame1);
     try {
+        let t0 = performance.now();
         testIndexCoordCoversion();
         testCorrespondingPointCPU();
         testNumberOfUsedPointsSameFrame();
@@ -705,6 +706,9 @@ function testMain() {
         // have their GL context deallocated once they are done, but this one
         // keeps running).
         testVolumetricModel();
+        let t1 = performance.now();
+        console.log("Blocking part of tests took " + (t1 - t0)
+                  + " milliseconds.")
     } catch (e) {
         handleError(e);
     }
