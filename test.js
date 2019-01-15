@@ -16,8 +16,8 @@
 // depth data.
 let width = 250;
 let height = 200;
-let frame0Transform = getViewMatrix(5, 0, 1.0);
-let frame1Transform = getViewMatrix(0, 10, 1.0);
+let frame0Transform = getViewMatrix(5, 0, 0.5);
+let frame1Transform = getViewMatrix(0, 10, 0.5);
 // mat4.translate(frame1Transform, frame1Transform, vec3.fromValues(0.0, 0.1, 0.0));
 let knownMovement = getMovement(frame1Transform, frame0Transform);
 let knownMovementInv = mat4.create();

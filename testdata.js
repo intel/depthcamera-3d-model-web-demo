@@ -38,9 +38,9 @@ function signedDistanceBox(position, center, size) {
 // object, negative if it's inside an object.
 function signedDistance(position) {
     const sphereCenter = vec3.fromValues(0.0, 0.0, 0.0);
-    const sphereRadius = 0.2;
-    const boxCenter =  vec3.fromValues(0.2, -0.1, -0.1);
-    const boxSize = vec3.fromValues(0.08, 0.08, 0.08);
+    const sphereRadius = 0.15;
+    const boxCenter =  vec3.fromValues(0.12, -0.05, -0.09);
+    const boxSize = vec3.fromValues(0.05, 0.05, 0.05);
     // show a spere and a box
     return Math.min(signedDistanceSphere(position, sphereCenter, sphereRadius),
         signedDistanceBox(position, boxCenter, boxSize));
