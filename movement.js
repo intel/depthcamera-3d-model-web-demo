@@ -189,12 +189,18 @@ function estimateMovement(gl, programs, textures, framebuffers, frame, max_steps
         // The last result of the summing will be a single block of data
         // containing the matrix A, the vector b and the error
         const data = new Float32Array(5 * 3 * stride);
-        gl.readPixels(0, 0, 5, 3, gl.RGBA, gl.FLOAT, data);
+        // gl.readPixels(0, 0, 5, 3, gl.RGBA, gl.FLOAT, data);
         let A, b, error, pointsFound, pointsUsed;
-        try {
-            [A, b, error, pointsFound, pointsUsed] = constructEquation(data);
-        } catch (e) {
-            throw e;
+        // try {
+        //     [A, b, error, pointsFound, pointsUsed] = constructEquation(data);
+        // } catch (e) {
+        //     throw e;
+        // }
+        b = new Float32Array(6);
+        A = Array(6);
+        for (let i = 0; i < 6; i += 1) {
+            A[i] = new Float32Array(6);
+            A[i][i] = 1;
         }
         info["error"] = error;
         info["pointsFound"] = pointsFound;
