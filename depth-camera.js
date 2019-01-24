@@ -371,23 +371,19 @@
       result =  {
         depthScale: 0.00100000005,
         getDepthIntrinsics: function(width, height) {
-          // if (width == 640 && height == 480) {
-          //   return {
-          //     offset: [315.847442626953, 241.684616088867],
-          //     focalLength: [643.142272949219, 643.142272949219],
-          //   };
-          // } else if (width == 1280 && height == 720) {
-          //   return {
-          //     offset: [633.771179199219, 362.526947021484],
-          //     focalLength: [964.713439941406, 964.713439941406],
-          //   };
-          // } else {
-            // throwUnsupportedSizeError();
+          if (width == 640 && height == 480) {
             return {
-              offset: [width/2, height/2],
-              focalLength: [width, width],
+              offset: [315.847442626953, 241.684616088867],
+              focalLength: [643.142272949219, 643.142272949219],
             };
-          // }
+          } else if (width == 1280 && height == 720) {
+            return {
+              offset: [633.771179199219, 362.526947021484],
+              focalLength: [964.713439941406, 964.713439941406],
+            };
+          } else {
+            throwUnsupportedSizeError();
+          }
         },
         getColorIntrinsics: function(width, height) {
           if (width == 640 && height == 480) {
@@ -436,23 +432,19 @@
       result =  {
         depthScale: 0.00100000005,
         getDepthIntrinsics: function(width, height) {
+          if (width == 640 && height == 480) {
             return {
-              offset: [width/2, height/2],
-              focalLength: [width, width],
+              offset: [318.229400634766, 239.944534301758],
+              focalLength: [381.902008056641, 381.902008056641],
             };
-          // if (width == 640 && height == 480) {
-          //   return {
-          //     offset: [318.229400634766, 239.944534301758],
-          //     focalLength: [381.902008056641, 381.902008056641],
-          //   };
-          // } else if (width == 1280 && height == 720) {
-          //   return {
-          //     offset: [637.048950195312, 359.907562255859],
-          //     focalLength: [636.503356933594, 636.503356933594],
-          //   };
-          // } else {
-          //   throwUnsupportedSizeError();
-          // }
+          } else if (width == 1280 && height == 720) {
+            return {
+              offset: [637.048950195312, 359.907562255859],
+              focalLength: [636.503356933594, 636.503356933594],
+            };
+          } else {
+            throwUnsupportedSizeError();
+          }
         },
         getColorIntrinsics: function(width, height) {
           if (width == 640 && height == 480) {
