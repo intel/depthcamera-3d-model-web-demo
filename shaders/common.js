@@ -40,7 +40,7 @@ bool coordIsOutOfRange(vec2 texCoord) {
 camera at origin.*/
 vec2 project(vec3 position) {
     vec2 position2d = - position.xy / position.z;
-    return position2d*depthFocalLength + depthOffset;
+    return position2d*depthFocalLength - depthOffset;
 }
 
 /*Use depth data to "reverse" projection.
@@ -55,7 +55,7 @@ vec3 deproject(sampler2D tex, vec2 coord) {
     texture has filtering GL_NEAREST. See
     https://wiki.linaro.org/WorkingGroups/Middleware/Graphics/GLES2PortingTips*/
     depth = mix(depth, 0.0, coordIsOutOfRange(texCoord));
-    vec2 position2d = (-coord - depthOffset)/depthFocalLength;
+    vec2 position2d = -(coord + depthOffset)/depthFocalLength;
     return vec3(position2d*depth, depth);
 }
 `.replace(/\n|\r/g, '');
