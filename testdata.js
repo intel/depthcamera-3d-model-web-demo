@@ -109,15 +109,15 @@ function getRealCameraParams() {
     return {
         depthScale: 0.00100000005* 65535,
         getDepthIntrinsics: function(width, height) {
-            // return {
-            //   offset: [315.847442626953, 241.684616088867],
-            //   focalLength: [643.142272949219, 643.142272949219],
-            // };
-            let size = Math.max(width, height);
             return {
-                offset: [width/2.0, height/2.0],
-                focalLength: [size, size],
+              offset: [315.847442626953, 241.684616088867],
+              focalLength: [643.142272949219, 643.142272949219],
             };
+            // let size = Math.max(width, height);
+            // return {
+            //     offset: [width/2.0, height/2.0],
+            //     focalLength: [size, size],
+            // };
         },
         // these are not normally here, but I found them useful
         width: 640,

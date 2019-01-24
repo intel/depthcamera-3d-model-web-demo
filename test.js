@@ -658,10 +658,13 @@ function testRealData(data1, data2) {
     frame = 1;
     uploadDepthData(gl, textures, data2, width, height, frame);
     let movement, info;
-    [movement, info] = estimateMovement(gl, programs, textures, framebuffers, frame);
+    [movement, info] = estimateMovement(gl, programs, textures, framebuffers, frame, 40);
     let movementInv = mat4.create();
     mat4.invert(movementInv, movement);
     createModel(gl, programs, framebuffers, textures, frame, movementInv);
+    console.log("error", info["error"]);
+    console.log("relative error", info["error"]/info["pointsUsed"]);
+    console.log("used points", info["pointsUsed"]);
     let animate = function () {
         renderModel(gl, programs, textures, frame, test.canvas);
         // window.requestAnimationFrame(animate);
