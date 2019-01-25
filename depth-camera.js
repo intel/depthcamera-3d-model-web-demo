@@ -147,7 +147,8 @@
         : (label.includes("Camera S") || label.includes("SR300")) ? "SR300"
         : label.includes("ZR300") ? "ZR300"
         : label.includes("415") ? "D415"
-        : label.includes("430") || label.includes("435") ? "D430"
+        : label.includes("430") ? "D430"
+        : label.includes("435i") ? "D435i"
         : label.includes(") 4") ? "generic4"
         : label;
 
@@ -488,6 +489,24 @@
         depthDistortioncoeffs: [0, 0, 0, 0, 0],
         colorDistortionModel: DistortionModel.NONE,
         colorDistortioncoeffs: [0, 0, 0, 0, 0],
+      };
+    } else if (cameraName === "D435i")  {
+      result =  {
+        depthScale: 0.00100000005,
+        getDepthIntrinsics: function(width, height) {
+            console.log("435i", width, height);
+          if (width == 480 && height == 270) {
+            return {
+              offset: [240.226989746094, 134.679840087891],
+              focalLength: [241.110397338867, 241.110397338867],
+            };
+          } else if (width == 640 && height == 480) {
+            return {
+              offset: [320.363189697266, 239.487731933594],
+              focalLength: [385.776641845703, 385.776641845703],
+            };
+          }
+        }
       };
     } else if (cameraName === "generic4")  {
       result = {
