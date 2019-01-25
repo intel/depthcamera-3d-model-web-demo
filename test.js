@@ -657,7 +657,7 @@ function testRealData(data) {
     uploadDepthData(gl, textures, data[frame], width, height, frame);
     let movement, info;
     [movement, info] = estimateMovement(gl, programs, textures, framebuffers, frame, 40);
-    mat4.mul(globalMovement, movement, globalMovement);
+    mat4.mul(globalMovement, globalMovement, movement);
     mat4.invert(globalMovementInv, globalMovement);
     createModel(gl, programs, framebuffers, textures, frame, globalMovementInv);
     console.log("error", info["error"]);
@@ -666,8 +666,8 @@ function testRealData(data) {
 
     frame = 2;
     uploadDepthData(gl, textures, data[frame], width, height, frame);
-    [movement, info] = estimateMovement(gl, programs, textures, framebuffers, frame, 20);
-    mat4.mul(globalMovement, movement, globalMovement);
+    [movement, info] = estimateMovement(gl, programs, textures, framebuffers, frame, 40);
+    mat4.mul(globalMovement, globalMovement, movement);
     globalMovementInv = mat4.create();
     mat4.invert(globalMovementInv, globalMovement);
     createModel(gl, programs, framebuffers, textures, frame, globalMovementInv);
@@ -677,19 +677,25 @@ function testRealData(data) {
 
     frame = 3;
     uploadDepthData(gl, textures, data[frame], width, height, frame);
-    [movement, info] = estimateMovement(gl, programs, textures, framebuffers, frame, 20);
-    mat4.mul(globalMovement, movement, globalMovement);
+    [movement, info] = estimateMovement(gl, programs, textures, framebuffers, frame, 40);
+    mat4.mul(globalMovement, globalMovement, movement);
     globalMovementInv = mat4.create();
     mat4.invert(globalMovementInv, globalMovement);
     createModel(gl, programs, framebuffers, textures, frame, globalMovementInv);
+    console.log("error", info["error"]);
+    console.log("relative error", info["error"]/info["pointsUsed"]);
+    console.log("used points", info["pointsUsed"]);
 
-    // frame = 4;
-    // uploadDepthData(gl, textures, data[frame], width, height, frame);
-    // [movement, info] = estimateMovement(gl, programs, textures, framebuffers, frame, 20);
-    // mat4.mul(globalMovement, movement, globalMovement);
-    // globalMovementInv = mat4.create();
-    // mat4.invert(globalMovementInv, globalMovement);
-    // createModel(gl, programs, framebuffers, textures, frame, globalMovementInv);
+    frame = 4;
+    uploadDepthData(gl, textures, data[frame], width, height, frame);
+    [movement, info] = estimateMovement(gl, programs, textures, framebuffers, frame, 40);
+    mat4.mul(globalMovement, globalMovement, movement);
+    globalMovementInv = mat4.create();
+    mat4.invert(globalMovementInv, globalMovement);
+    createModel(gl, programs, framebuffers, textures, frame, globalMovementInv);
+    console.log("error", info["error"]);
+    console.log("relative error", info["error"]/info["pointsUsed"]);
+    console.log("used points", info["pointsUsed"]);
     let animate = function () {
         renderModel(gl, programs, textures, frame, test.canvas);
         window.requestAnimationFrame(animate);

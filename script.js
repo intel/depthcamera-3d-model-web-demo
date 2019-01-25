@@ -87,7 +87,7 @@ async function doMain() {
                     framebuffers,
                     frame,
                 );
-                mat4.mul(globalMovement, movement, globalMovement);
+                mat4.mul(globalMovement, globalMovement, movement);
                 let globalMovementInv = mat4.create();
                 mat4.invert(globalMovementInv, globalMovement);
                 createModel(gl, programs, framebuffers, textures, frame,
