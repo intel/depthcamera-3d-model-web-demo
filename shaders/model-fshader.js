@@ -149,19 +149,14 @@ void main() {
     // texture is going to be centered at the origin.
     vec3 position = texel - 0.5;
     position.x = -position.x;
-    // Scale the cube so that it only it's effectively only 0.5 units (more or
-    // less 0.5 meters) on each side. This isn't necessary and can be removed,
-    // but the cameras don't have a very good resolution at higher distances and
-    // those data are usually not very useful.
-    position = position*0.5;
-    // Center the cube at (0, 0, 0.5), so that it is in front of the camera. The
+    // Center the cube at (0, 0, 0.6), so that it is in front of the camera. The
     // camera will be at the origin and the projection plane at z=-1. Only
     // points that are inside of this cube will be added to the model, i.e.
-    // points that are at least 0.25 away and at most 0.75 away (the units
+    // points that are at least 0.1 away and at most 1.1 away (the units
     // should correspond to meters, buts it's not exact). Centering the cube at
-    // z=0.25 would also work, but there are usually no useful data very close
+    // z=0.5 would also work, but there are usually no useful data very close
     // to the camera.
-    position += vec3(0.0, 0.0, 0.5);
+    position += vec3(0.0, 0.0, 0.6);
     position = (movement * vec4(position, 1.0)).xyz;
     outTexel = calculateSdf(texel, position);
 }
