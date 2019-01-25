@@ -110,8 +110,9 @@ function getRealCameraParams() {
         depthScale: 0.00100000005* 65535,
         getDepthIntrinsics: function(width, height) {
             return {
-              offset: [315.847442626953, 241.684616088867],
-              focalLength: [643.142272949219, 643.142272949219],
+                // for D453i at 640x480
+                offset: [320.363189697266, 239.487731933594],
+                focalLength: [385.776641845703, 385.776641845703],
             };
             // let size = Math.max(width, height);
             // return {
