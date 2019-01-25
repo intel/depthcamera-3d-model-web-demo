@@ -33,7 +33,7 @@
         let stream = await navigator.mediaDevices.getUserMedia({
           video: {
             videoKind: {exact: "depth"},
-            frameRate: {exact: 60}
+            frameRate: {exact: 30}
           }
         });
         const track = stream.getVideoTracks()[0];
@@ -50,12 +50,8 @@
       const constraints = {
         audio: false,
         video: {
-          // videoKind: {exact: "depth"}, R200 related hack: prefer
-          // depth (width = 628) to IR (width = 641) stream.
-          width: {ideal: 628},
-
-          // SR300 depth camera enables capture at 110 frames per second.
-          frameRate: {ideal: 110},
+          width: {ideal: 640},
+          frameRate: {ideal: 30},
         }
       }
 
@@ -77,7 +73,7 @@
           audio: false,
           video: {
             deviceId: {exact: track.getSettings().deviceId},
-            frameRate: {exact: 60}
+            frameRate: {exact: 30}
           }
         }
         stream = await navigator.mediaDevices.getUserMedia(constraints);
