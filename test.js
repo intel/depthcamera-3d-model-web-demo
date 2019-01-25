@@ -27,8 +27,7 @@ let [frame1, frame1Normals] = createFakeData(width, height, frame1Transform);
 let cameraParams = createFakeCameraParams(width, height);
 
 // Depth map captured from an actual camera.
-let realFrame0Url = "https://raw.githubusercontent.com/intel/depthcamera-3d-model-web-demo/devel/images/depth/frame0.png";
-let realFrame1Url = "https://raw.githubusercontent.com/intel/depthcamera-3d-model-web-demo/devel/images/depth/frame1.png";
+let realFrameUrl = "https://raw.githubusercontent.com/intel/depthcamera-3d-model-web-demo/devel/images/depth/";
 let realCameraParams = getRealCameraParams();
 
 
@@ -641,30 +640,59 @@ function testRealDataNormals(data1, data2) {
     showNormals(canvas1, d);
 }
 
-function testRealData(data1, data2) {
+function testRealData(data) {
     let test = new Test("Test motion estimation for real data (visual test only)");
     test.showCanvas();
     test.bindMouseToCanvas();
     let width = realCameraParams.width;
     let height = realCameraParams.height;
     let [gl, programs, textures, framebuffers] = setupGraphics(test.canvas, realCameraParams);
+    let globalMovement = mat4.create();
+    let globalMovementInv = mat4.create();
     let frame = 0;
-    uploadDepthData(gl, textures, data1, width, height, frame);
+    uploadDepthData(gl, textures, data[frame], width, height, frame);
     createModel(gl, programs, framebuffers, textures, frame, mat4.create());
 
     frame = 1;
-    uploadDepthData(gl, textures, data2, width, height, frame);
+    uploadDepthData(gl, textures, data[frame], width, height, frame);
     let movement, info;
     [movement, info] = estimateMovement(gl, programs, textures, framebuffers, frame, 40);
-    let movementInv = mat4.create();
-    mat4.invert(movementInv, movement);
-    createModel(gl, programs, framebuffers, textures, frame, movementInv);
+    mat4.mul(globalMovement, movement, globalMovement);
+    mat4.invert(globalMovementInv, globalMovement);
+    createModel(gl, programs, framebuffers, textures, frame, globalMovementInv);
     console.log("error", info["error"]);
     console.log("relative error", info["error"]/info["pointsUsed"]);
     console.log("used points", info["pointsUsed"]);
+
+    frame = 2;
+    uploadDepthData(gl, textures, data[frame], width, height, frame);
+    [movement, info] = estimateMovement(gl, programs, textures, framebuffers, frame, 20);
+    mat4.mul(globalMovement, movement, globalMovement);
+    globalMovementInv = mat4.create();
+    mat4.invert(globalMovementInv, globalMovement);
+    createModel(gl, programs, framebuffers, textures, frame, globalMovementInv);
+    console.log("error", info["error"]);
+    console.log("relative error", info["error"]/info["pointsUsed"]);
+    console.log("used points", info["pointsUsed"]);
+
+    frame = 3;
+    uploadDepthData(gl, textures, data[frame], width, height, frame);
+    [movement, info] = estimateMovement(gl, programs, textures, framebuffers, frame, 20);
+    mat4.mul(globalMovement, movement, globalMovement);
+    globalMovementInv = mat4.create();
+    mat4.invert(globalMovementInv, globalMovement);
+    createModel(gl, programs, framebuffers, textures, frame, globalMovementInv);
+
+    // frame = 4;
+    // uploadDepthData(gl, textures, data[frame], width, height, frame);
+    // [movement, info] = estimateMovement(gl, programs, textures, framebuffers, frame, 20);
+    // mat4.mul(globalMovement, movement, globalMovement);
+    // globalMovementInv = mat4.create();
+    // mat4.invert(globalMovementInv, globalMovement);
+    // createModel(gl, programs, framebuffers, textures, frame, globalMovementInv);
     let animate = function () {
         renderModel(gl, programs, textures, frame, test.canvas);
-        // window.requestAnimationFrame(animate);
+        window.requestAnimationFrame(animate);
     };
     animate();
 }
@@ -680,32 +708,36 @@ function testMain() {
     showDepthData(data2Canvas, frame1);
     try {
         let t0 = performance.now();
-        testIndexCoordCoversion();
-        testCorrespondingPointCPU();
-        testNumberOfUsedPointsSameFrame();
-        compareCorrespondingPointsVersions();
-        compareEquationsBetweenVersions();
-        testCPUMovementEstimationIdentity();
-        testCPUMovementEstimation();
-        testMovementEstimationIdentity();
-        testMovementEstimation();
-        testSumShaderSinglePass();
-        testSumShader();
-        testPointsShaderNormals();
-        Promise.all([getImageData(realFrame0Url), getImageData(realFrame1Url)])
+        // testIndexCoordCoversion();
+        // testCorrespondingPointCPU();
+        // testNumberOfUsedPointsSameFrame();
+        // compareCorrespondingPointsVersions();
+        // compareEquationsBetweenVersions();
+        // testCPUMovementEstimationIdentity();
+        // testCPUMovementEstimation();
+        // testMovementEstimationIdentity();
+        // testMovementEstimation();
+        // testSumShaderSinglePass();
+        // testSumShader();
+        // testPointsShaderNormals();
+        Promise.all([getImageData(realFrameUrl + "frame0.png"),
+                     getImageData(realFrameUrl + "frame1.png"),
+                     getImageData(realFrameUrl + "frame2.png"),
+                     getImageData(realFrameUrl + "frame3.png"),
+                     getImageData(realFrameUrl + "frame4.png")])
             .then(results => {
                 // showDepthData(realData1Canvas,
                 //     results[0], realCameraParams.depthScale);
                 // showDepthData(realData2Canvas,
                 //     results[1], realCameraParams.depthScale);
-                testRealData(results[0], results[1]);
-                testRealDataNormals(results[0], results[1]);
+                testRealData(results);
+                testRealDataNormals(results[0], results[1],);
             });
         // This test needs to be last, otherwise there might not be enough GPU
         // memory to create all the resources for all tests (the other tests
         // have their GL context deallocated once they are done, but this one
         // keeps running).
-        testVolumetricModel();
+        // testVolumetricModel();
         let t1 = performance.now();
         console.log("Blocking part of tests took " + (t1 - t0)
                   + " milliseconds.")
