@@ -611,9 +611,7 @@ function testRealDataNormals(data1, data2) {
     let width = realCameraParams.width;
     let height = realCameraParams.height;
     let canvas1 = document.createElement('canvas');
-    let canvas2 = document.createElement('canvas');
     test.div.appendChild(canvas1);
-    test.div.appendChild(canvas2);
 
     let frame = 0;
     uploadDepthData(gl, textures, data1, width, height, frame);
@@ -640,8 +638,7 @@ function testRealDataNormals(data1, data2) {
     gl.readPixels(0, 0, width, height, gl.RGBA, gl.FLOAT, d);
     d.width = width;
     d.height = height;
-    showNormals(canvas1, frame1Normals);
-    showNormals(canvas2, d);
+    showNormals(canvas1, d);
 }
 
 function testRealData(data1, data2) {
