@@ -237,8 +237,8 @@ function setupTextures(gl, programs, width, height) {
     // how big the side of each block in the sum shader is
     let blockWidth = 5;
     let blockHeight = 3;
-    const cube0 = new Texture3D(gl, CUBE_SIZE, gl.RG32F);
-    const cube1 = new Texture3D(gl, CUBE_SIZE, gl.RG32F);
+    const cube0 = new Texture3D(gl, CUBE_SIZE, gl.RG16F);
+    const cube1 = new Texture3D(gl, CUBE_SIZE, gl.RG16F);
     fillCubeTexture(gl, cube0);
     const depth0 = new Texture2D(gl, width, height, gl.R32F);
     const depth1 = new Texture2D(gl, width, height, gl.R32F);

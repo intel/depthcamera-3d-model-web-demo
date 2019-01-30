@@ -121,6 +121,10 @@ function parseFormat(gl, format) {
             format = gl.RED;
             type = gl.FLOAT;
             break;
+        case gl.RG16F:
+            format = gl.RG;
+            type = gl.FLOAT;
+            break;
         case gl.RG32F:
             format = gl.RG;
             type = gl.FLOAT;
