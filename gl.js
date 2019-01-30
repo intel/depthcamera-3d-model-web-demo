@@ -16,7 +16,7 @@ const CUBE_SIZE = 256;
 const GRID_UNIT = 1.0 / CUBE_SIZE;
 // a variant of SDF called TSDF limits the signed distance between
 // -SDF_TRUNCATION and SDF_TRUNCATION
-const SDF_TRUNCATION = 0.01;
+const SDF_TRUNCATION = GRID_UNIT*3.0;
 
 /* eslint-disable indent, no-multi-spaces */
 // canvas across the whole screen, so we can just paint with the fragment shader
