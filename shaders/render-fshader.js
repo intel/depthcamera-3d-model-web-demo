@@ -57,6 +57,7 @@ in vec2 aTexCoord;
 uniform highp sampler3D cubeTexture;
 // this should be 1.0/CUBE_SIZE, i.e. the side length of each sub-cube
 uniform float gridUnit;
+uniform float sdfTruncation;
 uniform mat4 viewMatrix;
 uniform uvec2 canvasSize;
 
@@ -81,7 +82,8 @@ float signedDistance(vec3 position) {
     // the same position as the texture cube, which will show us the distance
     // towards it.
     return max(signedDistanceBox(position),
-               texture(cubeTexture, getTexelCoordinate(position)).r);
+               texture(cubeTexture,
+                   getTexelCoordinate(position)).r/sdfTruncation);
     //return signedDistanceBox(position);
 }
 
