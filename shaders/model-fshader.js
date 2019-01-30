@@ -116,25 +116,23 @@ uniform mat4 movement;
 
 ${PROJECT_DEPROJECT_SHADER_FUNCTIONS}
 
-// Return the new sdf value to be stored in the sub-cube.
-// The 'position' argument is the center of the sub-cube for which we are
-// calculating this (where the 'sub-cube' is a single texel of the 3D
-// cubeTexture). The cubeTexture is assumed to be centered at (0, 0, 0.5) and
-// each side has length 1.
+// Return the new sdf value to be stored in the voxel.
+// The 'voxelCenter' argument is the center of the sub-cube/voxel for which we
+// are calculating this (where the 'sub-cube' is a single texel of the 3D
+// cubeTexture).
 // Returns the current value of the texture if anything goes wrong.
-vec2 calculateSdf(vec3 texelCoordinate, vec3 position) {
+vec2 calculateSdf(vec3 texelCoordinate, vec3 voxelCenter) {
     // Current value in the texture, to be updated.
     vec2 old = texture(cubeTexture, texelCoordinate).rg;
     // Make sure no division by 0 in prjecting occurs.
     // TODO: can this be done without a condition?
-    if (position.z == 0.0) return old;
-    vec2 p = project(position);
-    vec3 depth = deproject(depthTexture, p);
+    if (voxelCenter.z == 0.0) return old;
+    vec2 coord = project(voxelCenter);
+    vec3 point = deproject(depthTexture, coord);
     // The depth camera stores zero if depth is undefined.
     // TODO make sure not checking this won't affect results
-    if (depth.z == 0.0) return old;
-    vec3 camera = vec3(0.0, 0.0, 0.0);
-    float sdf = distance(depth, camera) - distance(position, camera);
+    if (point.z == 0.0) return old;
+    float sdf = length(point) - length(voxelCenter);
     float weight = float(sdf >= -sdfTruncation && sdf <= sdfTruncation);
     float newWeight = old.y + weight;
     float newSdf = ((old.x/sdfTruncation)*old.y + sdf*weight)/newWeight;
@@ -156,7 +154,7 @@ void main() {
     // should correspond to meters, buts it's not exact). Centering the cube at
     // z=0.5 would also work, but there are usually no useful data very close
     // to the camera.
-    position += vec3(0.0, 0.0, 0.6);
+    position.z += 0.6;
     position = (movement * vec4(position, 1.0)).xyz;
     outTexel = calculateSdf(texel, position);
 }
