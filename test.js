@@ -714,18 +714,18 @@ function testMain() {
     showDepthData(data2Canvas, frame1);
     try {
         let t0 = performance.now();
-        // testIndexCoordCoversion();
-        // testCorrespondingPointCPU();
-        // testNumberOfUsedPointsSameFrame();
-        // compareCorrespondingPointsVersions();
-        // compareEquationsBetweenVersions();
-        // testCPUMovementEstimationIdentity();
-        // testCPUMovementEstimation();
-        // testMovementEstimationIdentity();
-        // testMovementEstimation();
-        // testSumShaderSinglePass();
-        // testSumShader();
-        // testPointsShaderNormals();
+        testIndexCoordCoversion();
+        testCorrespondingPointCPU();
+        testNumberOfUsedPointsSameFrame();
+        compareCorrespondingPointsVersions();
+        compareEquationsBetweenVersions();
+        testCPUMovementEstimationIdentity();
+        testCPUMovementEstimation();
+        testMovementEstimationIdentity();
+        testMovementEstimation();
+        testSumShaderSinglePass();
+        testSumShader();
+        testPointsShaderNormals();
         Promise.all([getImageData(realFrameUrl + "frame0.png"),
                      getImageData(realFrameUrl + "frame1.png"),
                      getImageData(realFrameUrl + "frame2.png"),
@@ -743,7 +743,7 @@ function testMain() {
         // memory to create all the resources for all tests (the other tests
         // have their GL context deallocated once they are done, but this one
         // keeps running).
-        // testVolumetricModel();
+        testVolumetricModel();
         let t1 = performance.now();
         console.log("Blocking part of tests took " + (t1 - t0)
                   + " milliseconds.")
