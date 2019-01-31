@@ -211,8 +211,6 @@ function initUniforms(gl, programs, textures, parameters, width, height) {
     gl.uniformMatrix4fv(l, false, mat4.create());
     l = gl.getUniformLocation(program, 'gridUnit');
     gl.uniform1f(l, GRID_UNIT);
-    l = gl.getUniformLocation(program, 'sdfTruncation');
-    gl.uniform1f(l, SDF_TRUNCATION);
 }
 
 
@@ -221,7 +219,7 @@ function fillCubeTexture(gl, texture) {
     const size = CUBE_SIZE * CUBE_SIZE * CUBE_SIZE * stride;
     const data = new Float32Array(size);
     for (let i = 0; i < size; i += stride) {
-        data[i] = GRID_UNIT*SDF_TRUNCATION;
+        data[i] = GRID_UNIT;
         // This has to be bigger than 0, otherwise the shader will divide by 0.
         data[i + 1] = 0.1;
         // if (i < CUBE_SIZE*stride*2

@@ -135,8 +135,8 @@ vec2 calculateSdf(vec3 texelCoordinate, vec3 voxelCenter) {
     float sdf = length(point) - length(voxelCenter);
     float weight = float(sdf >= -sdfTruncation && sdf <= sdfTruncation);
     float newWeight = old.y + weight;
-    float newSdf = ((old.x/sdfTruncation)*old.y + sdf*weight)/newWeight;
-    return vec2(newSdf*sdfTruncation, min(newWeight, MAX_WEIGHT));
+    float newSdf = (old.x*old.y + sdf*weight)/newWeight;
+    return vec2(newSdf, min(newWeight, MAX_WEIGHT));
 }
 
 void main() {
